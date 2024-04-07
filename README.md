@@ -6,3 +6,4 @@ Immediate TO-DO in order of priority:
 
 Low Priority TO-DO:
 - [ ] Color in land mask and flatmap overlay properly.
+- [ ] Parallelize image processing
