@@ -1,8 +1,10 @@
 use std::path::PathBuf;
+use image_dds::image::Rgba;
 use tauri::{Manager, WindowMenuEvent};
 use crate::dds_to_png::DdsToPng;
 
 const FLATMAP_PATH: &str = "game/dlc/dlc004_voice_of_the_people/gfx/map/textures/flatmap_votp.dds";
+const LAND_MASK_PATH: &str = "game/gfx/map/textures/land_mask.dds";
 const FLATMAP_OVERLAY_PATH: &str = "game/dlc/dlc004_voice_of_the_people/gfx/map/textures/flatmap_overlay_votp.dds";
 
 pub struct GameFolder {
@@ -12,6 +14,7 @@ pub struct GameFolder {
 impl GameFolder {
   pub fn load(&self, event: WindowMenuEvent) {
     self.load_flatmap(&event);
+    self.load_land_mask(&event);
     self.load_flatmap_overlay(&event);
   }
 
@@ -20,8 +23,22 @@ impl GameFolder {
 
     match dds_to_png.cache(cache_dir(event)) {
       Ok(_) => handle_send_map(event, "load-flatmap"),
-      Err(e) => println!("Failed to cache flatmap: {:?}", e),
+      Err(_) => println!("Flatmap already in cache"),
     };
+  }
+
+  fn load_land_mask(&self, event: &WindowMenuEvent) {
+    let dds_to_png = DdsToPng { dds_file_path: self.land_mask() };
+
+    if !dds_to_png.exists_in_cache(cache_dir(event)) {
+      let mut png_buffer = dds_to_png.dds_to_buffer();
+      for pixel in png_buffer.pixels_mut() { if pixel[0] == 0 && pixel[1] == 0 && pixel[2] == 0 { *pixel = Rgba([0, 0, 0, 0]); } }
+
+      dds_to_png.write_image(png_buffer, dds_to_png.png_file_path(cache_dir(event))).unwrap();
+      handle_send_map(event, "load-land-mask");
+    } else {
+      println!("Land mask already in cache");
+    }
   }
 
   fn load_flatmap_overlay(&self, event: &WindowMenuEvent) {
@@ -29,12 +46,16 @@ impl GameFolder {
 
     match dds_to_png.cache(cache_dir(event)) {
       Ok(_) => handle_send_map(event, "load-flatmap-overlay"),
-      Err(e) => println!("Failed to cache flatmap: {:?}", e),
+      Err(_) => println!("Flatmap overlay already in cache"),
     };
   }
 
   fn flatmap(&self) -> PathBuf {
     self.folder_path.join(PathBuf::from(FLATMAP_PATH))
+  }
+
+  fn land_mask(&self) -> PathBuf {
+    self.folder_path.join(PathBuf::from(LAND_MASK_PATH))
   }
 
   fn flatmap_overlay(&self) -> PathBuf {

@@ -7,3 +7,8 @@ Immediate TO-DO in order of priority:
 Low Priority TO-DO:
 - [ ] Color in land mask and flatmap overlay properly.
 - [ ] Parallelize image processing
+
+Known Bugs:
+- If the map images load in the wrong order, they will layer in the wrong order
+Known Issues:
+- Land mask and flatmap overlay are not colored properly.
