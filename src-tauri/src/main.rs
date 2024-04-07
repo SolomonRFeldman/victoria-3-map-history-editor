@@ -2,6 +2,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod main_menu;
+mod game_folder;
+mod dds_to_png;
 
 use tauri::Manager;
 use main_menu::MainMenu;
