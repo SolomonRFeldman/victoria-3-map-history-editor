@@ -5,7 +5,7 @@ mod main_menu;
 mod game_folder;
 mod dds_to_png;
 
-use tauri::Manager;
+use tauri::{App, Manager};
 use main_menu::MainMenu;
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -19,6 +19,8 @@ fn main() {
         .setup(|app| {
             let main_window = app.get_window("main").unwrap();
             main_window.maximize().unwrap();
+
+            initialize_app_dir(app);
             Ok(())
         })
         .menu(MainMenu::create_menu())
@@ -26,4 +28,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![greet])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+fn initialize_app_dir(app: &mut App) {
+  std::fs::create_dir_all(app.path_resolver().app_cache_dir().unwrap()).unwrap();
 }
