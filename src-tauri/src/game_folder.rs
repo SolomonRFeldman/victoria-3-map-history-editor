@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-use tauri::WindowMenuEvent;
+use tauri::{Manager, WindowMenuEvent};
 use crate::dds_to_png::DdsToPng;
 
 const FLATMAP_PATH: &str = "game/dlc/dlc004_voice_of_the_people/gfx/map/textures/flatmap_votp.dds";
@@ -16,11 +16,21 @@ impl GameFolder {
   }
 
   fn load_flatmap(&self, event: &WindowMenuEvent) {
-    handle_send_map(event, "load-flatmap", DdsToPng { dds_file_path: self.flatmap() }.encode());
+    let dds_to_png = DdsToPng { dds_file_path: self.flatmap() };
+
+    match dds_to_png.cache(cache_dir(event)) {
+      Ok(_) => handle_send_map(event, "load-flatmap"),
+      Err(e) => println!("Failed to cache flatmap: {:?}", e),
+    };
   }
 
   fn load_flatmap_overlay(&self, event: &WindowMenuEvent) {
-    handle_send_map(event, "load-flatmap-overlay", DdsToPng { dds_file_path: self.flatmap_overlay() }.encode());
+    let dds_to_png = DdsToPng { dds_file_path: self.flatmap_overlay() };
+
+    match dds_to_png.cache(cache_dir(event)) {
+      Ok(_) => handle_send_map(event, "load-flatmap-overlay"),
+      Err(e) => println!("Failed to cache flatmap: {:?}", e),
+    };
   }
 
   fn flatmap(&self) -> PathBuf {
@@ -32,9 +42,13 @@ impl GameFolder {
   }
 }
 
-fn handle_send_map(event: &WindowMenuEvent, event_id: &str, payload: String) {
-  match event.window().emit(event_id, payload) {
+fn handle_send_map(event: &WindowMenuEvent, event_id: &str) {
+  match event.window().emit(event_id, true) {
     Ok(_) => println!("Sent {:?} to frontend", event_id),
     Err(e) => println!("Failed to send {:?} to frontend: {:?}", event_id, e),
   }
+}
+
+fn cache_dir(event: &WindowMenuEvent) -> PathBuf {
+  event.window().app_handle().path_resolver().app_cache_dir().unwrap()
 }
