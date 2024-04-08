@@ -9,10 +9,12 @@ Low Priority TO-DO:
 - [ ] Color in land mask and flatmap overlay properly.
 - [ ] Parallelize image processing
 - [ ] Look into caching and cache busting to speed up load times
+- [ ] Look into diagonal vector detection to optimize geojson rendering
 
 Known Bugs:
 - If the map images load in the wrong order, they will layer in the wrong order
 - Some provinces seem to be stuck in infinite loops when tracing their geojson bounds
+
 Known Issues:
 - Land mask and flatmap overlay are not colored properly.
 - Internal geojson bounds need to be accounted for, this is especially noticeable with sea provinces overlapping islands.
