@@ -4,6 +4,7 @@
 mod main_menu;
 mod game_folder;
 mod dds_to_png;
+mod border_to_geojson_coords;
 
 use tauri::{App, Manager};
 use main_menu::MainMenu;
