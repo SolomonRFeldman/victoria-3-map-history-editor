@@ -10,6 +10,7 @@ Low Priority TO-DO:
 - [ ] Parallelize image processing
 - [ ] Look into caching and cache busting to speed up load times
 - [ ] Look into diagonal vector detection to optimize geojson rendering
+- [ ] Make a proper readme
 
 Known Bugs:
 - If the map images load in the wrong order, they will layer in the wrong order
