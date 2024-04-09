@@ -61,13 +61,19 @@ impl GameFolder {
     let mut province_borders: HashMap<String, Vec<(u32, u32)>> = HashMap::new();
 
     for (x, y, pixel) in provinces.enumerate_pixels() {
+      let province_id = format!("x{:02X}{:02X}{:02X}", pixel[0], pixel[1], pixel[2]);
+
       let top = provinces.get_pixel_checked(x, y.saturating_sub(1));
       let left = provinces.get_pixel_checked(x.saturating_sub(1), y);
       let right = provinces.get_pixel_checked(x + 1, y);
       let bottom = provinces.get_pixel_checked(x, y + 1);
+      let top_left = provinces.get_pixel_checked(x.saturating_sub(1), y.saturating_sub(1));
+      let top_right = provinces.get_pixel_checked(x + 1, y.saturating_sub(1));
+      let bottom_right = provinces.get_pixel_checked(x + 1, y + 1);
+      let bottom_left = provinces.get_pixel_checked(x.saturating_sub(1), y + 1);
 
       let neighbors = [
-        top, left, right, bottom
+        top, left, right, bottom, top_left, top_right, bottom_right, bottom_left
       ];
 
       let is_border = neighbors.iter().any(|&neighbor| {
@@ -78,8 +84,7 @@ impl GameFolder {
         }
       });
       if is_border {
-        let hex_color = format!("{:02X}{:02X}{:02X}", pixel[0], pixel[1], pixel[2]);
-        province_borders.entry(format!("x{}", hex_color)).or_default().push((x, provinces.height() - y));
+        province_borders.entry(province_id).or_default().push((x, provinces.height() - y));
       }
     }
 
