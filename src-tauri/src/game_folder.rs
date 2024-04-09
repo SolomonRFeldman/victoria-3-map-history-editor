@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 use image_dds::image::Rgba;
-use image::{imageops::{resize, FilterType}, io::Reader as ImageReader};
+use image::io::Reader as ImageReader;
 use serde::Serialize;
 use tauri::{Manager, WindowMenuEvent};
 use crate::{border_to_geojson_coords::border_to_geojson_coords, dds_to_png::DdsToPng};
@@ -58,41 +58,29 @@ impl GameFolder {
   // TO-DO: should be broken up
   fn load_provinces(&self, event: &WindowMenuEvent) {
     let provinces = ImageReader::open(self.provinces()).unwrap().decode().unwrap().into_rgb8();
-    // let (width, height) = provinces.dimensions();
-    // let provinces = resize(&provinces, width * 2, height * 2, FilterType::Nearest);
     let mut province_borders: HashMap<String, Vec<(i32, i32)>> = HashMap::new();
+    let image_height = provinces.height() as i32;
 
     for (x, y, pixel) in provinces.enumerate_pixels() {
       let province_id = format!("x{:02X}{:02X}{:02X}", pixel[0], pixel[1], pixel[2]);
 
-      // if (province_id != "x567452") {
-      //   continue;
-      // }
+      let x = x as i32;
+      let y = y as i32;
 
-      let top = (provinces.get_pixel_checked(x, y.saturating_sub(1)), -1, -1, 1, -1, 0, -1);
-      let left = (provinces.get_pixel_checked(x.saturating_sub(1), y), -1, -1, -1, 1, -1, 0);
-      let right = (provinces.get_pixel_checked(x + 1, y), 1, 1, 1, -1, 1, 0);
-      let bottom = (provinces.get_pixel_checked(x, y + 1), -1, 1, 1, 1, 0, 1);
-      let top_left = (provinces.get_pixel_checked(x.saturating_sub(1), y.saturating_sub(1)), -1, -1);
-      let top_right = (provinces.get_pixel_checked(x + 1, y.saturating_sub(1)), 1, -1);
-      let bottom_right = (provinces.get_pixel_checked(x + 1, y + 1), 1, 1);
-      let bottom_left = (provinces.get_pixel_checked(x.saturating_sub(1), y + 1), -1, 1);
+      let top: (i32, i32, i32, i32, i32, i32, i32, i32) = (x, y - 1, 0, 0, 2, 0, 1, 0);
+      let left: (i32, i32, i32, i32, i32, i32, i32, i32)  = (x - 1, y, 0, 0, 0, 2, 0, 1);
+      let right: (i32, i32, i32, i32, i32, i32, i32, i32)  = (x + 1, y, 2, 2, 2, 0, 2, 1);
+      let bottom: (i32, i32, i32, i32, i32, i32, i32, i32)  = (x, y + 1, 0, 2, 2, 2, 1, 2);
 
       let neighbors = [
-        bottom_left, top_left, top_right, bottom_right
-      ];
-
-      let other_neighbors = [
         bottom, top, left, right
       ];
 
-      let is_border = other_neighbors.iter().for_each(|&neighbor| {
-        if let Some(color) = neighbor.0 {
-          if (color != pixel || x == 0 || y == 0) {
-            province_borders.entry(province_id.clone()).or_default().push(((x as i32 * 2) + neighbor.1, (provinces.height() as i32 * 2) - (((y as i32) * 2) + neighbor.2)));
-            province_borders.entry(province_id.clone()).or_default().push(((x as i32 * 2) + neighbor.3, (provinces.height() as i32 * 2) - (((y as i32) * 2) + neighbor.4)));
-            province_borders.entry(province_id.clone()).or_default().push(((x as i32 * 2) + neighbor.5, (provinces.height() as i32 * 2) - (((y as i32) * 2) + neighbor.6)));
-          }
+      neighbors.iter().for_each(|&neighbor| {
+        if neighbor.0 < 0 || neighbor.1 < 0 || neighbor.0 >= provinces.width() as i32 || neighbor.1 >= provinces.height() as i32 || provinces.get_pixel(neighbor.0 as u32, neighbor.1 as u32) != pixel {
+          province_borders.entry(province_id.clone()).or_default().push(((x * 2) + neighbor.2, (image_height * 2) - ((y * 2) + neighbor.3)));
+          province_borders.entry(province_id.clone()).or_default().push(((x * 2) + neighbor.4, (image_height * 2) - ((y * 2) + neighbor.5)));
+          province_borders.entry(province_id.clone()).or_default().push(((x * 2) + neighbor.6, (image_height * 2) - ((y * 2) + neighbor.7)));
         }
       });
     }
@@ -104,12 +92,14 @@ impl GameFolder {
     }
 
     let geojson_provinces = province_borders.iter().map(|(hex_color, coords)| {
+      let geo_json_coords = border_to_geojson_coords(coords.clone())
+        .iter()
+        .map(|&(x, y)| (x as f32 / 2 as f32, y as f32 / 2 as f32))
+        .collect::<Vec<(f32, f32)>>();
+
       Province { 
         name: hex_color.clone(), 
-        coords: border_to_geojson_coords(coords.clone())
-          .iter()
-          .map(|&(x, y)| ((x as f32 / 2 as f32) + 0.5 as f32, (y as f32 / 2 as f32) - 0.5 as f32))
-          .collect::<Vec<(f32, f32)>>()
+        coords: geo_json_coords
       }
     }).collect::<Vec<Province>>();
 
