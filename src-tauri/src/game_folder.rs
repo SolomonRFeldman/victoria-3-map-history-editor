@@ -64,14 +64,6 @@ impl GameFolder {
     for (x, y, pixel) in provinces.enumerate_pixels() {
       let province_id = format!("x{:02X}{:02X}{:02X}", pixel[0], pixel[1], pixel[2]);
 
-      // let test_province = "xE060C0";
-
-      // if province_id != test_province {
-      //   continue;
-      // }
-
-      // println!("Found province: {:?}", province_id);
-
       let x = x as i32;
       let y = y as i32;
 
