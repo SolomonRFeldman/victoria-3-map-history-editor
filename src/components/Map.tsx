@@ -9,7 +9,7 @@ import { convertFileSrc } from '@tauri-apps/api/tauri'
 import { FeatureCollection, Feature, Geometry } from 'geojson'
 
 type Province = {
-  coords: number[][]
+  coords: number[][][]
   name: string
 }
 
@@ -69,7 +69,7 @@ export default function Map() {
             },
             geometry: {
               type: "Polygon",
-              coordinates: [province.coords]
+              coordinates: province.coords
             }
           }
         })

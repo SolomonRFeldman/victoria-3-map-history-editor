@@ -88,14 +88,11 @@ impl GameFolder {
     #[derive(Clone, Serialize)]
     struct Province {
       name: String,
-      coords: Vec<(f32, f32)>,
+      coords: Vec<Vec<(f32, f32)>>,
     }
 
     let geojson_provinces = province_borders.iter().map(|(hex_color, coords)| {
-      let geo_json_coords = border_to_geojson_coords(coords.clone())
-        .iter()
-        .map(|&(x, y)| (x as f32 / 2 as f32, y as f32 / 2 as f32))
-        .collect::<Vec<(f32, f32)>>();
+      let geo_json_coords = border_to_geojson_coords(coords.clone());
 
       Province { 
         name: hex_color.clone(), 
