@@ -131,16 +131,7 @@ fn parse_hash_set(mut hash_coords: std::collections::HashSet<(i32, i32)>, start_
       current_coord = next_coord;
       continue;
     } else {
-      rotation.cycle_backward();
-    }
-    
-    let next_coord = rotation.next_coord(current_coord);
-    if hash_coords.contains(&next_coord) {
-      geo_trace.push(next_coord);
-      if next_coord == origin_coord {
-        break;
-      }
-      current_coord = next_coord;
+      break;
     }
   }
   for coord in geo_trace.iter() {
