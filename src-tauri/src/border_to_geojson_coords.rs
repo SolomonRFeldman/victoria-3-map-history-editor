@@ -1,9 +1,13 @@
 #[derive(Clone)]
 enum Direction {
-  Up,
-  Right,
-  Down,
-  Left,
+    Up,
+    UpRight,
+    Right,
+    DownRight,
+    Down,
+    DownLeft,
+    Left,
+    UpLeft,
 }
 
 struct Rotation {
@@ -12,11 +16,20 @@ struct Rotation {
 
 impl Rotation {
   fn new() -> Self {
-      Self { position: 1 }
+      Self { position: 3 }
   }
 
-  fn cycle(&self) -> [Direction; 4] {
-      [Direction::Up, Direction::Right, Direction::Down, Direction::Left]
+  fn cycle(&self) -> [Direction; 8] {
+    [
+      Direction::Up,
+      Direction::UpRight,
+      Direction::Right,
+      Direction::DownRight,
+      Direction::Down,
+      Direction::DownLeft,
+      Direction::Left,
+      Direction::UpLeft,
+    ]
   }
 
   fn cycle_forward(&mut self) {
@@ -42,15 +55,23 @@ impl Rotation {
   fn x_modifier(&self) -> i32 {
     match self.position_name() {
         Direction::Right => 1,
+        Direction::UpRight => 1,
+        Direction::DownRight => 1,
         Direction::Left => -1,
+        Direction::UpLeft => -1,
+        Direction::DownLeft => -1,
         _ => 0,
     }
   }
 
   fn y_modifier(&self) -> i32 {
       match self.position_name() {
-          Direction::Up => -1,
-          Direction::Down => 1,
+          Direction::Up => 1,
+          Direction::UpLeft => 1,
+          Direction::UpRight => 1,
+          Direction::Down => -1,
+          Direction::DownLeft => -1,
+          Direction::DownRight => -1,
           _ => 0,
       }
   }
@@ -77,16 +98,17 @@ pub fn border_to_geojson_coords(border_coords: Vec<(u32, u32)>) -> Vec<(i32, i32
     loop_count += 1;
     let current_coord = coord.unwrap_or(origin_coord);
     rotation.cycle_backward();
+    rotation.cycle_backward();
     let mut found_coord = None;
 
-    for _ in 0..4 {
+    for _ in 0..8 {
         if found_coord.is_some() {
             break;
         }
 
         let key = (
-            current_coord.0 + rotation.y_modifier(),
-            current_coord.1 + rotation.x_modifier(),
+            current_coord.0 + rotation.x_modifier(),
+            current_coord.1 + rotation.y_modifier(),
         );
 
         if hash_coords.contains(&key) {

@@ -65,13 +65,9 @@ impl GameFolder {
       let left = provinces.get_pixel_checked(x.saturating_sub(1), y);
       let right = provinces.get_pixel_checked(x + 1, y);
       let bottom = provinces.get_pixel_checked(x, y + 1);
-      let top_left = provinces.get_pixel_checked(x.saturating_sub(1), y.saturating_sub(1));
-      let top_right = provinces.get_pixel_checked(x + 1, y.saturating_sub(1));
-      let bottom_right = provinces.get_pixel_checked(x + 1, y + 1);
-      let bottom_left = provinces.get_pixel_checked(x.saturating_sub(1), y + 1);
 
       let neighbors = [
-        top, left, right, bottom, top_left, top_right, bottom_right, bottom_left
+        top, left, right, bottom
       ];
 
       let is_border = neighbors.iter().any(|&neighbor| {

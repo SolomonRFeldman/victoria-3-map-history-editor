@@ -9,7 +9,7 @@ Low Priority TO-DO:
 - [ ] Color in land mask and flatmap overlay properly.
 - [ ] Parallelize image processing
 - [ ] Look into caching and cache busting to speed up load times
-- [ ] Look into diagonal vector detection to optimize geojson rendering
+- [x] Look into diagonal vector detection to optimize geojson rendering (Implemented)
 - [ ] Make a proper readme
 
 Known Bugs:
