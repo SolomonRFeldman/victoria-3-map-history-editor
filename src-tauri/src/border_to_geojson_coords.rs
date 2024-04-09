@@ -62,7 +62,8 @@ impl Rotation {
 }
 
 // TO-DO: Code quality is in a bad state, should be refactored and broken up
-pub fn border_to_geojson_coords(border_coords: Vec<(u32, u32)>) -> Vec<(i32, i32)> {
+// detect whether it intersects itself at a point where it looks like a T
+pub fn border_to_geojson_coords(border_coords: Vec<(i32, i32)>) -> Vec<(i32, i32)> {
   let border_coords: Vec<(i32, i32)> = border_coords.into_iter().map(|(x, y)| (x as i32, y as i32)).collect();
   let mut rotation = Rotation::new();
   let hash_coords: std::collections::HashSet<_> = border_coords.clone().into_iter().map(|(x, y)| (x as i32, y as i32)).collect();
@@ -81,13 +82,7 @@ pub fn border_to_geojson_coords(border_coords: Vec<(u32, u32)>) -> Vec<(i32, i32
     }
     loop_count += 1;
     let current_coord = coord.unwrap_or(origin_coord);
-    rotation.cycle_backward();
     let mut found_coord = None;
-
-    for _ in 0..8 {
-        if found_coord.is_some() {
-            break;
-        }
 
         let key = (
             current_coord.0 + rotation.x_modifier(),
@@ -97,12 +92,46 @@ pub fn border_to_geojson_coords(border_coords: Vec<(u32, u32)>) -> Vec<(i32, i32
         if hash_coords.contains(&key) {
             found_coord = Some(key);
             coord = found_coord;
+            if coord == Some(origin_coord) {
+                break;
+            }
             geo_trace.push(key);
+            continue;
         } else {
             rotation.cycle_forward();
         }
-    }
+        let key = (
+            current_coord.0 + rotation.x_modifier(),
+            current_coord.1 + rotation.y_modifier(),
+        );
 
+
+        if hash_coords.contains(&key) {
+            found_coord = Some(key);
+            coord = found_coord;
+            if coord == Some(origin_coord) {
+                break;
+            }
+            geo_trace.push(key);
+            continue;
+        } else {
+            rotation.cycle_backward();
+            rotation.cycle_backward();
+        }
+        
+        let key = (
+            current_coord.0 + rotation.x_modifier(),
+            current_coord.1 + rotation.y_modifier(),
+        );
+
+        if hash_coords.contains(&key) {
+            found_coord = Some(key);
+            coord = found_coord;
+            if coord == Some(origin_coord) {
+                break;
+            }
+            geo_trace.push(key);
+        }
     if coord == Some(origin_coord) {
         break;
     }

@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 use image_dds::image::Rgba;
-use image::io::Reader as ImageReader;
+use image::{imageops::{resize, FilterType}, io::Reader as ImageReader};
 use serde::Serialize;
 use tauri::{Manager, WindowMenuEvent};
 use crate::{border_to_geojson_coords::border_to_geojson_coords, dds_to_png::DdsToPng};
@@ -58,44 +58,59 @@ impl GameFolder {
   // TO-DO: should be broken up
   fn load_provinces(&self, event: &WindowMenuEvent) {
     let provinces = ImageReader::open(self.provinces()).unwrap().decode().unwrap().into_rgb8();
-    let mut province_borders: HashMap<String, Vec<(u32, u32)>> = HashMap::new();
+    // let (width, height) = provinces.dimensions();
+    // let provinces = resize(&provinces, width * 2, height * 2, FilterType::Nearest);
+    let mut province_borders: HashMap<String, Vec<(i32, i32)>> = HashMap::new();
 
     for (x, y, pixel) in provinces.enumerate_pixels() {
       let province_id = format!("x{:02X}{:02X}{:02X}", pixel[0], pixel[1], pixel[2]);
 
-      let top = provinces.get_pixel_checked(x, y.saturating_sub(1));
-      let left = provinces.get_pixel_checked(x.saturating_sub(1), y);
-      let right = provinces.get_pixel_checked(x + 1, y);
-      let bottom = provinces.get_pixel_checked(x, y + 1);
-      let top_left = provinces.get_pixel_checked(x.saturating_sub(1), y.saturating_sub(1));
-      let top_right = provinces.get_pixel_checked(x + 1, y.saturating_sub(1));
-      let bottom_right = provinces.get_pixel_checked(x + 1, y + 1);
-      let bottom_left = provinces.get_pixel_checked(x.saturating_sub(1), y + 1);
+      // if (province_id != "x567452") {
+      //   continue;
+      // }
+
+      let top = (provinces.get_pixel_checked(x, y.saturating_sub(1)), -1, -1, 1, -1, 0, -1);
+      let left = (provinces.get_pixel_checked(x.saturating_sub(1), y), -1, -1, -1, 1, -1, 0);
+      let right = (provinces.get_pixel_checked(x + 1, y), 1, 1, 1, -1, 1, 0);
+      let bottom = (provinces.get_pixel_checked(x, y + 1), -1, 1, 1, 1, 0, 1);
+      let top_left = (provinces.get_pixel_checked(x.saturating_sub(1), y.saturating_sub(1)), -1, -1);
+      let top_right = (provinces.get_pixel_checked(x + 1, y.saturating_sub(1)), 1, -1);
+      let bottom_right = (provinces.get_pixel_checked(x + 1, y + 1), 1, 1);
+      let bottom_left = (provinces.get_pixel_checked(x.saturating_sub(1), y + 1), -1, 1);
 
       let neighbors = [
-        top, left, right, bottom, top_left, top_right, bottom_right, bottom_left
+        bottom_left, top_left, top_right, bottom_right
       ];
 
-      let is_border = neighbors.iter().any(|&neighbor| {
-        if let Some(neighbor) = neighbor {
-          neighbor != pixel || x == 0 || y == 0
-        } else {
-          false
+      let other_neighbors = [
+        bottom, top, left, right
+      ];
+
+      let is_border = other_neighbors.iter().for_each(|&neighbor| {
+        if let Some(color) = neighbor.0 {
+          if (color != pixel || x == 0 || y == 0) {
+            province_borders.entry(province_id.clone()).or_default().push(((x as i32 * 2) + neighbor.1, (provinces.height() as i32 * 2) - (((y as i32) * 2) + neighbor.2)));
+            province_borders.entry(province_id.clone()).or_default().push(((x as i32 * 2) + neighbor.3, (provinces.height() as i32 * 2) - (((y as i32) * 2) + neighbor.4)));
+            province_borders.entry(province_id.clone()).or_default().push(((x as i32 * 2) + neighbor.5, (provinces.height() as i32 * 2) - (((y as i32) * 2) + neighbor.6)));
+          }
         }
       });
-      if is_border {
-        province_borders.entry(province_id).or_default().push((x, provinces.height() - y));
-      }
     }
 
     #[derive(Clone, Serialize)]
     struct Province {
       name: String,
-      coords: Vec<(i32, i32)>,
+      coords: Vec<(f32, f32)>,
     }
 
     let geojson_provinces = province_borders.iter().map(|(hex_color, coords)| {
-      Province { name: hex_color.clone(), coords: border_to_geojson_coords(coords.clone()) }
+      Province { 
+        name: hex_color.clone(), 
+        coords: border_to_geojson_coords(coords.clone())
+          .iter()
+          .map(|&(x, y)| ((x as f32 / 2 as f32) + 0.5 as f32, (y as f32 / 2 as f32) - 0.5 as f32))
+          .collect::<Vec<(f32, f32)>>()
+      }
     }).collect::<Vec<Province>>();
 
     match event.window().emit("load-province-data", geojson_provinces) {
