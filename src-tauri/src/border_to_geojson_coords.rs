@@ -70,12 +70,20 @@ impl Rotation {
 
 // TO-DO: Code quality is in a bad state, should be refactored and broken up
 // detect whether it intersects itself at a point where it looks like a T
-pub fn border_to_geojson_coords(border_coords: Vec<(i32, i32)>) -> Vec<(i32, i32)> {
+pub fn border_to_geojson_coords(border_coords: Vec<(i32, i32)>) -> Vec<Vec<(f32, f32)>> {
   let border_coords: Vec<(i32, i32)> = border_coords.into_iter().map(|(x, y)| (x as i32, y as i32)).collect();
-  let mut rotation = Rotation::new();
-  let hash_coords: std::collections::HashSet<_> = border_coords.clone().into_iter().map(|(x, y)| (x as i32, y as i32)).collect();
+  let mut hash_coords: std::collections::HashSet<_> = border_coords.clone().into_iter().map(|(x, y)| (x as i32, y as i32)).collect();
 
   let origin_coord = border_coords[0];
+
+  let mut geo_json_coordinate_array: Vec<Vec<(f32, f32)>> = vec![];
+  parse_hash_set(hash_coords, origin_coord, &mut geo_json_coordinate_array).to_vec()
+}
+
+fn parse_hash_set(mut hash_coords: std::collections::HashSet<(i32, i32)>, start_point: (i32, i32), mut geo_json_coordinate_array: &mut Vec<Vec<(f32, f32)>>) -> &mut Vec<Vec<(f32, f32)>> {
+  let mut rotation = Rotation::new();
+
+  let origin_coord = start_point;
   let mut geo_trace = vec![origin_coord];
 
   let mut current_coord = origin_coord;
@@ -121,10 +129,34 @@ pub fn border_to_geojson_coords(border_coords: Vec<(i32, i32)>) -> Vec<(i32, i32
         break;
       }
       current_coord = next_coord;
+      continue;
+    } else {
+      rotation.cycle_backward();
+    }
+    
+    let next_coord = rotation.next_coord(current_coord);
+    if hash_coords.contains(&next_coord) {
+      geo_trace.push(next_coord);
+      if next_coord == origin_coord {
+        break;
+      }
+      current_coord = next_coord;
     }
   }
+  for coord in geo_trace.iter() {
+    hash_coords.remove(coord);
+  }
 
-  remove_unnecessary_coords(geo_trace)
+  let geo_json_coordinate = remove_unnecessary_coords(geo_trace);
+
+  geo_json_coordinate_array.push(geo_json_coordinate.iter().map(|(x, y)| (*x as f32 / 2 as f32, *y as f32 / 2 as f32)).collect());
+
+  if(hash_coords.len() > 0) {
+    let next_start_point = hash_coords.iter().next().unwrap().clone();
+    geo_json_coordinate_array = parse_hash_set(hash_coords, next_start_point, geo_json_coordinate_array);
+  }
+
+  geo_json_coordinate_array
 }
 
 fn remove_unnecessary_coords(geo_trace: Vec<(i32, i32)>) -> Vec<(i32, i32)> {

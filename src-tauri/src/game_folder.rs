@@ -64,6 +64,14 @@ impl GameFolder {
     for (x, y, pixel) in provinces.enumerate_pixels() {
       let province_id = format!("x{:02X}{:02X}{:02X}", pixel[0], pixel[1], pixel[2]);
 
+      // let test_province = "xE060C0";
+
+      // if province_id != test_province {
+      //   continue;
+      // }
+
+      // println!("Found province: {:?}", province_id);
+
       let x = x as i32;
       let y = y as i32;
 
@@ -88,14 +96,11 @@ impl GameFolder {
     #[derive(Clone, Serialize)]
     struct Province {
       name: String,
-      coords: Vec<(f32, f32)>,
+      coords: Vec<Vec<(f32, f32)>>,
     }
 
     let geojson_provinces = province_borders.iter().map(|(hex_color, coords)| {
-      let geo_json_coords = border_to_geojson_coords(coords.clone())
-        .iter()
-        .map(|&(x, y)| (x as f32 / 2 as f32, y as f32 / 2 as f32))
-        .collect::<Vec<(f32, f32)>>();
+      let geo_json_coords = border_to_geojson_coords(coords.clone());
 
       Province { 
         name: hex_color.clone(), 
