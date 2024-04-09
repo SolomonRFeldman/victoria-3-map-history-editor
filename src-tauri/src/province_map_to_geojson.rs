@@ -1,3 +1,8 @@
+use std::{collections::HashMap, path::PathBuf};
+
+use image::io::Reader as ImageReader;
+use serde::Serialize;
+
 #[derive(Clone)]
 enum Direction {
   Up,
@@ -168,4 +173,49 @@ fn remove_unnecessary_coords(geo_trace: Vec<(i32, i32)>) -> Vec<(i32, i32)> {
   new_geo_trace.push(Some(*geo_trace.last().unwrap()));
 
   new_geo_trace.into_iter().filter_map(|x| x).collect()
+}
+
+#[derive(Clone, Serialize)]
+pub struct Province {
+  name: String,
+  coords: Vec<Vec<(f32, f32)>>,
+}
+
+pub fn province_map_to_geojson(provinces: PathBuf) -> Vec<Province> {
+  let provinces = ImageReader::open(provinces).unwrap().decode().unwrap().into_rgb8();
+  let mut province_borders: HashMap<String, Vec<(i32, i32)>> = HashMap::new();
+  let image_height = provinces.height() as i32;
+
+  for (x, y, pixel) in provinces.enumerate_pixels() {
+    let province_id = format!("x{:02X}{:02X}{:02X}", pixel[0], pixel[1], pixel[2]);
+
+    let x = x as i32;
+    let y = y as i32;
+
+    let top: (i32, i32, i32, i32, i32, i32, i32, i32) = (x, y - 1, 0, 0, 2, 0, 1, 0);
+    let left: (i32, i32, i32, i32, i32, i32, i32, i32)  = (x - 1, y, 0, 0, 0, 2, 0, 1);
+    let right: (i32, i32, i32, i32, i32, i32, i32, i32)  = (x + 1, y, 2, 2, 2, 0, 2, 1);
+    let bottom: (i32, i32, i32, i32, i32, i32, i32, i32)  = (x, y + 1, 0, 2, 2, 2, 1, 2);
+
+    let neighbors = [
+      bottom, top, left, right
+    ];
+
+    neighbors.iter().for_each(|&neighbor| {
+      if neighbor.0 < 0 || neighbor.1 < 0 || neighbor.0 >= provinces.width() as i32 || neighbor.1 >= provinces.height() as i32 || provinces.get_pixel(neighbor.0 as u32, neighbor.1 as u32) != pixel {
+        province_borders.entry(province_id.clone()).or_default().push(((x * 2) + neighbor.2, (image_height * 2) - ((y * 2) + neighbor.3)));
+        province_borders.entry(province_id.clone()).or_default().push(((x * 2) + neighbor.4, (image_height * 2) - ((y * 2) + neighbor.5)));
+        province_borders.entry(province_id.clone()).or_default().push(((x * 2) + neighbor.6, (image_height * 2) - ((y * 2) + neighbor.7)));
+      }
+    });
+  }
+
+  province_borders.iter().map(|(hex_color, coords)| {
+    let geo_json_coords = border_to_geojson_coords(coords.clone());
+
+    Province { 
+      name: hex_color.clone(), 
+      coords: geo_json_coords
+    }
+  }).collect::<Vec<Province>>()
 }
