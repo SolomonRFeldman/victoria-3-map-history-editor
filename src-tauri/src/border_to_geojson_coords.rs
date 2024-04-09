@@ -72,7 +72,7 @@ impl Rotation {
 // detect whether it intersects itself at a point where it looks like a T
 pub fn border_to_geojson_coords(border_coords: Vec<(i32, i32)>) -> Vec<Vec<(f32, f32)>> {
   let border_coords: Vec<(i32, i32)> = border_coords.into_iter().map(|(x, y)| (x as i32, y as i32)).collect();
-  let mut hash_coords: std::collections::HashSet<_> = border_coords.clone().into_iter().map(|(x, y)| (x as i32, y as i32)).collect();
+  let hash_coords: std::collections::HashSet<_> = border_coords.clone().into_iter().map(|(x, y)| (x as i32, y as i32)).collect();
 
   let origin_coord = border_coords[0];
 
@@ -88,15 +88,7 @@ fn parse_hash_set(mut hash_coords: std::collections::HashSet<(i32, i32)>, start_
 
   let mut current_coord = origin_coord;
 
-  let mut loop_count = 0;
-
   loop {
-    if loop_count > 100000 {
-      println!("Loop count exceeded 10000, breaking loop");
-      break;
-    }
-    loop_count += 1;
-
     let next_coord = rotation.next_coord(current_coord);
     if hash_coords.contains(&next_coord) {
       geo_trace.push(next_coord);
@@ -138,11 +130,14 @@ fn parse_hash_set(mut hash_coords: std::collections::HashSet<(i32, i32)>, start_
     hash_coords.remove(coord);
   }
 
-  let geo_json_coordinate = remove_unnecessary_coords(geo_trace);
+  if geo_trace.first() == geo_trace.last() && geo_trace.len() > 1 {
+    let geo_json_coordinate = remove_unnecessary_coords(geo_trace);
+  
+    geo_json_coordinate_array.push(geo_json_coordinate.iter().map(|(x, y)| (*x as f32 / 2 as f32, *y as f32 / 2 as f32)).collect());
+  }
 
-  geo_json_coordinate_array.push(geo_json_coordinate.iter().map(|(x, y)| (*x as f32 / 2 as f32, *y as f32 / 2 as f32)).collect());
 
-  if(hash_coords.len() > 0) {
+  if hash_coords.len() > 0 {
     let next_start_point = hash_coords.iter().next().unwrap().clone();
     geo_json_coordinate_array = parse_hash_set(hash_coords, next_start_point, geo_json_coordinate_array);
   }
