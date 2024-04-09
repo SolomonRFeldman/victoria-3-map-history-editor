@@ -91,7 +91,7 @@ export default function Map() {
   }
 
   return (
-    <MapContainer center={[0, 0]} minZoom={-2} maxZoom={6} doubleClickZoom={false} crs={CRS.Simple} bounds={bounds}>
+    <MapContainer center={[0, 0]} minZoom={-2} maxZoom={2} doubleClickZoom={false} crs={CRS.Simple} bounds={bounds}>
       { flatmap ? <ImageOverlay url={flatmap} bounds={bounds} /> : null }
       { landMask ? <ImageOverlay url={landMask} bounds={bounds} /> : null }
       { flatmapOverlay ? <ImageOverlay url={flatmapOverlay} bounds={bounds} /> : null }
