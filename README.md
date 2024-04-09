@@ -9,14 +9,15 @@ Low Priority TO-DO:
 - [ ] Color in land mask and flatmap overlay properly.
 - [ ] Parallelize image processing
 - [ ] Look into caching and cache busting to speed up load times
-- [x] Look into diagonal vector detection to optimize geojson rendering (Implemented)
+- [x] ~~Look into diagonal vector detection to optimize geojson rendering (Implemented)~~ (Reverted)
 - [ ] Make a proper readme
 
 Known Bugs:
 - If the map images load in the wrong order, they will layer in the wrong order
-- Some provinces seem to be stuck in infinite loops when tracing their geojson bounds
+- ~~Some provinces seem to be stuck in infinite loops when tracing their geojson bounds~~ (squished)
+- Some province borders do not trace properly, so they may be slightly inaccurate. No visual quirks though.
 
 Known Issues:
 - Land mask and flatmap overlay are not colored properly.
-- Internal geojson bounds need to be accounted for, this is especially noticeable with sea provinces overlapping islands.
+- ~~Internal geojson bounds need to be accounted for, this is especially noticeable with sea provinces overlapping islands.~~ (Resolved!)
 - Rendering the provinces is very slow to parse, and laggy when rendered. Should seek to only render state bounding boxes next, perhaps also cache the processing of provinces.png
