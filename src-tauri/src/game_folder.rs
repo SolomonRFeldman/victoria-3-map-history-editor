@@ -58,44 +58,49 @@ impl GameFolder {
   // TO-DO: should be broken up
   fn load_provinces(&self, event: &WindowMenuEvent) {
     let provinces = ImageReader::open(self.provinces()).unwrap().decode().unwrap().into_rgb8();
-    let mut province_borders: HashMap<String, Vec<(u32, u32)>> = HashMap::new();
+    let mut province_borders: HashMap<String, Vec<(i32, i32)>> = HashMap::new();
+    let image_height = provinces.height() as i32;
 
     for (x, y, pixel) in provinces.enumerate_pixels() {
       let province_id = format!("x{:02X}{:02X}{:02X}", pixel[0], pixel[1], pixel[2]);
 
-      let top = provinces.get_pixel_checked(x, y.saturating_sub(1));
-      let left = provinces.get_pixel_checked(x.saturating_sub(1), y);
-      let right = provinces.get_pixel_checked(x + 1, y);
-      let bottom = provinces.get_pixel_checked(x, y + 1);
-      let top_left = provinces.get_pixel_checked(x.saturating_sub(1), y.saturating_sub(1));
-      let top_right = provinces.get_pixel_checked(x + 1, y.saturating_sub(1));
-      let bottom_right = provinces.get_pixel_checked(x + 1, y + 1);
-      let bottom_left = provinces.get_pixel_checked(x.saturating_sub(1), y + 1);
+      let x = x as i32;
+      let y = y as i32;
+
+      let top: (i32, i32, i32, i32, i32, i32, i32, i32) = (x, y - 1, 0, 0, 2, 0, 1, 0);
+      let left: (i32, i32, i32, i32, i32, i32, i32, i32)  = (x - 1, y, 0, 0, 0, 2, 0, 1);
+      let right: (i32, i32, i32, i32, i32, i32, i32, i32)  = (x + 1, y, 2, 2, 2, 0, 2, 1);
+      let bottom: (i32, i32, i32, i32, i32, i32, i32, i32)  = (x, y + 1, 0, 2, 2, 2, 1, 2);
 
       let neighbors = [
-        top, left, right, bottom, top_left, top_right, bottom_right, bottom_left
+        bottom, top, left, right
       ];
 
-      let is_border = neighbors.iter().any(|&neighbor| {
-        if let Some(neighbor) = neighbor {
-          neighbor != pixel || x == 0 || y == 0
-        } else {
-          false
+      neighbors.iter().for_each(|&neighbor| {
+        if neighbor.0 < 0 || neighbor.1 < 0 || neighbor.0 >= provinces.width() as i32 || neighbor.1 >= provinces.height() as i32 || provinces.get_pixel(neighbor.0 as u32, neighbor.1 as u32) != pixel {
+          province_borders.entry(province_id.clone()).or_default().push(((x * 2) + neighbor.2, (image_height * 2) - ((y * 2) + neighbor.3)));
+          province_borders.entry(province_id.clone()).or_default().push(((x * 2) + neighbor.4, (image_height * 2) - ((y * 2) + neighbor.5)));
+          province_borders.entry(province_id.clone()).or_default().push(((x * 2) + neighbor.6, (image_height * 2) - ((y * 2) + neighbor.7)));
         }
       });
-      if is_border {
-        province_borders.entry(province_id).or_default().push((x, provinces.height() - y));
-      }
     }
 
     #[derive(Clone, Serialize)]
     struct Province {
       name: String,
-      coords: Vec<(i32, i32)>,
+      coords: Vec<(f32, f32)>,
     }
 
     let geojson_provinces = province_borders.iter().map(|(hex_color, coords)| {
-      Province { name: hex_color.clone(), coords: border_to_geojson_coords(coords.clone()) }
+      let geo_json_coords = border_to_geojson_coords(coords.clone())
+        .iter()
+        .map(|&(x, y)| (x as f32 / 2 as f32, y as f32 / 2 as f32))
+        .collect::<Vec<(f32, f32)>>();
+
+      Province { 
+        name: hex_color.clone(), 
+        coords: geo_json_coords
+      }
     }).collect::<Vec<Province>>();
 
     match event.window().emit("load-province-data", geojson_provinces) {

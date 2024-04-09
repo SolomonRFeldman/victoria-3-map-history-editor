@@ -59,10 +59,18 @@ impl Rotation {
           _ => 0,
       }
   }
+
+  fn next_coord(&self, coord: (i32, i32)) -> (i32, i32) {
+    (
+      coord.0 + self.x_modifier(),
+      coord.1 + self.y_modifier(),
+    )
+  }
 }
 
 // TO-DO: Code quality is in a bad state, should be refactored and broken up
-pub fn border_to_geojson_coords(border_coords: Vec<(u32, u32)>) -> Vec<(i32, i32)> {
+// detect whether it intersects itself at a point where it looks like a T
+pub fn border_to_geojson_coords(border_coords: Vec<(i32, i32)>) -> Vec<(i32, i32)> {
   let border_coords: Vec<(i32, i32)> = border_coords.into_iter().map(|(x, y)| (x as i32, y as i32)).collect();
   let mut rotation = Rotation::new();
   let hash_coords: std::collections::HashSet<_> = border_coords.clone().into_iter().map(|(x, y)| (x as i32, y as i32)).collect();
@@ -70,41 +78,49 @@ pub fn border_to_geojson_coords(border_coords: Vec<(u32, u32)>) -> Vec<(i32, i32
   let origin_coord = border_coords[0];
   let mut geo_trace = vec![origin_coord];
 
-  let mut coord = None;
+  let mut current_coord = origin_coord;
 
   let mut loop_count = 0;
 
   loop {
-    if loop_count > 10000 {
+    if loop_count > 100000 {
       println!("Loop count exceeded 10000, breaking loop");
       break;
     }
     loop_count += 1;
-    let current_coord = coord.unwrap_or(origin_coord);
-    rotation.cycle_backward();
-    let mut found_coord = None;
 
-    for _ in 0..8 {
-        if found_coord.is_some() {
+    let next_coord = rotation.next_coord(current_coord);
+    if hash_coords.contains(&next_coord) {
+        geo_trace.push(next_coord);
+        if next_coord == origin_coord {
             break;
         }
-
-        let key = (
-            current_coord.0 + rotation.x_modifier(),
-            current_coord.1 + rotation.y_modifier(),
-        );
-
-        if hash_coords.contains(&key) {
-            found_coord = Some(key);
-            coord = found_coord;
-            geo_trace.push(key);
-        } else {
-            rotation.cycle_forward();
-        }
+        current_coord = next_coord;
+        continue;
+    } else {
+        rotation.cycle_forward();
     }
 
-    if coord == Some(origin_coord) {
-        break;
+    let next_coord = rotation.next_coord(current_coord);
+    if hash_coords.contains(&next_coord) {
+        geo_trace.push(next_coord);
+        if next_coord == origin_coord {
+            break;
+        }
+        current_coord = next_coord;
+        continue;
+    } else {
+        rotation.cycle_backward();
+        rotation.cycle_backward();
+    }
+    
+    let next_coord = rotation.next_coord(current_coord);
+    if hash_coords.contains(&next_coord) {
+        geo_trace.push(next_coord);
+        if next_coord == origin_coord {
+            break;
+        }
+        current_coord = next_coord;
     }
   }
 
