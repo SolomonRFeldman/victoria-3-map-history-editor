@@ -13,6 +13,8 @@ type Province = {
   name: string
 }
 
+type State = { [key: string]: number[][][] }
+
 const flatmapFileName = 'flatmap_votp.png'
 const landMaskFileName = 'land_mask.png'
 const flatmapOverlayFileName = 'flatmap_overlay_votp.png'
@@ -59,6 +61,7 @@ export default function Map() {
 
   useEffect(() => {
     const unlistenToProvinceData = listen<Province[]>('load-province-data', (data) => {
+      console.log(data.payload)
       const geojsonData: FeatureCollection = {
         type: "FeatureCollection",
         features: data.payload.map((province: Province) => {
@@ -82,8 +85,27 @@ export default function Map() {
   }, [])
 
   useEffect(() => {
-    const unlistenToProvinceData = listen<Province[]>('load-state-data', (data) => {
+    const unlistenToProvinceData = listen<State>('load-state-data', (data) => {
       console.log(data.payload)
+      const geojsonData: FeatureCollection = {
+        type: "FeatureCollection",
+        features: Object.keys(data.payload).map((key) => {
+          console.log(key)
+          console.log(data.payload[key])
+          return {
+            type: "Feature",
+            properties: {
+              name: key
+            },
+            geometry: {
+              type: "Polygon",
+              coordinates: data.payload[key]
+            }
+          }
+        })
+      }
+      console.log(geojsonData)
+      setProvinceData(geojsonData)
     })
     return () => {
       unlistenToProvinceData.then((unlisten) => unlisten())

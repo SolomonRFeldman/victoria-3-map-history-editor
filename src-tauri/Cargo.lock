@@ -3902,6 +3902,7 @@ dependencies = [
  "image 0.25.1",
  "image_dds",
  "nom",
+ "rayon",
  "regex",
  "serde",
  "serde_json",

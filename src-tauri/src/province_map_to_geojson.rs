@@ -1,5 +1,6 @@
 use std::{collections::HashMap, path::PathBuf};
 
+use geo::{LineString, MultiPolygon, Polygon};
 use image::io::Reader as ImageReader;
 use serde::Serialize;
 
@@ -175,19 +176,15 @@ fn remove_unnecessary_coords(geo_trace: Vec<(i32, i32)>) -> Vec<(i32, i32)> {
   new_geo_trace.into_iter().filter_map(|x| x).collect()
 }
 
-#[derive(Clone, Serialize)]
-pub struct Province {
-  name: String,
-  coords: Vec<Vec<(f32, f32)>>,
-}
-
-pub fn province_map_to_geojson(provinces: PathBuf) -> Vec<Province> {
+pub fn province_map_to_geojson(provinces: PathBuf) -> HashMap<String, MultiPolygon<f32>> {
   let provinces = ImageReader::open(provinces).unwrap().decode().unwrap().into_rgb8();
   let mut province_borders: HashMap<String, Vec<(i32, i32)>> = HashMap::new();
   let image_height = provinces.height() as i32;
 
   for (x, y, pixel) in provinces.enumerate_pixels() {
     let province_id = format!("x{:02X}{:02X}{:02X}", pixel[0], pixel[1], pixel[2]);
+
+    // x641238 xE5C4FE xC7847D xA060C0 x5DEF58 x85F13B x656D90 x20E0C0
 
     let x = x as i32;
     let y = y as i32;
@@ -210,12 +207,14 @@ pub fn province_map_to_geojson(provinces: PathBuf) -> Vec<Province> {
     });
   }
 
-  province_borders.iter().map(|(hex_color, coords)| {
+  let province_borders: HashMap<String, MultiPolygon<f32>> = province_borders.iter().map(|(hex_color, coords)| {
     let geo_json_coords = border_to_geojson_coords(coords.clone());
+    let multi_polygon: MultiPolygon<f32> = geo_json_coords.into_iter().map(|coords| {
+      Polygon::new(LineString::from(coords), vec![])
+    }).collect();
 
-    Province { 
-      name: hex_color.clone(), 
-      coords: geo_json_coords
-    }
-  }).collect::<Vec<Province>>()
+    (hex_color.clone(), multi_polygon)
+  }).collect();
+
+  province_borders
 }
