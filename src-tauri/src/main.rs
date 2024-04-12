@@ -5,6 +5,7 @@ mod main_menu;
 mod game_folder;
 mod dds_to_png;
 mod province_map_to_geojson;
+mod pdx_script_parser;
 
 use tauri::{App, Manager};
 use main_menu::MainMenu;

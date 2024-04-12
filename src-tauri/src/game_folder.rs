@@ -1,12 +1,13 @@
 use std::path::PathBuf;
 use image_dds::image::Rgba;
 use tauri::{Manager, WindowMenuEvent};
-use crate::{province_map_to_geojson::province_map_to_geojson, dds_to_png::DdsToPng};
+use crate::{dds_to_png::DdsToPng, pdx_script_parser::parse_script, province_map_to_geojson::province_map_to_geojson};
 
 const FLATMAP_PATH: &str = "game/dlc/dlc004_voice_of_the_people/gfx/map/textures/flatmap_votp.dds";
 const LAND_MASK_PATH: &str = "game/gfx/map/textures/land_mask.dds";
 const FLATMAP_OVERLAY_PATH: &str = "game/dlc/dlc004_voice_of_the_people/gfx/map/textures/flatmap_overlay_votp.dds";
 const PROVINCE_PATH: &str = "game/map_data/provinces.png";
+const STATES_PATH: &str = "game/common/history/states/00_states.txt";
 
 pub struct GameFolder {
   pub folder_path: PathBuf,
@@ -17,6 +18,7 @@ impl GameFolder {
     self.load_flatmap(&event);
     self.load_land_mask(&event);
     self.load_flatmap_overlay(&event);
+    self.load_states(&event);
     self.load_provinces(&event);
   }
 
@@ -58,6 +60,15 @@ impl GameFolder {
       Err(e) => println!("Failed to send load-province-data to frontend: {:?}", e),
     }
   }
+  
+  fn load_states(&self, event: &WindowMenuEvent) {
+    let parsed_states = parse_script(&std::fs::read_to_string(self.states()).unwrap());
+
+    match event.window().emit("load-state-data", parsed_states) {
+      Ok(_) => println!("Sent load-state-data to frontend"),
+      Err(e) => println!("Failed to send load-state-data to frontend: {:?}", e),
+    }
+  }
 
   fn flatmap(&self) -> PathBuf {
     self.folder_path.join(PathBuf::from(FLATMAP_PATH))
@@ -73,6 +84,10 @@ impl GameFolder {
 
   fn provinces(&self) -> PathBuf {
     self.folder_path.join(PathBuf::from(PROVINCE_PATH))
+  }
+
+  fn states(&self) -> PathBuf {
+    self.folder_path.join(PathBuf::from(STATES_PATH))
   }
 }
 

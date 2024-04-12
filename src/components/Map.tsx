@@ -81,6 +81,15 @@ export default function Map() {
     }
   }, [])
 
+  useEffect(() => {
+    const unlistenToProvinceData = listen<Province[]>('load-state-data', (data) => {
+      console.log(data.payload)
+    })
+    return () => {
+      unlistenToProvinceData.then((unlisten) => unlisten())
+    }
+  }, [])
+
   const provinceStyle = (feature?: Feature<Geometry, { name: string }>) => {
     return {
       fillColor: feature ? feature.properties.name.replace('x', '#') : 'transparent',
