@@ -1,4 +1,4 @@
-use serde_json::{Map, Value as JsonValue};
+use serde_json::Value as JsonValue;
 use nom::{
   branch::alt,
   bytes::complete::{escaped, is_not, take_while},
@@ -9,8 +9,8 @@ use nom::{
   sequence::{delimited, preceded, separated_pair, terminated}, IResult, Parser,
 };
 
-pub fn parse_script(script: &str) -> Map<String, JsonValue> {
-  preceded(bom, map(keys_and_values, to_hashmap))(script).unwrap().1
+pub fn parse_script(script: &str) -> JsonValue {
+  convert_vector_of_tuples_to_vector_of_vectors(preceded(bom, keys_and_values)(script).unwrap().1)
 }
 
 fn bom(input: &str) -> IResult<&str, Option<char>> {
@@ -29,26 +29,15 @@ fn keys_and_values<'a, E: ParseError<&'a str> + ContextError<&'a str>>(
   many0(delimited(sp, key_value, sp))(i)
 }
 
-fn to_hashmap(tuple_vec: Vec<(&str, JsonValue)>) -> Map<std::string::String, JsonValue> {
-  let mut map = Map::new();
-  for (k, v) in tuple_vec {
-      map.insert(k.to_string(), v);
-  }
-  map
-}
-
 fn hash<'a, E: ParseError<&'a str> + ContextError<&'a str>>(
   i: &'a str,
-) -> IResult<&'a str, Map<std::string::String, JsonValue>, E> {
+) -> IResult<&'a str, Vec<(&str, JsonValue)>, E> {
   context(
     "map",
     preceded(
       preceded(sp, char('{')),
       cut(terminated(
-        map(
           keys_and_values,
-          to_hashmap,
-        ),
         preceded(sp, char('}')),
       )),
     ),
@@ -113,9 +102,17 @@ fn json_value<'a, E: ParseError<&'a str> + ContextError<&'a str>>(
     sp,
     alt((
       map(array, JsonValue::Array),
-      map(hash, JsonValue::Object),
+      map(hash, |vec| convert_vector_of_tuples_to_vector_of_vectors(vec)),
       map(string, |s| JsonValue::String(String::from(s)))
     )),
   )
   .parse(i)
+}
+
+fn convert_tuple_to_array(tuple: (&str, JsonValue)) -> JsonValue {
+  JsonValue::Array(vec![JsonValue::String(tuple.0.to_string()), tuple.1])
+}
+
+fn convert_vector_of_tuples_to_vector_of_vectors(array: Vec<(&str, JsonValue)>) -> JsonValue {
+  JsonValue::Array(array.into_iter().map(|tuple| convert_tuple_to_array(tuple)).collect())
 }
