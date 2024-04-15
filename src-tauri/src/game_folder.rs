@@ -1,10 +1,12 @@
-use std::{collections::HashMap, path::PathBuf, sync::{Arc, Mutex}};
-use geo::{BooleanOps, MultiPolygon};
+use std::{collections::HashMap, path::PathBuf, sync::{Arc, Mutex}, time::Instant};
+use geo::{BooleanOps, MapCoords, MultiPolygon, Polygon};
 use image_dds::image::Rgba;
-use serde_json::Value;
+use serde_json::{to_vec, Value};
 use tauri::{Manager, WindowMenuEvent};
 use crate::{dds_to_png::DdsToPng, pdx_script_parser::parse_script, province_map_to_geojson::province_map_to_geojson};
 use rayon::prelude::*;
+use serde_json::Value as JsonValue;
+use serde::{Serialize, Deserialize};
 
 const FLATMAP_PATH: &str = "game/dlc/dlc004_voice_of_the_people/gfx/map/textures/flatmap_votp.dds";
 const LAND_MASK_PATH: &str = "game/gfx/map/textures/land_mask.dds";
@@ -16,12 +18,44 @@ pub struct GameFolder {
   pub folder_path: PathBuf,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct SubState {
+  provinces: Vec<Value>,
+  owner: String,
+  coordinates: Vec<Vec<(f32, f32)>>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct State {
+  name: String,
+  sub_states: Vec<SubState>
+}
+
+fn get_sub_states_from_state(state: &Vec<JsonValue>) -> State {
+  let sub_states = state[1].as_array().unwrap().iter().filter(|item| item[0] == "create_state").map(|sub_state| {
+    let sub_state_data = sub_state[1].as_array().unwrap();
+    let sub_state_provinces = sub_state_data.iter().find(|item| item[0] == "owned_provinces").unwrap().as_array().unwrap()[1].as_array().unwrap();
+    let sub_state_owner = sub_state_data.iter().find(|item| item[0] == "country").unwrap().as_array().unwrap()[1].as_str().unwrap();
+
+    SubState {
+      provinces: sub_state_provinces.to_vec(),
+      owner: sub_state_owner.to_string(),
+      coordinates: vec![]
+    }
+  }).collect::<Vec<SubState>>();
+  State {
+    name: state[0].as_str().unwrap().to_string(),
+    sub_states
+  }
+}
+
 impl GameFolder {
   pub fn load(&self, event: WindowMenuEvent) {
     self.load_flatmap(&event);
     self.load_land_mask(&event);
     self.load_flatmap_overlay(&event);
-    self.load_all_states(&event);
+    // self.load_all_states(&event);
+    self.load_states(&event);
     // self.load_provinces(&event);
   }
 
@@ -66,20 +100,55 @@ impl GameFolder {
   
   fn load_states(&self, event: &WindowMenuEvent) {
     let parsed_states = parse_script(&std::fs::read_to_string(self.states()).unwrap());
-    let connaught_state: &Vec<Value> = parsed_states["STATES"]["s:STATE_CONNAUGHT"]["create_state"]["owned_provinces"].as_array().unwrap();
-    println!("Connaught state: {:?}", connaught_state);
-    let provinces = province_map_to_geojson(self.provinces());
-    println!("Province x20E0C0 has borders: {:?}", provinces.get("x20E0C0"));
-    // provinces.get("x20E0C0").unwrap().union(provinces.get("x20E0C1").unwrap());
-    let connacht_borders = connaught_state.iter().map(|province| provinces.get(province.as_str().unwrap()).unwrap()).collect::<Vec<_>>();
-    let unioned = connacht_borders.iter().fold(connacht_borders[0].clone(), |acc, x| acc.union(x));
-    println!("Unioned: {:?}", unioned);
-    let states: Vec<Vec<(f32, f32)>> = Vec::new();
-    let polygons_data: Vec<Vec<(f32, f32)>> = unioned.0.iter().map(|polygon| {
-      polygon.exterior().0.iter().map(|&point| (point.x, point.y)).collect()
-  }).collect();
+    // let connaught_state = &parsed_states[0][1].as_array().unwrap().iter().find(|state| state[0] == "s:STATE_CONNAUGHT").unwrap().as_array().unwrap();
+    // // let connaught_state: &Vec<Value> = parsed_states[0][1]["s:STATE_CONNAUGHT"]["create_state"]["owned_provinces"].as_array().unwrap();
+    // get_sub_states_from_state(connaught_state);
 
-    match event.window().emit("load-state-data", polygons_data) {
+    let start = Instant::now();
+    let states = parsed_states[0][1].as_array().unwrap().iter().map(|state| {
+      get_sub_states_from_state(state.as_array().unwrap())
+    }).collect::<Vec<_>>();
+    let duration = start.elapsed();
+    println!("Time elapsed in get_sub_states_from_state() is: {:?}", duration);
+  //   println!("Connaught state: {:?}", connaught_state);
+    let start = Instant::now();
+    let provinces = province_map_to_geojson(self.provinces());
+    let duration = start.elapsed();
+    println!("Time elapsed in province_map_to_geojson() is: {:?}", duration);
+
+    let start = Instant::now();
+    let state_geojsons = states.iter().map(|state| {
+      let sub_state_geometries = state.sub_states.iter().map(|sub_state| {
+        let sub_state_borders = sub_state.provinces.iter().filter_map(|province| {
+          provinces.get(province.as_str().unwrap().trim_matches('"'))
+        }).collect::<Vec<_>>();
+        let unioned = sub_state_borders.iter().fold(sub_state_borders[0].clone(), |acc, x| acc.union(x));
+        SubState {
+          provinces: sub_state.provinces.clone(),
+          owner: sub_state.owner.clone(),
+          coordinates: unioned.iter().map(|polygon| polygon.exterior().points().map(|point| (point.x(), point.y())).collect::<Vec<(f32, f32)>>()).collect::<Vec<Vec<(f32, f32)>>>()
+        }
+      }).collect::<Vec<_>>();
+      State {
+        name: state.name.clone(),
+        sub_states: sub_state_geometries
+      }
+    }).collect::<Vec<State>>();
+    let duration = start.elapsed();
+    println!("Time elapsed in state_geojsons is: {:?}", duration);
+  //   println!("Province x20E0C0 has borders: {:?}", provinces.get("x20E0C0"));
+  //   // provinces.get("x20E0C0").unwrap().union(provinces.get("x20E0C1").unwrap());
+  //   let connacht_borders = connaught_state.iter().map(|province| provinces.get(province.as_str().unwrap()).unwrap()).collect::<Vec<_>>();
+  //   let unioned = connacht_borders.iter().fold(connacht_borders[0].clone(), |acc, x| acc.union(x));
+  //   println!("Unioned: {:?}", unioned);
+  //   let states: Vec<Vec<(f32, f32)>> = Vec::new();
+  //   let polygons_data: Vec<Vec<(f32, f32)>> = unioned.iter().map(|polygon| {
+  //     polygon.exterior().0.iter().map(|&point| (point.x, point.y)).collect()
+  // }).collect();
+
+  // let array = vec![polygons_data];
+
+    match event.window().emit("load-state-data", state_geojsons) {
       Ok(_) => println!("Sent load-state-data to frontend"),
       Err(e) => println!("Failed to send load-state-data to frontend: {:?}", e),
     }
@@ -138,6 +207,7 @@ println!("States polygons data:");
         Err(e) => println!("Failed to send all states data to frontend: {:?}", e),
     }
 }
+
 
   // fn load_all_states(&self, event: &WindowMenuEvent) {
   //   let states_script = std::fs::read_to_string(self.states()).unwrap();
