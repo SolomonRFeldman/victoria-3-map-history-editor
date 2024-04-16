@@ -82,7 +82,7 @@ fn array<'a, E: ParseError<&'a str> + ContextError<&'a str>>(
           sp,
           terminated(
             map(
-              separated_list0(multispace1, is_not(" =}")),
+              separated_list0(multispace1, is_not(" =}\n\t")),
               |vec_str: Vec<&str>| {
                 vec_str.into_iter().map(|s| JsonValue::String(s.to_string())).collect()
               },
