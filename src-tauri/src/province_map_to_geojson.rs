@@ -182,8 +182,6 @@ pub fn province_map_to_geojson(provinces: PathBuf) -> HashMap<String, Vec<Vec<(f
   for (x, y, pixel) in provinces.enumerate_pixels() {
     let province_id = format!("x{:02X}{:02X}{:02X}", pixel[0], pixel[1], pixel[2]);
 
-    // x641238 xE5C4FE xC7847D xA060C0 x5DEF58 x85F13B x656D90 x20E0C0
-
     let x = x as i32;
     let y = y as i32;
 
@@ -205,13 +203,11 @@ pub fn province_map_to_geojson(provinces: PathBuf) -> HashMap<String, Vec<Vec<(f
     });
   }
 
-  let province_borders: HashMap<String, Vec<Vec<(f32,f32)>>> = province_borders.iter().map(|(hex_color, coords)| {
+  province_borders.iter().map(|(hex_color, coords)| {
     let geo_json_coords = border_to_geojson_coords(coords.clone());
 
     (hex_color.clone(), geo_json_coords)
-  }).collect();
-
-  province_borders
+  }).collect()
 }
 
 pub fn state_map_to_geojson(province_map: PathBuf, state_map: PathBuf, states: Vec<State>) -> Vec<State> {
