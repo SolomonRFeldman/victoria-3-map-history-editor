@@ -8,9 +8,19 @@ import { exists } from '@tauri-apps/api/fs'
 import { convertFileSrc } from '@tauri-apps/api/tauri'
 import { FeatureCollection, Feature, Geometry } from 'geojson'
 
-type Province = {
-  coords: number[][][]
-  name: string
+type Provinces = {
+  [key: string]: [number, number][][]
+}
+
+type SubState = {
+  coordinates: [number, number][][]
+  provinces: string[]
+  owner: string
+}
+
+type State = {
+  name: string,
+  sub_states: SubState[]
 }
 
 const flatmapFileName = 'flatmap_votp.png'
@@ -32,7 +42,8 @@ export default function Map() {
   const [flatmap, setFlatmap] = useState<null | string>(null)
   const [flatmapOverlay, setFlatmapOverlay] = useState<null | string>('')
   const [landMask, setLandMask] = useState<null | string>('')
-  const [provinceData, setProvinceData] = useState<FeatureCollection | null>(null)
+  const [, setProvinceData] = useState<Provinces | null>(null)
+  const [stateData, setStateData] = useState<FeatureCollection | null>(null)
 
   useEffect(() => {
     const unlistenToFlatmap = listen<String>('load-flatmap', () => {
@@ -58,23 +69,9 @@ export default function Map() {
   }, [])
 
   useEffect(() => {
-    const unlistenToProvinceData = listen<Province[]>('load-province-data', (data) => {
-      const geojsonData: FeatureCollection = {
-        type: "FeatureCollection",
-        features: data.payload.map((province: Province) => {
-          return {
-            type: "Feature",
-            properties: {
-              name: province.name
-            },
-            geometry: {
-              type: "Polygon",
-              coordinates: province.coords
-            }
-          }
-        })
-      }
-      setProvinceData(geojsonData)
+    const unlistenToProvinceData = listen<Provinces>('load-province-data', (data) => {
+      console.log(data.payload)
+      setProvinceData(data.payload)
     })
     return () => {
       unlistenToProvinceData.then((unlisten) => unlisten())
@@ -82,17 +79,41 @@ export default function Map() {
   }, [])
 
   useEffect(() => {
-    const unlistenToProvinceData = listen<Province[]>('load-state-data', (data) => {
+    const unlistenToProvinceData = listen<State[]>('load-state-data', (data) => {
       console.log(data.payload)
+      const sub_states: (SubState & { state_name: string })[] = []
+      data.payload.forEach((state) => {
+        state.sub_states.forEach((sub_state) => {
+          sub_states.push({ ...sub_state, state_name: state.name })
+        })
+      })
+
+      const geojsonData: FeatureCollection<Geometry, { name: string, color: string }> = {
+        type: "FeatureCollection",
+        features: sub_states.map((substate) => {
+          return {
+            type: "Feature",
+            properties: {
+              name: `${substate.state_name} - ${substate.owner}`,
+              color: substate.provinces[0]
+            },
+            geometry: {
+              type: "Polygon",
+              coordinates: substate.coordinates
+            }
+          }
+        })
+      }
+      setStateData(geojsonData)
     })
     return () => {
       unlistenToProvinceData.then((unlisten) => unlisten())
     }
   }, [])
 
-  const provinceStyle = (feature?: Feature<Geometry, { name: string }>) => {
+  const polygonStyle = (feature?: Feature<Geometry, { name: string, color: string }>) => {
     return {
-      fillColor: feature ? feature.properties.name.replace('x', '#') : 'transparent',
+      fillColor: feature ? feature.properties.color.replace('x', '#') : 'transparent',
       fillOpacity: 0.5,
       color: 'black',
       weight: 1
@@ -104,7 +125,7 @@ export default function Map() {
       { flatmap ? <ImageOverlay url={flatmap} bounds={bounds} /> : null }
       { landMask ? <ImageOverlay url={landMask} bounds={bounds} /> : null }
       { flatmapOverlay ? <ImageOverlay url={flatmapOverlay} bounds={bounds} /> : null }
-      { provinceData ? <GeoJSON data={provinceData} style={provinceStyle} /> : null }
+      { stateData ? <GeoJSON data={stateData} style={polygonStyle} /> : null }
     </MapContainer>
   ) 
 }

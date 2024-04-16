@@ -1,7 +1,6 @@
-use std::{collections::HashMap, path::PathBuf};
-
-use image::io::Reader as ImageReader;
-use serde::Serialize;
+use std::{collections::HashMap, fs, path::PathBuf};
+use image::{io::Reader as ImageReader, Rgb};
+use crate::get_states::{State, SubState};
 
 #[derive(Clone)]
 enum Direction {
@@ -175,13 +174,7 @@ fn remove_unnecessary_coords(geo_trace: Vec<(i32, i32)>) -> Vec<(i32, i32)> {
   new_geo_trace.into_iter().filter_map(|x| x).collect()
 }
 
-#[derive(Clone, Serialize)]
-pub struct Province {
-  name: String,
-  coords: Vec<Vec<(f32, f32)>>,
-}
-
-pub fn province_map_to_geojson(provinces: PathBuf) -> Vec<Province> {
+pub fn province_map_to_geojson(provinces: PathBuf) -> HashMap<String, Vec<Vec<(f32, f32)>>> {
   let provinces = ImageReader::open(provinces).unwrap().decode().unwrap().into_rgb8();
   let mut province_borders: HashMap<String, Vec<(i32, i32)>> = HashMap::new();
   let image_height = provinces.height() as i32;
@@ -213,9 +206,75 @@ pub fn province_map_to_geojson(provinces: PathBuf) -> Vec<Province> {
   province_borders.iter().map(|(hex_color, coords)| {
     let geo_json_coords = border_to_geojson_coords(coords.clone());
 
-    Province { 
-      name: hex_color.clone(), 
-      coords: geo_json_coords
+    (hex_color.clone(), geo_json_coords)
+  }).collect()
+}
+
+pub fn state_map_to_geojson(province_map: PathBuf, state_map: PathBuf, states: Vec<State>) -> Vec<State> {
+  if fs::metadata(&state_map).is_err() {
+    let mut color_map = HashMap::<Rgb<u8>, Rgb<u8>>::new();
+    states.iter().for_each(|state| {
+      state.sub_states.iter().for_each(|sub_state| {
+        if sub_state.provinces.len() == 0 {
+          println!("No valid provinces for state: {:?}", state.name);
+          return;
+        }
+        let first_province = sub_state.provinces[0].trim_matches('"');
+        let red: String = first_province.chars().skip(1).take(2).collect::<String>();
+        let green: String = first_province.chars().skip(3).take(2).collect::<String>();
+        let blue: String = first_province.chars().skip(5).take(2).collect::<String>();
+  
+        let color_to_turn = Rgb([u8::from_str_radix(&red, 16).unwrap(), u8::from_str_radix(&green, 16).unwrap(), u8::from_str_radix(&blue, 16).unwrap()]);
+        sub_state.provinces.iter().for_each(|province| {
+          let red = province.chars().skip(1).take(2).collect::<String>();
+          let green = province.chars().skip(3).take(2).collect::<String>();
+          let blue = province.chars().skip(5).take(2).collect::<String>();
+  
+          let color = Rgb([u8::from_str_radix(&red, 16).unwrap(), u8::from_str_radix(&green, 16).unwrap(), u8::from_str_radix(&blue, 16).unwrap()]);
+          color_map.insert(color, color_to_turn);
+        })
+      });
+    });
+    
+    let mut provinces = ImageReader::open(province_map).unwrap().decode().unwrap().into_rgb8();
+  
+    provinces.enumerate_pixels_mut().for_each(|(_, _, pixel)| {
+      let color = color_map.get(&pixel).unwrap_or(&Rgb([0, 0, 0]));
+      *pixel = *color;
+    });
+    provinces.save(&state_map).unwrap();
+  } else {
+    println!("State map already in cache");
+  }
+
+  let state_borders = province_map_to_geojson(state_map);
+
+  states.iter().map(|state| {
+    let sub_states_with_coords = state.sub_states.iter().map(|sub_state| {
+      let state_geometries = state_borders.get(&sub_state.provinces[0]);
+
+      match state_geometries {
+        Some(geometries) => {
+          SubState {
+            provinces: sub_state.provinces.clone(),
+            owner: sub_state.owner.clone(),
+            coordinates: geometries.to_vec()
+          }
+        },
+        None => {
+          println!("No geometries for state: {:?}", state.name);
+          println!("Provinces: {:?}", sub_state.provinces);
+          SubState {
+            provinces: sub_state.provinces.clone(),
+            owner: sub_state.owner.clone(),
+            coordinates: vec![]
+          }
+        }
+      }
+    }).collect::<Vec<SubState>>();
+    State {
+      name: state.name.clone(),
+      sub_states: sub_states_with_coords
     }
-  }).collect::<Vec<Province>>()
+  }).collect::<Vec<State>>()
 }

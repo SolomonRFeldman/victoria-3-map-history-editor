@@ -2,8 +2,14 @@ Immediate TO-DO in order of priority:
 - [x] Cache flatmap converted images
 - [x] Process land mask to have black filled in as transparent, and pass to renderer
 - [x] Process provinces.png, pass province bounding boxes and ids to renderer and render the bounding boxes
-- [ ] Render state bounding boxes
-- [ ] Grab history info about who owns what province to pass with the province info
+- [x] Render state bounding boxes
+- [ ] Render country bounding boxes
+- [ ] Click on country to reveal its states
+- [ ] Transfer selected state to selected country
+- [ ] Click on state to reveal its provinces
+- [ ] Transfer selected province to selected country
+- [ ] Persist state and province transfers as pdx script
+- [ ] Allow opening of working directory, save state and province transfer data there
 
 Low Priority TO-DO:
 - [ ] Color in land mask and flatmap overlay properly.
@@ -16,6 +22,7 @@ Known Bugs:
 - If the map images load in the wrong order, they will layer in the wrong order
 - ~~Some provinces seem to be stuck in infinite loops when tracing their geojson bounds~~ (squished)
 - Some province borders do not trace properly, so they may be slightly inaccurate. No visual quirks though.
+- States Burma and Ryukyu Islands are unable to process their borders
 
 Known Issues:
 - Land mask and flatmap overlay are not colored properly.
