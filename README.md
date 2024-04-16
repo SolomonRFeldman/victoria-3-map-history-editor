@@ -27,4 +27,5 @@ Known Bugs:
 Known Issues:
 - Land mask and flatmap overlay are not colored properly.
 - ~~Internal geojson bounds need to be accounted for, this is especially noticeable with sea provinces overlapping islands.~~ (Resolved!)
-- Rendering the provinces is very slow to parse, and laggy when rendered. Should seek to only render state bounding boxes next, perhaps also cache the processing of provinces.png
+- Parsing the provinces and states is very slow. Should seek to optimize this and cache.
+- If state history file is change, border changes are not picked up unless state cache is manually busted
