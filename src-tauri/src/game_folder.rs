@@ -1,5 +1,6 @@
 use std::{collections::HashMap, path::PathBuf, sync::{Arc, Mutex}, time::Instant};
 use geo::{BooleanOps, MapCoords, MultiPolygon, Polygon};
+use image::{io::Reader as ImageReader, ImageBuffer, Rgb};
 use image_dds::image::Rgba;
 use serde_json::{to_vec, Value};
 use tauri::{Manager, WindowMenuEvent};
@@ -20,7 +21,7 @@ pub struct GameFolder {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct SubState {
-  provinces: Vec<Value>,
+  provinces: Vec<String>,
   owner: String,
   coordinates: Vec<Vec<(f32, f32)>>,
 }
@@ -38,7 +39,7 @@ fn get_sub_states_from_state(state: &Vec<JsonValue>) -> State {
     let sub_state_owner = sub_state_data.iter().find(|item| item[0] == "country").unwrap().as_array().unwrap()[1].as_str().unwrap();
 
     SubState {
-      provinces: sub_state_provinces.to_vec(),
+      provinces: sub_state_provinces.iter().map(|province| province.as_str().unwrap().trim_matches('"').to_string()).filter(|province| province.len() > 6 && province.chars().next().unwrap() == 'x').collect::<Vec<String>>(),
       owner: sub_state_owner.to_string(),
       coordinates: vec![]
     }
@@ -108,147 +109,88 @@ impl GameFolder {
     let states = parsed_states[0][1].as_array().unwrap().iter().map(|state| {
       get_sub_states_from_state(state.as_array().unwrap())
     }).collect::<Vec<_>>();
-    let duration = start.elapsed();
-    println!("Time elapsed in get_sub_states_from_state() is: {:?}", duration);
-  //   println!("Connaught state: {:?}", connaught_state);
+    println!("Time to load states: {:?}", start.elapsed());
+    
     let start = Instant::now();
-    let provinces = province_map_to_geojson(self.provinces());
-    let duration = start.elapsed();
-    println!("Time elapsed in province_map_to_geojson() is: {:?}", duration);
+    let mut color_map = HashMap::<Rgb<u8>, Rgb<u8>>::new();
+    states.iter().for_each(|state| {
+      state.sub_states.iter().for_each(|sub_state| {
+        // let valid_provinces: Vec<String> = sub_state.provinces.iter().filter(|province| province.as_str().unwrap().trim_matches('"').len() == 7).map(|province| province.as_str().unwrap().to_string()).collect();
+        if sub_state.provinces.len() == 0 {
+          println!("No valid provinces for state: {:?}", state.name);
+          return;
+        }
+        let first_province = sub_state.provinces[0].trim_matches('"');
+        let red: String = first_province.chars().skip(1).take(2).collect::<String>();
+        let green: String = first_province.chars().skip(3).take(2).collect::<String>();
+        let blue: String = first_province.chars().skip(5).take(2).collect::<String>();
+
+        let color_to_turn = Rgb([u8::from_str_radix(&red, 16).unwrap(), u8::from_str_radix(&green, 16).unwrap(), u8::from_str_radix(&blue, 16).unwrap()]);
+        sub_state.provinces.iter().for_each(|province| {
+          let red = province.chars().skip(1).take(2).collect::<String>();
+          let green = province.chars().skip(3).take(2).collect::<String>();
+          let blue = province.chars().skip(5).take(2).collect::<String>();
+
+          let color = Rgb([u8::from_str_radix(&red, 16).unwrap(), u8::from_str_radix(&green, 16).unwrap(), u8::from_str_radix(&blue, 16).unwrap()]);
+          color_map.insert(color, color_to_turn);
+        })
+      });
+    });
+    // println!("Color map: {:?}", color_map);
+    println!("Time to load color map: {:?}", start.elapsed());
+    
+    let start = Instant::now();
+    let mut provinces = ImageReader::open(self.provinces()).unwrap().decode().unwrap().into_rgb8();
+
+    provinces.enumerate_pixels_mut().for_each(|(x, y, pixel)| {
+      let color = color_map.get(&pixel).unwrap_or(&Rgb([0, 0, 0]));
+      *pixel = *color;
+    });
+    provinces.save(cache_dir(event).join("states.png")).unwrap();
+    println!("Time to color provinces: {:?}", start.elapsed());
+    // let arizona = states.iter().find(|state| state.name == "s:STATE_ARIZONA").unwrap();
+    // println!("Arazona: {:?}", arizona);
+    let start = Instant::now();
+    let state_borders = province_map_to_geojson(cache_dir(event).join("states.png"));
+    println!("Time to load state borders: {:?}", start.elapsed());
 
     let start = Instant::now();
-    let state_geojsons = states.iter().map(|state| {
-      let sub_state_geometries = state.sub_states.iter().map(|sub_state| {
-        let sub_state_borders = sub_state.provinces.iter().filter_map(|province| {
-          provinces.get(province.as_str().unwrap().trim_matches('"'))
-        }).collect::<Vec<_>>();
-        let unioned = sub_state_borders.iter().fold(sub_state_borders[0].clone(), |acc, x| acc.union(x));
-        SubState {
-          provinces: sub_state.provinces.clone(),
-          owner: sub_state.owner.clone(),
-          coordinates: unioned.iter().map(|polygon| polygon.exterior().points().map(|point| (point.x(), point.y())).collect::<Vec<(f32, f32)>>()).collect::<Vec<Vec<(f32, f32)>>>()
+    let states_with_coords = states.iter().map(|state| {
+      let sub_states_with_coords = state.sub_states.iter().map(|sub_state| {
+        let state_geometries = state_borders.get(&sub_state.provinces[0]);
+
+        match state_geometries {
+          Some(geometries) => {
+            SubState {
+              provinces: sub_state.provinces.clone(),
+              owner: sub_state.owner.clone(),
+              coordinates: geometries.to_vec()
+            }
+          },
+          None => {
+            println!("No geometries for state: {:?}", state.name);
+            println!("Provinces: {:?}", sub_state.provinces);
+            SubState {
+              provinces: sub_state.provinces.clone(),
+              owner: sub_state.owner.clone(),
+              coordinates: vec![]
+            }
+          }
         }
-      }).collect::<Vec<_>>();
+      }).collect::<Vec<SubState>>();
       State {
         name: state.name.clone(),
-        sub_states: sub_state_geometries
+        sub_states: sub_states_with_coords
       }
     }).collect::<Vec<State>>();
-    let duration = start.elapsed();
-    println!("Time elapsed in state_geojsons is: {:?}", duration);
-  //   println!("Province x20E0C0 has borders: {:?}", provinces.get("x20E0C0"));
-  //   // provinces.get("x20E0C0").unwrap().union(provinces.get("x20E0C1").unwrap());
-  //   let connacht_borders = connaught_state.iter().map(|province| provinces.get(province.as_str().unwrap()).unwrap()).collect::<Vec<_>>();
-  //   let unioned = connacht_borders.iter().fold(connacht_borders[0].clone(), |acc, x| acc.union(x));
-  //   println!("Unioned: {:?}", unioned);
-  //   let states: Vec<Vec<(f32, f32)>> = Vec::new();
-  //   let polygons_data: Vec<Vec<(f32, f32)>> = unioned.iter().map(|polygon| {
-  //     polygon.exterior().0.iter().map(|&point| (point.x, point.y)).collect()
-  // }).collect();
+    println!("Time to load states with coords: {:?}", start.elapsed());
 
-  // let array = vec![polygons_data];
-
-    match event.window().emit("load-state-data", state_geojsons) {
+    match event.window().emit("load-state-data", states_with_coords) {
       Ok(_) => println!("Sent load-state-data to frontend"),
       Err(e) => println!("Failed to send load-state-data to frontend: {:?}", e),
     }
   }
-  fn load_all_states(&self, event: &WindowMenuEvent) {
-    let states_script = std::fs::read_to_string(self.states()).unwrap();
-    let parsed_states = parse_script(&states_script);
-    let provinces_geojson = province_map_to_geojson(self.provinces());
-    let all_states = parsed_states["STATES"].as_object().unwrap();
-    let all_states_vec: Vec<(&String, &Value)> = all_states.iter().collect();
 
-    // Using a thread-safe container to store results from parallel processing
-    let state_geometries = Arc::new(Mutex::new(HashMap::new()));
-
-    println!("Starting to load all states data");
-    // Parallel processing of each state to calculate geometries
-    all_states_vec.par_iter().for_each(|(state_name, state_details)| {
-        if let Some(create_state) = state_details.get("create_state") {
-            if let Some(owned_provinces) = create_state["owned_provinces"].as_array() {
-                let province_geometries: Vec<&MultiPolygon<f32>> = owned_provinces.iter()
-                    .filter_map(|v| v.as_str())
-                    .map(|code| code.trim_matches('"')) 
-                    .filter_map(|code| provinces_geojson.get(code))
-                    .collect();
-
-                if let Some(initial) = province_geometries.first().cloned() {
-                    let unioned = province_geometries.iter().skip(1).fold(initial.clone(), |acc, x| acc.union(x));
-
-                    // Lock the mutex to safely update the shared HashMap
-                    let mut geometries = state_geometries.lock().unwrap();
-                    geometries.insert(state_name.to_string(), unioned);
-                }
-            }
-        }
-    });
-
-    println!("Finished loading all states data");
-    // Retrieve and unlock the data container on the main thread
-    let locked_geometries = Arc::try_unwrap(state_geometries).expect("Lock still has multiple owners");
-    let geometries = locked_geometries.into_inner().unwrap();
-
-    println!("States geometries: ");
-    // Convert to arrays of arrays of tuples for each state
-    let states_polygons_data: HashMap<String, Vec<Vec<(f32, f32)>>> = geometries.iter()
-        .map(|(name, multipolygon)| {
-            let polygons_data = multipolygon.0.iter()
-                .map(|polygon| polygon.exterior().0.iter().map(|point| (point.x, point.y)).collect())
-                .collect();
-            (name.clone(), polygons_data)
-        })
-        .collect();
-println!("States polygons data:");
-    // Emit all state geometries data together
-    match event.window().emit("load-state-data", &states_polygons_data) {
-        Ok(_) => println!("Sent all states data to frontend"),
-        Err(e) => println!("Failed to send all states data to frontend: {:?}", e),
-    }
-}
-
-
-  // fn load_all_states(&self, event: &WindowMenuEvent) {
-  //   let states_script = std::fs::read_to_string(self.states()).unwrap();
-  //   let parsed_states = parse_script(&states_script);
-  //   let provinces_geojson = province_map_to_geojson(self.provinces());
-  //   let all_states = parsed_states["STATES"].as_object().unwrap();
-
-  //   let mut state_geometries: HashMap<String, MultiPolygon<f32>> = HashMap::new();
-
-  //   for (state_name, state_details) in all_states.iter() {
-  //       if let Some(create_state) = state_details.get("create_state") {
-  //           if let Some(owned_provinces) = create_state["owned_provinces"].as_array() {
-  //               let province_geometries: Vec<&MultiPolygon<f32>> = owned_provinces.iter()
-  //                   .filter_map(|v| v.as_str())
-  //                   .filter_map(|code| provinces_geojson.get(code))
-  //                   .collect();
-
-  //               if let Some(initial) = province_geometries.first().cloned() {
-  //                   let unioned = province_geometries.iter().skip(1).fold(initial.clone(), |acc, x| acc.union(x));
-  //                   state_geometries.insert(state_name.to_string(), unioned);
-  //               }
-  //           }
-  //       }
-  //   }
-
-  //   // Convert to arrays of arrays of tuples for each state
-  //   let states_polygons_data: HashMap<String, Vec<Vec<(f32, f32)>>> = state_geometries.iter()
-  //       .map(|(name, multipolygon)| {
-  //           let polygons_data = multipolygon.0.iter()
-  //               .map(|polygon| polygon.exterior().0.iter().map(|point| (point.x, point.y)).collect())
-  //               .collect();
-  //           (name.clone(), polygons_data)
-  //       })
-  //       .collect();
-
-  //   // Emit each state's geometry data
-  //       match event.window().emit("load-state-data", states_polygons_data) {
-  //           Ok(_) => println!("Sent load-state-data for to frontend"),
-  //           Err(e) => println!("Failed to send load-state-data fo"),
-  //       }
-// }
   fn flatmap(&self) -> PathBuf {
     self.folder_path.join(PathBuf::from(FLATMAP_PATH))
   }

@@ -176,7 +176,7 @@ fn remove_unnecessary_coords(geo_trace: Vec<(i32, i32)>) -> Vec<(i32, i32)> {
   new_geo_trace.into_iter().filter_map(|x| x).collect()
 }
 
-pub fn province_map_to_geojson(provinces: PathBuf) -> HashMap<String, MultiPolygon<f32>> {
+pub fn province_map_to_geojson(provinces: PathBuf) -> HashMap<String, Vec<Vec<(f32, f32)>>> {
   let provinces = ImageReader::open(provinces).unwrap().decode().unwrap().into_rgb8();
   let mut province_borders: HashMap<String, Vec<(i32, i32)>> = HashMap::new();
   let image_height = provinces.height() as i32;
@@ -207,13 +207,10 @@ pub fn province_map_to_geojson(provinces: PathBuf) -> HashMap<String, MultiPolyg
     });
   }
 
-  let province_borders: HashMap<String, MultiPolygon<f32>> = province_borders.iter().map(|(hex_color, coords)| {
+  let province_borders: HashMap<String, Vec<Vec<(f32,f32)>>> = province_borders.iter().map(|(hex_color, coords)| {
     let geo_json_coords = border_to_geojson_coords(coords.clone());
-    let multi_polygon: MultiPolygon<f32> = geo_json_coords.into_iter().map(|coords| {
-      Polygon::new(LineString::from(coords), vec![])
-    }).collect();
 
-    (hex_color.clone(), multi_polygon)
+    (hex_color.clone(), geo_json_coords)
   }).collect();
 
   province_borders
