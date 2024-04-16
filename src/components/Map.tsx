@@ -8,13 +8,12 @@ import { exists } from '@tauri-apps/api/fs'
 import { convertFileSrc } from '@tauri-apps/api/tauri'
 import { FeatureCollection, Feature, Geometry } from 'geojson'
 
-type Province = {
-  coords: number[][][]
-  name: string
+type Provinces = {
+  [key: string]: [number, number][][]
 }
 
 type SubState = {
-  coordinates: number[][][]
+  coordinates: [number, number][][]
   provinces: string[]
   owner: string
 }
@@ -43,7 +42,7 @@ export default function Map() {
   const [flatmap, setFlatmap] = useState<null | string>(null)
   const [flatmapOverlay, setFlatmapOverlay] = useState<null | string>('')
   const [landMask, setLandMask] = useState<null | string>('')
-  const [, setProvinceData] = useState<FeatureCollection | null>(null)
+  const [, setProvinceData] = useState<Provinces | null>(null)
   const [stateData, setStateData] = useState<FeatureCollection | null>(null)
 
   useEffect(() => {
@@ -70,24 +69,9 @@ export default function Map() {
   }, [])
 
   useEffect(() => {
-    const unlistenToProvinceData = listen<Province[]>('load-province-data', (data) => {
+    const unlistenToProvinceData = listen<Provinces>('load-province-data', (data) => {
       console.log(data.payload)
-      const geojsonData: FeatureCollection = {
-        type: "FeatureCollection",
-        features: data.payload.map((province: Province) => {
-          return {
-            type: "Feature",
-            properties: {
-              name: province.name
-            },
-            geometry: {
-              type: "Polygon",
-              coordinates: province.coords
-            }
-          }
-        })
-      }
-      setProvinceData(geojsonData)
+      setProvinceData(data.payload)
     })
     return () => {
       unlistenToProvinceData.then((unlisten) => unlisten())
