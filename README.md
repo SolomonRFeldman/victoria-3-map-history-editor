@@ -3,7 +3,7 @@ Immediate TO-DO in order of priority:
 - [x] Process land mask to have black filled in as transparent, and pass to renderer
 - [x] Process provinces.png, pass province bounding boxes and ids to renderer and render the bounding boxes
 - [x] Render state bounding boxes
-- [ ] Render country bounding boxes
+- [x] Render country bounding boxes
 - [ ] Click on country to reveal its states
 - [ ] Transfer selected state to selected country
 - [ ] Click on state to reveal its provinces
