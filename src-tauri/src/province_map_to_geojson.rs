@@ -251,7 +251,7 @@ pub fn state_map_to_geojson(province_map: PathBuf, state_map: PathBuf, states: V
 
   states.iter().map(|state| {
     let sub_states_with_coords = state.sub_states.iter().map(|sub_state| {
-      let state_geometries = state_borders.get(&sub_state.provinces[0]);
+      let state_geometries = state_borders.get(&format!("x{}", &sub_state.provinces[0][1..].to_uppercase()));
 
       match state_geometries {
         Some(geometries) => {

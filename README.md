@@ -22,7 +22,6 @@ Known Bugs:
 - If the map images load in the wrong order, they will layer in the wrong order
 - ~~Some provinces seem to be stuck in infinite loops when tracing their geojson bounds~~ (squished)
 - Some province borders do not trace properly, so they may be slightly inaccurate. No visual quirks though.
-- States Burma and Ryukyu Islands are unable to process their borders
 
 Known Issues:
 - Land mask and flatmap overlay are not colored properly.
