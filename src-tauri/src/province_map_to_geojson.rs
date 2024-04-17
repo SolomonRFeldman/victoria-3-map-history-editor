@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fs, path::PathBuf};
 use image::{io::Reader as ImageReader, Rgb};
-use crate::{get_countries::Country, get_states::{State, SubState}};
+use crate::{get_countries::Country, get_states::State};
 
 #[derive(Clone)]
 enum Direction {
@@ -210,7 +210,7 @@ pub fn province_map_to_geojson(provinces: PathBuf) -> HashMap<String, Vec<Vec<(f
   }).collect()
 }
 
-pub fn state_map_to_geojson(province_map: PathBuf, state_map: PathBuf, states: Vec<State>) -> Vec<State> {
+pub fn state_map_to_geojson(province_map: PathBuf, state_map: PathBuf, states: Vec<State>) -> HashMap<String, Vec<Vec<(f32, f32)>>> {
   if fs::metadata(&state_map).is_err() {
     let mut color_map = HashMap::<Rgb<u8>, Rgb<u8>>::new();
     states.iter().for_each(|state| {
@@ -248,35 +248,14 @@ pub fn state_map_to_geojson(province_map: PathBuf, state_map: PathBuf, states: V
   }
 
   let state_borders = province_map_to_geojson(state_map);
-
-  states.iter().map(|state| {
-    let sub_states_with_coords = state.sub_states.iter().map(|sub_state| {
-      let state_geometries = state_borders.get(&format!("x{}", &sub_state.provinces[0][1..].to_uppercase()));
-
-      match state_geometries {
-        Some(geometries) => {
-          SubState {
-            provinces: sub_state.provinces.clone(),
-            owner: sub_state.owner.clone(),
-            coordinates: geometries.to_vec()
-          }
-        },
-        None => {
-          println!("No geometries for state: {:?}", state.name);
-          println!("Provinces: {:?}", sub_state.provinces);
-          SubState {
-            provinces: sub_state.provinces.clone(),
-            owner: sub_state.owner.clone(),
-            coordinates: vec![]
-          }
-        }
-      }
-    }).collect::<Vec<SubState>>();
-    State {
-      name: state.name.clone(),
-      sub_states: sub_states_with_coords
-    }
-  }).collect::<Vec<State>>()
+  
+  let mut state_map: HashMap<String, Vec<Vec<(f32, f32)>>> = HashMap::new();
+  states.iter().for_each(|state| {
+    state.sub_states.iter().for_each(|sub_state| {
+      state_map.insert(format!("{}:{}", sub_state.owner.clone(), state.name.clone()), state_borders.get(&format!("x{}", &sub_state.provinces[0][1..].to_uppercase())).unwrap().clone());
+    });
+  });
+  state_map
 }
 
 pub fn country_map_to_geojson(state_map: PathBuf, country_map: PathBuf, countries: Vec<Country>) -> Vec<Country> {

@@ -1,5 +1,5 @@
 import { MapContainer, ImageOverlay, GeoJSON } from 'react-leaflet'
-import { CRS, LatLngBoundsExpression } from 'leaflet'
+import { CRS, LatLngBoundsExpression, LeafletMouseEvent } from 'leaflet'
 import './Map.css'
 import { useEffect, useState } from 'react'
 import { listen } from '@tauri-apps/api/event'
@@ -12,21 +12,21 @@ type Provinces = {
   [key: string]: [number, number][][]
 }
 
-type SubState = {
-  coordinates: [number, number][][]
-  provinces: string[]
-  owner: string
-}
-
-type State = {
-  name: string,
-  sub_states: SubState[]
+type StateCoords = {
+  [key: string]: [number, number][][]
 }
 
 type Country = {
   name: string,
   color: string,
-  coordinates: [number, number][][]
+  coordinates: [number, number][][],
+  states: State[]
+}
+
+type State = {
+  name: string,
+  color: string
+  provinces: string[]
 }
 
 const flatmapFileName = 'flatmap_votp.png'
@@ -50,6 +50,9 @@ export default function Map() {
   const [landMask, setLandMask] = useState<null | string>('')
   const [, setProvinceData] = useState<Provinces | null>(null)
   const [countryData, setCountryData] = useState<FeatureCollection | null>(null)
+  const [stateData, setStateData] = useState<FeatureCollection | null>(null)
+  const [stateCoords, setStateCoords] = useState<StateCoords>({})
+  const [selectedCountry, setSelectedCountry] = useState('')
 
   useEffect(() => {
     const unlistenToFlatmap = listen<String>('load-flatmap', () => {
@@ -85,8 +88,9 @@ export default function Map() {
   }, [])
 
   useEffect(() => {
-    const unlistenToStateData = listen<State[]>('load-state-data', (data) => {
+    const unlistenToStateData = listen<StateCoords>('load-state-coords', (data) => {
       console.log(data.payload)
+      setStateCoords(data.payload)
     })
     return () => {
       unlistenToStateData.then((unlisten) => unlisten())
@@ -96,15 +100,12 @@ export default function Map() {
   useEffect(() => {
     const unlistenToCountryData = listen<Country[]>('load-country-data', (data) => {
       console.log(data.payload)
-      const geojsonData: FeatureCollection<Geometry, { name: string, color: string }> = {
+      const geojsonData: FeatureCollection<Geometry, Country> = {
         type: "FeatureCollection",
         features: data.payload.map((country) => {
           return {
             type: "Feature",
-            properties: {
-              name: country.name,
-              color: country.color
-            },
+            properties: country,
             geometry: {
               type: "Polygon",
               coordinates: country.coordinates
@@ -119,7 +120,7 @@ export default function Map() {
     }
   }, [])
 
-  const polygonStyle = (feature?: Feature<Geometry, { name: string, color: string }>) => {
+  const countryStyle = (feature?: Feature<Geometry, { name: string, color: string }>) => {
     return {
       fillColor: feature ? feature.properties.color.replace('x', '#') : 'transparent',
       fillOpacity: 0.5,
@@ -128,12 +129,42 @@ export default function Map() {
     }
   }
 
+  const stateStyle = (feature?: Feature<Geometry, State>) => {
+    return {
+      fillColor: feature ? feature.properties.provinces[0].replace('x', '#') : 'transparent',
+      fillOpacity: 0.5,
+      color: 'purple',
+      weight: 2
+    }
+  }
+
+  const handleGeoJSONEvent = (event: LeafletMouseEvent) => {
+    const country = event.sourceTarget.feature.properties as Country
+    const geojsonData: FeatureCollection<Geometry, State> = {
+      type: "FeatureCollection",
+      features: country.states.map((state) => {
+        return {
+          type: "Feature",
+          properties: state,
+          geometry: {
+            type: "Polygon",
+            coordinates: stateCoords[`${country.name}:${state.name}`]
+          }
+        }
+      })
+    }
+
+    setStateData(geojsonData)
+    setSelectedCountry(country.name)
+  }
+
   return (
     <MapContainer center={[0, 0]} minZoom={-2} maxZoom={2} doubleClickZoom={false} crs={CRS.Simple} bounds={bounds}>
       { flatmap && <ImageOverlay url={flatmap} bounds={bounds} /> }
       { landMask && <ImageOverlay url={landMask} bounds={bounds} /> }
       { flatmapOverlay && <ImageOverlay url={flatmapOverlay} bounds={bounds} /> }
-      { countryData && <GeoJSON data={countryData} style={polygonStyle} /> }
+      { countryData && <GeoJSON data={countryData} style={countryStyle} eventHandlers={{ click: handleGeoJSONEvent }} /> }
+      { stateData && <GeoJSON data={stateData} key={selectedCountry} style={stateStyle} /> }
     </MapContainer>
   ) 
 }
