@@ -252,7 +252,7 @@ pub fn state_map_to_geojson(province_map: PathBuf, state_map: PathBuf, states: V
   let mut state_map: HashMap<String, Vec<Vec<(f32, f32)>>> = HashMap::new();
   states.iter().for_each(|state| {
     state.sub_states.iter().for_each(|sub_state| {
-      state_map.insert(format!("{}:{}", sub_state.owner.clone(), state.name.clone()), state_borders.get(&format!("x{}", &sub_state.provinces[0][1..].to_uppercase())).unwrap().clone());
+      state_map.insert(format!("{}:{}", sub_state.owner.clone(), state.name.clone()), state_borders.get(&sub_state.provinces[0]).unwrap().clone());
     });
   });
   state_map
