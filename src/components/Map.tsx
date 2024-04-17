@@ -23,6 +23,12 @@ type State = {
   sub_states: SubState[]
 }
 
+type Country = {
+  name: string,
+  color: string,
+  coordinates: [number, number][][]
+}
+
 const flatmapFileName = 'flatmap_votp.png'
 const landMaskFileName = 'land_mask.png'
 const flatmapOverlayFileName = 'flatmap_overlay_votp.png'
@@ -43,7 +49,7 @@ export default function Map() {
   const [flatmapOverlay, setFlatmapOverlay] = useState<null | string>('')
   const [landMask, setLandMask] = useState<null | string>('')
   const [, setProvinceData] = useState<Provinces | null>(null)
-  const [stateData, setStateData] = useState<FeatureCollection | null>(null)
+  const [countryData, setCountryData] = useState<FeatureCollection | null>(null)
 
   useEffect(() => {
     const unlistenToFlatmap = listen<String>('load-flatmap', () => {
@@ -79,41 +85,34 @@ export default function Map() {
   }, [])
 
   useEffect(() => {
-    const unlistenToProvinceData = listen<State[]>('load-state-data', (data) => {
+    const unlistenToStateData = listen<State[]>('load-state-data', (data) => {
       console.log(data.payload)
-      const sub_states: (SubState & { state_name: string })[] = []
-      data.payload.forEach((state) => {
-        state.sub_states.forEach((sub_state) => {
-          sub_states.push({ ...sub_state, state_name: state.name })
-        })
-      })
-
-      const geojsonData: FeatureCollection<Geometry, { name: string, color: string }> = {
-        type: "FeatureCollection",
-        features: sub_states.map((substate) => {
-          return {
-            type: "Feature",
-            properties: {
-              name: `${substate.state_name} - ${substate.owner}`,
-              color: substate.provinces[0]
-            },
-            geometry: {
-              type: "Polygon",
-              coordinates: substate.coordinates
-            }
-          }
-        })
-      }
-      setStateData(geojsonData)
     })
     return () => {
-      unlistenToProvinceData.then((unlisten) => unlisten())
+      unlistenToStateData.then((unlisten) => unlisten())
     }
   }, [])
 
   useEffect(() => {
-    const unlistenToCountryData = listen<State[]>('load-country-data', (data) => {
+    const unlistenToCountryData = listen<Country[]>('load-country-data', (data) => {
       console.log(data.payload)
+      const geojsonData: FeatureCollection<Geometry, { name: string, color: string }> = {
+        type: "FeatureCollection",
+        features: data.payload.map((country) => {
+          return {
+            type: "Feature",
+            properties: {
+              name: country.name,
+              color: country.color
+            },
+            geometry: {
+              type: "Polygon",
+              coordinates: country.coordinates
+            }
+          }
+        })
+      }
+      setCountryData(geojsonData)
     })
     return () => {
       unlistenToCountryData.then((unlisten) => unlisten())
@@ -134,7 +133,7 @@ export default function Map() {
       { flatmap ? <ImageOverlay url={flatmap} bounds={bounds} /> : null }
       { landMask ? <ImageOverlay url={landMask} bounds={bounds} /> : null }
       { flatmapOverlay ? <ImageOverlay url={flatmapOverlay} bounds={bounds} /> : null }
-      { stateData ? <GeoJSON data={stateData} style={polygonStyle} /> : null }
+      { countryData ? <GeoJSON data={countryData} style={polygonStyle} /> : null }
     </MapContainer>
   ) 
 }

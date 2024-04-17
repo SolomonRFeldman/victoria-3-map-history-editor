@@ -7,6 +7,7 @@ pub struct Country {
   pub name: String,
   pub color: String,
   pub states: Vec<State>,
+  pub coordinates: Vec<Vec<(f32, f32)>>,
 }
 
 #[derive(Serialize, Clone)]
@@ -20,6 +21,7 @@ pub fn get_countries(state_histories: Vec<StateHistory>) -> Vec<Country> {
 
   for state_history in state_histories {
     let state_history_copy = state_history.clone();
+
     for state in state_history.sub_states {
       let country = countries.iter_mut().find(|country| country.name == state.owner);
 
@@ -31,7 +33,8 @@ pub fn get_countries(state_histories: Vec<StateHistory>) -> Vec<Country> {
           });
         },
         None => {
-          let color = format!("#{:02x}{:02x}{:02x}", state.owner.chars().nth(0).unwrap() as u8, state.owner.chars().nth(1).unwrap() as u8, state.owner.chars().nth(2).unwrap() as u8);
+          let color = format!("x{:02x}{:02x}{:02x}", state.owner.chars().nth(0).unwrap() as u8, state.owner.chars().nth(1).unwrap() as u8, state.owner.chars().nth(2).unwrap() as u8);
+
           countries.push(Country {
             name: state.owner,
             color,
@@ -39,6 +42,7 @@ pub fn get_countries(state_histories: Vec<StateHistory>) -> Vec<Country> {
               name: state_history_copy.name.clone(),
               provinces: state.provinces,
             }],
+            coordinates: vec![],
           });
         },
       }
