@@ -56,9 +56,9 @@ impl GameFolder {
   }
 
   fn load_provinces(&self, event: &WindowMenuEvent) {
-    match event.window().emit("load-province-data", province_map_to_geojson(self.provinces())) {
-      Ok(_) => println!("Sent load-province-data to frontend"),
-      Err(e) => println!("Failed to send load-province-data to frontend: {:?}", e),
+    match event.window().emit("load-province-coords", province_map_to_geojson(self.provinces())) {
+      Ok(_) => println!("Sent load-province-coords to frontend"),
+      Err(e) => println!("Failed to send load-province-coords to frontend: {:?}", e),
     }
   }
   

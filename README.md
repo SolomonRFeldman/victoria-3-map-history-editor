@@ -6,7 +6,7 @@ Immediate TO-DO in order of priority:
 - [x] Render country bounding boxes
 - [x] Click on country to reveal its states
 - [ ] Transfer selected state to selected country
-- [ ] Click on state to reveal its provinces
+- [x] Click on state to reveal its provinces
 - [ ] Transfer selected province to selected country
 - [ ] Persist state and province transfers as pdx script
 - [ ] Allow opening of working directory, save state and province transfer data there

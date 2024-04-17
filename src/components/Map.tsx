@@ -8,7 +8,7 @@ import { exists } from '@tauri-apps/api/fs'
 import { convertFileSrc } from '@tauri-apps/api/tauri'
 import { FeatureCollection, Feature, Geometry } from 'geojson'
 
-type Provinces = {
+type ProvincesCoords = {
   [key: string]: [number, number][][]
 }
 
@@ -48,11 +48,13 @@ export default function Map() {
   const [flatmap, setFlatmap] = useState<null | string>(null)
   const [flatmapOverlay, setFlatmapOverlay] = useState<null | string>('')
   const [landMask, setLandMask] = useState<null | string>('')
-  const [, setProvinceData] = useState<Provinces | null>(null)
   const [countryData, setCountryData] = useState<FeatureCollection | null>(null)
   const [stateData, setStateData] = useState<FeatureCollection | null>(null)
+  const [provinceData, setProvinceData] = useState<FeatureCollection | null>(null)
   const [stateCoords, setStateCoords] = useState<StateCoords>({})
+  const [provinceCoords, setProvinceCoords] = useState<ProvincesCoords>({})
   const [selectedCountry, setSelectedCountry] = useState('')
+  const [selectedState, setSelectedState] = useState('')
 
   useEffect(() => {
     const unlistenToFlatmap = listen<String>('load-flatmap', () => {
@@ -78,12 +80,12 @@ export default function Map() {
   }, [])
 
   useEffect(() => {
-    const unlistenToProvinceData = listen<Provinces>('load-province-data', (data) => {
+    const unlistenToProvinceCoords = listen<ProvincesCoords>('load-province-coords', (data) => {
       console.log(data.payload)
-      setProvinceData(data.payload)
+      setProvinceCoords(data.payload)
     })
     return () => {
-      unlistenToProvinceData.then((unlisten) => unlisten())
+      unlistenToProvinceCoords.then((unlisten) => unlisten())
     }
   }, [])
 
@@ -138,7 +140,16 @@ export default function Map() {
     }
   }
 
-  const handleGeoJSONEvent = (event: LeafletMouseEvent) => {
+  const provinceStyle = (feature?: Feature<Geometry, { name: string }>) => {
+    return {
+      fillColor: feature ? feature.properties.name.replace('x', '#') : 'transparent',
+      fillOpacity: 0.5,
+      color: 'black',
+      weight: 2
+    }
+  }
+
+  const handleClickCountry = (event: LeafletMouseEvent) => {
     const country = event.sourceTarget.feature.properties as Country
     const geojsonData: FeatureCollection<Geometry, State> = {
       type: "FeatureCollection",
@@ -154,8 +165,34 @@ export default function Map() {
       })
     }
 
+    setProvinceData(null)
+    setSelectedState('')
     setStateData(geojsonData)
     setSelectedCountry(country.name)
+  }
+
+  const handleClickState = (event: LeafletMouseEvent) => {
+    const state = event.sourceTarget.feature.properties as State
+    if (!state.provinces.every((province) => provinceCoords[province] !== undefined)) {
+      console.log(`Provinces data for ${state.name} not found`)
+      console.log(state.provinces)
+      return
+    }
+    const geojsonData: FeatureCollection<Geometry, { name: string }> = {
+      type: "FeatureCollection",
+      features: state.provinces.map((province) => {
+        return {
+          type: "Feature",
+          properties: { name: province },
+          geometry: {
+            type: "Polygon",
+            coordinates: provinceCoords[province]
+          }
+        }
+      })
+    }
+    setProvinceData(geojsonData)
+    setSelectedState(state.name)
   }
 
   return (
@@ -163,8 +200,9 @@ export default function Map() {
       { flatmap && <ImageOverlay url={flatmap} bounds={bounds} /> }
       { landMask && <ImageOverlay url={landMask} bounds={bounds} /> }
       { flatmapOverlay && <ImageOverlay url={flatmapOverlay} bounds={bounds} /> }
-      { countryData && <GeoJSON data={countryData} style={countryStyle} eventHandlers={{ click: handleGeoJSONEvent }} /> }
-      { stateData && <GeoJSON data={stateData} key={selectedCountry} style={stateStyle} /> }
+      { countryData && <GeoJSON data={countryData} style={countryStyle} eventHandlers={{ click: handleClickCountry }} /> }
+      { stateData && <GeoJSON data={stateData} key={selectedCountry} style={stateStyle} eventHandlers={{ click: handleClickState }} /> }
+      { provinceData && <GeoJSON data={provinceData} key={selectedState} style={provinceStyle} /> }
     </MapContainer>
   ) 
 }
