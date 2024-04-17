@@ -130,10 +130,10 @@ export default function Map() {
 
   return (
     <MapContainer center={[0, 0]} minZoom={-2} maxZoom={2} doubleClickZoom={false} crs={CRS.Simple} bounds={bounds}>
-      { flatmap ? <ImageOverlay url={flatmap} bounds={bounds} /> : null }
-      { landMask ? <ImageOverlay url={landMask} bounds={bounds} /> : null }
-      { flatmapOverlay ? <ImageOverlay url={flatmapOverlay} bounds={bounds} /> : null }
-      { countryData ? <GeoJSON data={countryData} style={polygonStyle} /> : null }
+      { flatmap && <ImageOverlay url={flatmap} bounds={bounds} /> }
+      { landMask && <ImageOverlay url={landMask} bounds={bounds} /> }
+      { flatmapOverlay && <ImageOverlay url={flatmapOverlay} bounds={bounds} /> }
+      { countryData && <GeoJSON data={countryData} style={polygonStyle} /> }
     </MapContainer>
   ) 
 }
