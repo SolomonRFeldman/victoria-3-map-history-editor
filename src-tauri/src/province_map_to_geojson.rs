@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fs, path::PathBuf};
 use image::{io::Reader as ImageReader, Rgb};
-use crate::get_states::{State, SubState};
+use crate::{get_countries::Country, get_states::{State, SubState}};
 
 #[derive(Clone)]
 enum Direction {
@@ -277,4 +277,61 @@ pub fn state_map_to_geojson(province_map: PathBuf, state_map: PathBuf, states: V
       sub_states: sub_states_with_coords
     }
   }).collect::<Vec<State>>()
+}
+
+pub fn country_map_to_geojson(state_map: PathBuf, country_map: PathBuf, countries: Vec<Country>) -> Vec<Country> {
+  if fs::metadata(&country_map).is_err() {
+    let mut color_map = HashMap::<Rgb<u8>, Rgb<u8>>::new();
+    countries.iter().for_each(|country| {
+      let r = u8::from_str_radix(&country.color[1..3], 16).ok().unwrap();
+      let g = u8::from_str_radix(&country.color[3..5], 16).ok().unwrap();
+      let b = u8::from_str_radix(&country.color[5..7], 16).ok().unwrap();
+      let color_to_turn = Rgb([r, g, b]);
+
+      country.states.iter().for_each(|state| {
+        let state_color_id = &state.provinces[0];
+        let r = u8::from_str_radix(&state_color_id[1..3], 16).ok().unwrap();
+        let g = u8::from_str_radix(&state_color_id[3..5], 16).ok().unwrap();
+        let b = u8::from_str_radix(&state_color_id[5..7], 16).ok().unwrap();
+
+        color_map.insert(Rgb([r, g, b]), color_to_turn);
+      });
+    });
+    
+    let mut state_map_image = ImageReader::open(state_map).unwrap().decode().unwrap().into_rgb8();
+  
+    state_map_image.enumerate_pixels_mut().for_each(|(_, _, pixel)| {
+      let color = color_map.get(&pixel).unwrap_or(&Rgb([0, 0, 0]));
+      *pixel = *color;
+    });
+    state_map_image.save(&country_map).unwrap();
+  } else {
+    println!("Country map already in cache");
+  }
+
+  let country_borders = province_map_to_geojson(country_map);
+
+  countries.iter().map(|country| {
+    let country_coords = country_borders.get(&format!("x{}", &country.color[1..].to_uppercase()));
+
+    match country_coords {
+      Some(geometries) => {
+        Country {
+          name: country.name.clone(),
+          color: country.color.clone(),
+          states: country.states.clone(),
+          coordinates: geometries.to_vec()
+        }
+      },
+      None => {
+        println!("No geometries for country: {:?}, {:?}", country.name, country.color);
+        Country {
+          name: country.name.clone(),
+          color: country.color.clone(),
+          states: country.states.clone(),
+          coordinates: vec![]
+        }
+      }
+    }
+  }).collect::<Vec<Country>>()
 }
