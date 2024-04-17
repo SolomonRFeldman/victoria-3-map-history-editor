@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use image_dds::image::Rgba;
 use tauri::{Manager, WindowMenuEvent};
-use crate::{dds_to_png::DdsToPng, get_states::get_states, province_map_to_geojson::{province_map_to_geojson, state_map_to_geojson}};
+use crate::{dds_to_png::DdsToPng, get_countries::get_countries, get_states::get_states, province_map_to_geojson::{province_map_to_geojson, state_map_to_geojson}};
 
 const FLATMAP_PATH: &str = "game/dlc/dlc004_voice_of_the_people/gfx/map/textures/flatmap_votp.dds";
 const LAND_MASK_PATH: &str = "game/gfx/map/textures/land_mask.dds";
@@ -65,9 +65,15 @@ impl GameFolder {
     let states = get_states(self.states());
     let states_with_coords = state_map_to_geojson(self.provinces(), cache_dir(event).join("states.png"), states);
 
-    match event.window().emit("load-state-data", states_with_coords) {
+    match event.window().emit("load-state-data", &states_with_coords) {
       Ok(_) => println!("Sent load-state-data to frontend"),
       Err(e) => println!("Failed to send load-state-data to frontend: {:?}", e),
+    }
+
+    let countries = get_countries(states_with_coords);
+    match event.window().emit("load-country-data", countries) {
+      Ok(_) => println!("Sent load-country-data to frontend"),
+      Err(e) => println!("Failed to send load-country-data to frontend: {:?}", e),
     }
   }
 

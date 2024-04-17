@@ -111,6 +111,15 @@ export default function Map() {
     }
   }, [])
 
+  useEffect(() => {
+    const unlistenToCountryData = listen<State[]>('load-country-data', (data) => {
+      console.log(data.payload)
+    })
+    return () => {
+      unlistenToCountryData.then((unlisten) => unlisten())
+    }
+  }, [])
+
   const polygonStyle = (feature?: Feature<Geometry, { name: string, color: string }>) => {
     return {
       fillColor: feature ? feature.properties.color.replace('x', '#') : 'transparent',
