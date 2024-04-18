@@ -126,6 +126,16 @@ export default function Map() {
     console.log(countries)
   }, [countries])
 
+  useEffect(() => {
+    const handleEscapePress = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        if (selectedState) { setSelectedState(null) } else if (selectedCountry) { setSelectedCountry(null) }
+      }
+    }
+    window.addEventListener('keydown', handleEscapePress)
+    return () => window.removeEventListener('keydown', handleEscapePress)
+  }, [selectedCountry, selectedState])
+
   return (
     <MapContainer center={[0, 0]} minZoom={-2} maxZoom={2} doubleClickZoom={false} crs={CRS.Simple} bounds={bounds}>
       <Background bounds={bounds} />
