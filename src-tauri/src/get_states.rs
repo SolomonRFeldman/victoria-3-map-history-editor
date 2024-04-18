@@ -32,8 +32,13 @@ fn get_sub_states_from_state(state: &Vec<JsonValue>) -> State {
     let sub_state_provinces = sub_state_data.iter().find(|item| item[0] == "owned_provinces").unwrap().as_array().unwrap()[1].as_array().unwrap();
     let sub_state_owner = &sub_state_data.iter().find(|item| item[0] == "country").unwrap().as_array().unwrap()[1].as_str().unwrap()[2..];
 
+    let filtered_sub_state_provinces = sub_state_provinces.iter()
+      .map(|province| province.as_str().unwrap().trim_matches('"').to_string()).collect::<Vec<String>>().iter()
+      .filter(|province| province.len() == 7 && province.chars().nth(0).unwrap() == 'x' ).collect::<Vec<&String>>().iter()
+      .map(|province| format!("x{}", province[1..].to_uppercase())).collect::<Vec<String>>();
+
     SubState {
-      provinces: sub_state_provinces.iter().map(|province| format!("x{}", province.as_str().unwrap().trim_matches('"')[1..].to_uppercase().to_string())).collect::<Vec<String>>(),
+      provinces: filtered_sub_state_provinces,
       owner: sub_state_owner.to_string(),
       coordinates: vec![]
     }
