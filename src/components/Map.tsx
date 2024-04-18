@@ -80,7 +80,7 @@ export default function Map() {
       countries[toCountryIndex] = transferStateResponse.to_country
       countries[fromCountryIndex] = transferStateResponse.from_country
 
-      setSelectedState(null)
+      setSelectedState((state) => state?.name === selectedState.name ? null : state)
       setSelectedCountry(transferStateResponse.from_country)
 
       setCountries([...countries])
