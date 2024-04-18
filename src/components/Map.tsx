@@ -33,7 +33,6 @@ export default function Map() {
   const [provinceCoords, setProvinceCoords] = useState<ProvincesCoords>({})
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null)
   const [selectedState, setSelectedState] = useState<State | null>(null)
-  const [stateToTransfer, setStateToTransfer] = useState<State | null>(null)
   const [renderBreaker, setRenderBreaker] = useState(Date.now())
   const forceRerender = () => setRenderBreaker(Date.now())
 
@@ -62,18 +61,17 @@ export default function Map() {
   }, [])
 
   const handleControlClickCountry = async (event: LeafletMouseEvent) => {
-    if (selectedCountry && stateToTransfer) {
-      setStateToTransfer(null)
+    if (selectedCountry && selectedState) {
       const toCountry = event.sourceTarget.feature.properties as Country
       const transferStateResponse = await invoke<TransferStateResponse>("transfer_state", { 
-        state: stateToTransfer.name,
+        state: selectedState.name,
         fromCountry: selectedCountry,
         toCountry,
-        fromCoords: stateCoords[`${selectedCountry.name}:${stateToTransfer.name}`],
-        toCoords: stateCoords[`${toCountry.name}:${stateToTransfer.name}`] || [] 
+        fromCoords: stateCoords[`${selectedCountry.name}:${selectedState.name}`],
+        toCoords: stateCoords[`${toCountry.name}:${selectedState.name}`] || [] 
       })
       console.log(transferStateResponse)
-      const stateCoordsCopy = { ...stateCoords, [`${toCountry.name}:${stateToTransfer.name}`]: transferStateResponse.state_coords }
+      const stateCoordsCopy = { ...stateCoords, [`${toCountry.name}:${selectedState.name}`]: transferStateResponse.state_coords }
       setStateCoords(stateCoordsCopy)
 
       const fromCountryIndex = countries.findIndex((country) => country.name === selectedCountry.name)
@@ -82,6 +80,7 @@ export default function Map() {
       countries[toCountryIndex] = transferStateResponse.to_country
       countries[fromCountryIndex] = transferStateResponse.from_country
 
+      setSelectedState(null)
       setSelectedCountry(transferStateResponse.from_country)
 
       setCountries([...countries])
@@ -94,18 +93,11 @@ export default function Map() {
 
     const country = event.sourceTarget.feature.properties as Country
     setSelectedState(null)
-    setStateToTransfer(null)
+    setSelectedState(null)
     setSelectedCountry(country)
   }
 
-  const handleControlClickState = (event: LeafletMouseEvent) => {
-    console.log(event.sourceTarget.feature.properties)
-    setStateToTransfer(event.sourceTarget.feature.properties as State)
-  }
-
   const handleClickState = (event: LeafletMouseEvent) => {
-    if (event.originalEvent.ctrlKey) { return handleControlClickState(event) }
-
     const state = event.sourceTarget.feature.properties as State
     if (!state.provinces.every((province) => provinceCoords[province] !== undefined)) {
       console.log(`Provinces data for ${state.name} not found`)
