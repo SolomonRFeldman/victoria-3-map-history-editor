@@ -93,7 +93,6 @@ export default function Map() {
 
     const country = event.sourceTarget.feature.properties as Country
     setSelectedState(null)
-    setSelectedState(null)
     setSelectedCountry(country)
   }
 
@@ -101,7 +100,6 @@ export default function Map() {
     const state = event.sourceTarget.feature.properties as State
     if (!state.provinces.every((province) => provinceCoords[province] !== undefined)) {
       console.log(`Provinces data for ${state.name} not found`)
-      console.log(state.provinces)
       return
     }
     setSelectedState(state)
