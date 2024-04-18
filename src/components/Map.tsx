@@ -63,25 +63,25 @@ export default function Map() {
   const handleControlClickCountry = async (event: LeafletMouseEvent) => {
     if (selectedCountry && selectedState) {
       const toCountry = event.sourceTarget.feature.properties as Country
-      const transferStateResponse = await invoke<TransferStateResponse>("transfer_state", { 
+      const { to_country: responseToCountry, from_country: responseFromCountry, state_coords: responseStateCoords } = await invoke<TransferStateResponse>("transfer_state", { 
         state: selectedState.name,
         fromCountry: selectedCountry,
         toCountry,
         fromCoords: stateCoords[`${selectedCountry.name}:${selectedState.name}`],
         toCoords: stateCoords[`${toCountry.name}:${selectedState.name}`] || [] 
       })
-      console.log(transferStateResponse)
-      const stateCoordsCopy = { ...stateCoords, [`${toCountry.name}:${selectedState.name}`]: transferStateResponse.state_coords }
+
+      const stateCoordsCopy = { ...stateCoords, [`${toCountry.name}:${selectedState.name}`]: responseStateCoords }
       setStateCoords(stateCoordsCopy)
 
       const fromCountryIndex = countries.findIndex((country) => country.name === selectedCountry.name)
       const toCountryIndex = countries.findIndex((country) => country.name === toCountry.name)
 
-      countries[toCountryIndex] = transferStateResponse.to_country
-      countries[fromCountryIndex] = transferStateResponse.from_country
+      countries[toCountryIndex] = responseToCountry
+      responseFromCountry.states.length > 0 ? countries[fromCountryIndex] = responseFromCountry : countries.splice(fromCountryIndex, 1)
 
       setSelectedState((state) => state?.name === selectedState.name ? null : state)
-      setSelectedCountry((country) => country?.name === selectedCountry.name ? transferStateResponse.from_country : country)
+      setSelectedCountry((country) => country?.name === selectedCountry.name ? responseFromCountry : country)
 
       setCountries([...countries])
       forceRerender()
