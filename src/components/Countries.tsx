@@ -41,5 +41,5 @@ export default function Countries({ countries, renderBreaker, eventHandlers }: C
     })
   }
 
-  return countryData && <GeoJSON data={countryData} key={renderBreaker} style={countryStyle} eventHandlers={eventHandlers} />
+  return <GeoJSON data={countryData} key={renderBreaker} style={countryStyle} eventHandlers={eventHandlers} />
 }
