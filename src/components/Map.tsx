@@ -5,21 +5,23 @@ import { useEffect, useState } from 'react'
 import { listen } from '@tauri-apps/api/event'
 import { appCacheDir, join } from '@tauri-apps/api/path'
 import { exists } from '@tauri-apps/api/fs'
-import { convertFileSrc } from '@tauri-apps/api/tauri'
+import { convertFileSrc, invoke } from '@tauri-apps/api/tauri'
 import { FeatureCollection, Feature, Geometry } from 'geojson'
 
+type Coords = [number, number][][]
+
 type ProvincesCoords = {
-  [key: string]: [number, number][][]
+  [key: string]: Coords
 }
 
 type StateCoords = {
-  [key: string]: [number, number][][]
+  [key: string]: Coords
 }
 
 type Country = {
   name: string,
   color: string,
-  coordinates: [number, number][][],
+  coordinates: Coords,
   states: State[]
 }
 
@@ -27,6 +29,12 @@ type State = {
   name: string,
   color: string
   provinces: string[]
+}
+
+type TransferStateResponse = {
+  to_country: Country,
+  from_country: Country,
+  state_coords: Coords
 }
 
 const flatmapFileName = 'flatmap_votp.png'
@@ -48,13 +56,16 @@ export default function Map() {
   const [flatmap, setFlatmap] = useState<null | string>(null)
   const [flatmapOverlay, setFlatmapOverlay] = useState<null | string>('')
   const [landMask, setLandMask] = useState<null | string>('')
-  const [countryData, setCountryData] = useState<FeatureCollection | null>(null)
+  const [countries, setCountries] = useState<Country[]>([])
   const [stateData, setStateData] = useState<FeatureCollection | null>(null)
   const [provinceData, setProvinceData] = useState<FeatureCollection | null>(null)
   const [stateCoords, setStateCoords] = useState<StateCoords>({})
   const [provinceCoords, setProvinceCoords] = useState<ProvincesCoords>({})
-  const [selectedCountry, setSelectedCountry] = useState('')
+  const [selectedCountry, setSelectedCountry] = useState<Country | null>(null)
   const [selectedState, setSelectedState] = useState('')
+  const [stateToTransfer, setStateToTransfer] = useState<State | null>(null)
+  const [renderBreaker, setRenderBreaker] = useState(Date.now())
+  const forceRerender = () => setRenderBreaker(Date.now())
 
   useEffect(() => {
     const unlistenToFlatmap = listen<String>('load-flatmap', () => {
@@ -115,7 +126,8 @@ export default function Map() {
           }
         })
       }
-      setCountryData(geojsonData)
+      setCountries(data.payload)
+      forceRerender()
     })
     return () => {
       unlistenToCountryData.then((unlisten) => unlisten())
@@ -149,7 +161,52 @@ export default function Map() {
     }
   }
 
+  const handleControlClickCountry = async (event: LeafletMouseEvent) => {
+    if (selectedCountry && stateToTransfer) {
+      setStateToTransfer(null)
+      const toCountry = event.sourceTarget.feature.properties as Country
+      const transferStateResponse = await invoke<TransferStateResponse>("transfer_state", { 
+        state: stateToTransfer.name,
+        fromCountry: selectedCountry,
+        toCountry,
+        fromCoords: stateCoords[`${selectedCountry.name}:${stateToTransfer.name}`],
+        toCoords: stateCoords[`${toCountry.name}:${stateToTransfer.name}`] || [] 
+      })
+      console.log(transferStateResponse)
+      const stateCoordsCopy = { ...stateCoords, [`${toCountry.name}:${stateToTransfer.name}`]: transferStateResponse.state_coords }
+      setStateCoords(stateCoordsCopy)
+
+      const fromCountryIndex = countries.findIndex((country) => country.name === selectedCountry.name)
+      const toCountryIndex = countries.findIndex((country) => country.name === toCountry.name)
+
+      countries[toCountryIndex] = transferStateResponse.to_country
+      countries[fromCountryIndex] = transferStateResponse.from_country
+
+      
+      const geojsonData: FeatureCollection<Geometry, State> = {
+        type: "FeatureCollection",
+        features: transferStateResponse.from_country.states.map((state) => {
+          return {
+            type: "Feature",
+            properties: state,
+            geometry: {
+              type: "Polygon",
+              coordinates: stateCoords[`${transferStateResponse.from_country.name}:${state.name}`]
+            }
+          }
+        })
+      }
+      setStateData(geojsonData)
+      setSelectedCountry(transferStateResponse.from_country)
+
+      setCountries([...countries])
+      forceRerender()
+    }
+  }
+
   const handleClickCountry = (event: LeafletMouseEvent) => {
+    if (event.originalEvent.ctrlKey) { return handleControlClickCountry(event) }
+
     const country = event.sourceTarget.feature.properties as Country
     const geojsonData: FeatureCollection<Geometry, State> = {
       type: "FeatureCollection",
@@ -168,10 +225,17 @@ export default function Map() {
     setProvinceData(null)
     setSelectedState('')
     setStateData(geojsonData)
-    setSelectedCountry(country.name)
+    setSelectedCountry(country)
+  }
+
+  const handleControlClickState = (event: LeafletMouseEvent) => {
+    console.log(event.sourceTarget.feature.properties)
+    setStateToTransfer(event.sourceTarget.feature.properties as State)
   }
 
   const handleClickState = (event: LeafletMouseEvent) => {
+    if (event.originalEvent.ctrlKey) { return handleControlClickState(event) }
+
     const state = event.sourceTarget.feature.properties as State
     if (!state.provinces.every((province) => provinceCoords[province] !== undefined)) {
       console.log(`Provinces data for ${state.name} not found`)
@@ -194,14 +258,32 @@ export default function Map() {
     setProvinceData(geojsonData)
     setSelectedState(state.name)
   }
+  
+  const countryData: FeatureCollection<Geometry, Country> = {
+    type: "FeatureCollection",
+    features: countries.map((country) => {
+      return {
+        type: "Feature",
+        properties: country,
+        geometry: {
+          type: "Polygon",
+          coordinates: country.coordinates
+        }
+      }
+    })
+  }
+
+  useEffect(() => {
+    console.log(countries)
+  }, [countries])
 
   return (
     <MapContainer center={[0, 0]} minZoom={-2} maxZoom={2} doubleClickZoom={false} crs={CRS.Simple} bounds={bounds}>
       { flatmap && <ImageOverlay url={flatmap} bounds={bounds} /> }
       { landMask && <ImageOverlay url={landMask} bounds={bounds} /> }
       { flatmapOverlay && <ImageOverlay url={flatmapOverlay} bounds={bounds} /> }
-      { countryData && <GeoJSON data={countryData} style={countryStyle} eventHandlers={{ click: handleClickCountry }} /> }
-      { stateData && <GeoJSON data={stateData} key={selectedCountry} style={stateStyle} eventHandlers={{ click: handleClickState }} /> }
+      { countryData && <GeoJSON data={countryData} key={renderBreaker} style={countryStyle} eventHandlers={{ click: handleClickCountry }} /> }
+      { stateData && <GeoJSON data={stateData} key={selectedCountry ? selectedCountry.name + renderBreaker : undefined} style={stateStyle} eventHandlers={{ click: handleClickState }} /> }
       { provinceData && <GeoJSON data={provinceData} key={selectedState} style={provinceStyle} /> }
     </MapContainer>
   ) 

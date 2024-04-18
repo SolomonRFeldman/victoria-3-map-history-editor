@@ -1,8 +1,8 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::get_states::State as StateHistory;
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Country {
   pub name: String,
   pub color: String,
@@ -10,7 +10,7 @@ pub struct Country {
   pub coordinates: Vec<Vec<(f32, f32)>>,
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct State {
   pub name: String,
   pub provinces: Vec<String>,
