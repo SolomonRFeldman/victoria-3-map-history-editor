@@ -42,28 +42,21 @@ export default function Map() {
       console.log(data.payload)
       setProvinceCoords(data.payload)
     })
-    return () => {
-      unlistenToProvinceCoords.then((unlisten) => unlisten())
-    }
-  }, [])
 
-  useEffect(() => {
     const unlistenToStateData = listen<StateCoords>('load-state-coords', (data) => {
       console.log(data.payload)
       setStateCoords(data.payload)
     })
-    return () => {
-      unlistenToStateData.then((unlisten) => unlisten())
-    }
-  }, [])
 
-  useEffect(() => {
     const unlistenToCountryData = listen<Country[]>('load-country-data', (data) => {
       console.log(data.payload)
       setCountries(data.payload)
       forceRerender()
     })
+
     return () => {
+      unlistenToProvinceCoords.then((unlisten) => unlisten())
+      unlistenToStateData.then((unlisten) => unlisten())
       unlistenToCountryData.then((unlisten) => unlisten())
     }
   }, [])
@@ -121,10 +114,6 @@ export default function Map() {
     }
     setSelectedState(state)
   }
-
-  useEffect(() => {
-    console.log(countries)
-  }, [countries])
 
   useEffect(() => {
     const handleEscapePress = (event: KeyboardEvent) => {
