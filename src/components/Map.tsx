@@ -47,6 +47,17 @@ const getStateCoords = async () => {
   return JSON.parse(fileContents) as StateCoords
 }
 
+const getCountries = async () => {
+  const cacheDir = await appCacheDir()
+  const path = `${cacheDir}/countries.json`
+  const fileExists = await exists(path)
+  
+  if (!fileExists) { return [] }
+
+  const fileContents = await readTextFile(`${cacheDir}/countries.json`);
+  return JSON.parse(fileContents) as Country[]
+}
+
 export default function Map() {
   const [countries, setCountries] = useState<Country[]>([])
   const [stateCoords, setStateCoords] = useState<StateCoords>({})
@@ -70,13 +81,19 @@ export default function Map() {
       })
     })
 
-    const unlistenToCountryData = listen<Country[]>('load-country-data', (data) => {
-      console.log(data.payload)
-      setCountries(data.payload)
-      forceRerender()
+    const unlistenToCountryData = listen<Country[]>('load-country-data', () => {
+      getCountries().then((countries) => {
+        console.log(countries)
+        setCountries(countries)
+        forceRerender()
+      })
     })
 
     getStateCoords().then((stateCoords) => setStateCoords(stateCoords))
+    getCountries().then((countries) => {
+      setCountries(countries)
+      forceRerender()
+    })
 
     return () => {
       unlistenToProvinceCoords.then((unlisten) => unlisten())

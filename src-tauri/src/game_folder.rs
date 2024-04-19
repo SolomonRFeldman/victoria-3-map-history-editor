@@ -87,7 +87,9 @@ impl GameFolder {
   fn load_countries(&self, event: &WindowMenuEvent) {
     let countries = get_countries(get_states(self.states()));
     let countries_with_coords = country_map_to_geojson(cache_dir(event).join("states.png"), cache_dir(event).join("countries.png"), countries.clone());
-    match event.window().emit("load-country-data", countries_with_coords) {
+    std::fs::write(cache_dir(event).join("countries.json"), serde_json::to_string(&countries_with_coords).unwrap()).unwrap();
+
+    match event.window().emit("load-country-data", true) {
       Ok(_) => println!("Sent load-country-data to frontend"),
       Err(e) => println!("Failed to send load-country-data to frontend: {:?}", e),
     }
