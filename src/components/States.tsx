@@ -14,11 +14,12 @@ export type State = {
 type StatesProps = {
   country: Country
   stateCoords: { [key: string]: Coords }
+  selectedState: State | null
   renderBreaker: number
   eventHandlers: LeafletEventHandlerFnMap
 }
 
-export default function States({ country, stateCoords, renderBreaker, eventHandlers }: StatesProps) {
+export default function States({ country, stateCoords, selectedState, renderBreaker, eventHandlers }: StatesProps) {
   const stateStyle = (feature?: Feature<Geometry, State>) => {
     return {
       fillColor: feature ? feature.properties.provinces[0].replace('x', '#') : 'transparent',
@@ -28,9 +29,11 @@ export default function States({ country, stateCoords, renderBreaker, eventHandl
     }
   }
 
+  const states = country.states.filter((state) => state.name != selectedState?.name)
+
   const stateData: FeatureCollection<Geometry, State> = {
     type: "FeatureCollection",
-    features: country.states.map((state) => {
+    features: states.map((state) => {
       return {
         type: "Feature",
         properties: state,
@@ -42,5 +45,5 @@ export default function States({ country, stateCoords, renderBreaker, eventHandl
     })
   }
 
-  return <GeoJSON data={stateData} key={country.name + renderBreaker} style={stateStyle} eventHandlers={eventHandlers} />
+  return <GeoJSON data={stateData} key={country.name + selectedState?.name + renderBreaker} style={stateStyle} eventHandlers={eventHandlers} />
 }
