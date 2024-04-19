@@ -12,8 +12,9 @@ mod transfer_state;
 mod transfer_provinces;
 mod geo_converters;
 
+use std::{collections::HashMap, thread};
 use get_countries::Country;
-use tauri::{App, Manager};
+use tauri::{App, Manager, Window};
 use main_menu::MainMenu;
 use transfer_state::{transfer_state as handle_transfer_state, TransferStateResponse};
 use transfer_provinces::{transfer_province as handle_transfer_province, TransferProvinceResponse};
@@ -28,6 +29,14 @@ fn transfer_state(state: String, from_country: Country, to_country: Country, fro
 fn transfer_province(state: String, province: String, from_country: Country, to_country: Country, from_coords: Vec<Vec<(f32, f32)>>, to_coords: Vec<Vec<(f32, f32)>>, province_coords: Vec<Vec<(f32, f32)>>) -> TransferProvinceResponse {
   handle_transfer_province(&state, &province, from_country, to_country, from_coords, to_coords, province_coords)
 }
+#[tauri::command]
+fn cache_state(window: Window, countries: Vec<Country>, states: HashMap<String, Vec<Vec<(f32, f32)>>>) {
+  thread::spawn(move || {
+    let cache_dir = window.app_handle().path_resolver().app_cache_dir().unwrap();
+    std::fs::write(cache_dir.join("states.json"), serde_json::to_string(&states).unwrap()).unwrap();
+    std::fs::write(cache_dir.join("countries.json"), serde_json::to_string(&countries).unwrap()).unwrap();
+  });
+}
 
 fn main() {
     tauri::Builder::default()
@@ -40,7 +49,7 @@ fn main() {
         })
         .menu(MainMenu::create_menu())
         .on_menu_event(MainMenu::handler)
-        .invoke_handler(tauri::generate_handler![transfer_state, transfer_province])
+        .invoke_handler(tauri::generate_handler![transfer_state, transfer_province, cache_state])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

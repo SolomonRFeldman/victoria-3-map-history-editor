@@ -200,6 +200,17 @@ export default function Map() {
     return () => window.removeEventListener('keydown', handleEscapePress)
   }, [selectedCountry, selectedState, selectedProvince])
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (countries.length > 0 && Object.keys(stateCoords).length > 0) {
+        console.log("Caching state");
+        invoke<TransferProvinceResponse>("cache_state", { countries, states: stateCoords });
+      }
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [countries, stateCoords]
+)
+
   return (
     <MapContainer center={[0, 0]} minZoom={-2} maxZoom={2} doubleClickZoom={false} crs={CRS.Simple} bounds={bounds}>
       <Background bounds={bounds} />
