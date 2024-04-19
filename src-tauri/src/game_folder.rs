@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 use image_dds::image::Rgba;
 use tauri::{Manager, WindowMenuEvent};
 use crate::{dds_to_png::DdsToPng, get_countries::get_countries, get_states::get_states, province_map_to_geojson::{country_map_to_geojson, province_map_to_geojson, state_map_to_geojson}};
@@ -56,7 +56,18 @@ impl GameFolder {
   }
 
   fn load_provinces(&self, event: &WindowMenuEvent) {
-    match event.window().emit("load-province-coords", province_map_to_geojson(self.provinces())) {
+    let province_coords: HashMap<String, Vec<Vec<(f32, f32)>>> = match cache_dir(event).join("provinces.json").exists() {
+      true => {
+        let provinces = std::fs::read_to_string(cache_dir(event).join("provinces.json")).unwrap();
+        serde_json::from_str(&provinces).unwrap()
+      },
+      false => {
+        let provinces = province_map_to_geojson(self.provinces());
+        std::fs::write(cache_dir(event).join("provinces.json"), serde_json::to_string(&provinces).unwrap()).unwrap();
+        provinces
+      },
+    };
+    match event.window().emit("load-province-coords", province_coords) {
       Ok(_) => println!("Sent load-province-coords to frontend"),
       Err(e) => println!("Failed to send load-province-coords to frontend: {:?}", e),
     }
