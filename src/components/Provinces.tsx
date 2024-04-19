@@ -19,9 +19,12 @@ export default function Provinces({ state, provinceCoords, renderBreaker }: Prov
     }
   }
 
+  const hasAllProvinceData = state.provinces.every((province) => provinceCoords[province] !== undefined)
+  const featureProvinces = hasAllProvinceData ? state.provinces : []
+
   const provinceData: FeatureCollection<Geometry, { name: string }> = {
     type: "FeatureCollection",
-    features: state.provinces.map((province) => {
+    features: featureProvinces.map((province) => {
       return {
         type: "Feature",
         properties: { name: province },

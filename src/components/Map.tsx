@@ -98,10 +98,6 @@ export default function Map() {
 
   const handleClickState = (event: LeafletMouseEvent) => {
     const state = event.sourceTarget.feature.properties as State
-    if (!state.provinces.every((province) => provinceCoords[province] !== undefined)) {
-      console.log(`Provinces data for ${state.name} not found`)
-      return
-    }
     setSelectedState(state)
   }
 
