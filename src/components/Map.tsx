@@ -98,6 +98,9 @@ export default function Map() {
       getCountries().then((countries) => {
         console.log(countries)
         setCountries(countries)
+        setSelectedProvince(null)
+        setSelectedState(null)
+        setSelectedCountry(null)
         forceRerender()
       })
     })
