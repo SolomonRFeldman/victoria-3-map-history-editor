@@ -71,21 +71,26 @@ export default function Map() {
         toCoords: stateCoords[`${toCountry.name}:${selectedState.name}`] || [] 
       })
 
-      const stateCoordsCopy = { ...stateCoords, [`${toCountry.name}:${selectedState.name}`]: responseStateCoords }
-      setStateCoords(stateCoordsCopy)
-
-      const fromCountryIndex = countries.findIndex((country) => country.name === selectedCountry.name)
-      const toCountryIndex = countries.findIndex((country) => country.name === toCountry.name)
-
-      countries[toCountryIndex] = responseToCountry
-      responseFromCountry.states.length > 0 ? countries[fromCountryIndex] = responseFromCountry : countries.splice(fromCountryIndex, 1)
-
-      setSelectedState((state) => state?.name === selectedState.name ? null : state)
-      setSelectedCountry((country) => country?.name === selectedCountry.name ? responseFromCountry : country)
-
-      setCountries([...countries])
-      forceRerender()
+      handleTransferResponse({ toCountry: responseToCountry, fromCountry: responseFromCountry, toStateCoords: responseStateCoords, fromStateCoords: [], selectedState })
     }
+  }
+
+  const handleTransferResponse = ({ toCountry, fromCountry, toStateCoords, fromStateCoords, selectedState }: { toCountry: Country, fromCountry: Country, toStateCoords: Coords, fromStateCoords: Coords, selectedState: State }) => {
+    const stateCoordsCopy = { ...stateCoords, [`${toCountry.name}:${selectedState.name}`]: toStateCoords }
+    fromStateCoords.length > 0 ? stateCoordsCopy[`${fromCountry.name}:${selectedState.name}`] = fromStateCoords : delete stateCoordsCopy[`${fromCountry.name}:${selectedState.name}`]
+    setStateCoords(stateCoordsCopy)
+
+    const fromCountryIndex = countries.findIndex((country) => country.name === fromCountry.name)
+    const toCountryIndex = countries.findIndex((country) => country.name === toCountry.name)
+
+    countries[toCountryIndex] = toCountry
+    fromCountry.states.length > 0 ? countries[fromCountryIndex] = fromCountry : countries.splice(fromCountryIndex, 1)
+
+    setSelectedState((state) => state?.name === selectedState.name ? null : state)
+    setSelectedCountry((country) => country?.name === fromCountry.name ? fromCountry : country)
+
+    setCountries([...countries])
+    forceRerender()
   }
 
   const handleClickCountry = (event: LeafletMouseEvent) => {
