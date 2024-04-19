@@ -36,6 +36,17 @@ type TransferProvinceResponse = {
 
 const bounds: LatLngBoundsExpression = [[0, 0], [3616, 8192]]
 
+const getProvinceCoords = async () => {
+  const cacheDir = await appCacheDir()
+  const path = `${cacheDir}/provinces.json`
+  const fileExists = await exists(path)
+  
+  if (!fileExists) { return {} }
+
+  const fileContents = await readTextFile(`${cacheDir}/provinces.json`);
+  return JSON.parse(fileContents) as ProvincesCoords
+}
+
 const getStateCoords = async () => {
   const cacheDir = await appCacheDir()
   const path = `${cacheDir}/states.json`
@@ -69,9 +80,11 @@ export default function Map() {
   const forceRerender = () => setRenderBreaker(Date.now())
 
   useEffect(() => {
-    const unlistenToProvinceCoords = listen<ProvincesCoords>('load-province-coords', (data) => {
-      console.log(data.payload)
-      setProvinceCoords(data.payload)
+    const unlistenToProvinceCoords = listen<ProvincesCoords>('load-province-coords', () => {
+      getProvinceCoords().then((provinceCoords) => {
+        console.log(provinceCoords)
+        setProvinceCoords(provinceCoords)
+      })
     })
 
     const unlistenToStateData = listen('load-state-coords', () => {
@@ -89,6 +102,7 @@ export default function Map() {
       })
     })
 
+    getProvinceCoords().then((provinceCoords) => setProvinceCoords(provinceCoords))
     getStateCoords().then((stateCoords) => setStateCoords(stateCoords))
     getCountries().then((countries) => {
       setCountries(countries)
