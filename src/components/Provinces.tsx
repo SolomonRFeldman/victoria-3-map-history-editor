@@ -26,8 +26,8 @@ export default function Provinces({ state, provinceCoords, selectedProvince, ren
     return {
       fillColor: feature ? feature.properties.name.replace('x', '#') : 'transparent',
       fillOpacity: 0.5,
-      color: 'purple',
-      weight: 3,
+      color: '#FF69B4',
+      weight: 2,
     }
   }
 
