@@ -11,7 +11,7 @@ edition = "2021"
 tauri-build = { version = "1", features = [] }
 
 [dependencies]
-tauri = { version = "1", features = [ "fs-exists", "protocol-all", "path-all", "dialog-all", "shell-open"] }
+tauri = { version = "1", features = [ "fs-read-file", "fs-exists", "protocol-all", "path-all", "dialog-all", "shell-open"] }
 image = "0.25"
 ddsfile = "0.5"
 image_dds = "0.5"

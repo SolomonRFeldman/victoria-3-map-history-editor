@@ -75,7 +75,10 @@ impl GameFolder {
   
   fn load_states(&self, event: &WindowMenuEvent) {
     let states = get_states(self.states());
-    match event.window().emit("load-state-coords", &state_map_to_geojson(self.provinces(), cache_dir(event).join("states.png"), states)) {
+    let state_coords = state_map_to_geojson(self.provinces(), cache_dir(event).join("states.png"), states);
+    std::fs::write(cache_dir(event).join("states.json"), serde_json::to_string(&state_coords).unwrap()).unwrap();
+
+    match event.window().emit("load-state-coords", true) {
       Ok(_) => println!("Sent load-state-coords to frontend"),
       Err(e) => println!("Failed to send load-state-coords to frontend: {:?}", e),
     }

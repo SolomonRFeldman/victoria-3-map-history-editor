@@ -26,6 +26,7 @@
       },
       "fs": {
         "exists": true,
+        "readFile": true,
         "scope": ["$CACHE/**/*"]
       },
       "path": {

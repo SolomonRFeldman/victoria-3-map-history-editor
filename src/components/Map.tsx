@@ -8,6 +8,8 @@ import Countries, { Country } from './Countries'
 import States, { State } from './States'
 import Provinces from './Provinces'
 import Background from './Background'
+import { exists, readTextFile } from '@tauri-apps/api/fs';
+import { appCacheDir } from '@tauri-apps/api/path'
 
 export type Coords = [number, number][][]
 
@@ -34,6 +36,17 @@ type TransferProvinceResponse = {
 
 const bounds: LatLngBoundsExpression = [[0, 0], [3616, 8192]]
 
+const getStateCoords = async () => {
+  const cacheDir = await appCacheDir()
+  const path = `${cacheDir}/states.json`
+  const fileExists = await exists(path)
+  
+  if (!fileExists) { return {} }
+
+  const fileContents = await readTextFile(`${cacheDir}/states.json`);
+  return JSON.parse(fileContents) as StateCoords
+}
+
 export default function Map() {
   const [countries, setCountries] = useState<Country[]>([])
   const [stateCoords, setStateCoords] = useState<StateCoords>({})
@@ -50,9 +63,11 @@ export default function Map() {
       setProvinceCoords(data.payload)
     })
 
-    const unlistenToStateData = listen<StateCoords>('load-state-coords', (data) => {
-      console.log(data.payload)
-      setStateCoords(data.payload)
+    const unlistenToStateData = listen('load-state-coords', () => {
+      getStateCoords().then((stateCoords) => {
+        console.log(stateCoords)
+        setStateCoords(stateCoords)
+      })
     })
 
     const unlistenToCountryData = listen<Country[]>('load-country-data', (data) => {
@@ -61,12 +76,14 @@ export default function Map() {
       forceRerender()
     })
 
+    getStateCoords().then((stateCoords) => setStateCoords(stateCoords))
+
     return () => {
       unlistenToProvinceCoords.then((unlisten) => unlisten())
       unlistenToStateData.then((unlisten) => unlisten())
       unlistenToCountryData.then((unlisten) => unlisten())
     }
-  }, [])
+  }, [setStateCoords])
 
   const handleControlClickCountry = async (event: LeafletMouseEvent) => {
     if (selectedCountry && selectedState) {
