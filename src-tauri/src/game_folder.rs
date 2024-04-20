@@ -1,8 +1,7 @@
 use std::path::PathBuf;
 use image_dds::image::Rgba;
-use serde::{Deserialize, Serialize};
 use tauri::{Manager, WindowMenuEvent};
-use crate::{dds_to_png::DdsToPng, get_countries::get_countries, get_states::get_states, province_map_to_geojson::{country_map_to_geojson, province_map_to_geojson, state_map_to_geojson}};
+use crate::{cache_config::CacheConfig, dds_to_png::DdsToPng, get_countries::get_countries, get_states::get_states, province_map_to_geojson::{country_map_to_geojson, province_map_to_geojson, state_map_to_geojson}};
 
 const FLATMAP_PATH: &str = "game/dlc/dlc004_voice_of_the_people/gfx/map/textures/flatmap_votp.dds";
 const LAND_MASK_PATH: &str = "game/gfx/map/textures/land_mask.dds";
@@ -12,11 +11,6 @@ pub const STATES_PATH: &str = "game/common/history/states/00_states.txt";
 
 pub struct GameFolder {
   pub folder_path: PathBuf,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct Config {
-  pub game_folder: PathBuf,
 }
 
 impl GameFolder {
@@ -32,7 +26,13 @@ impl GameFolder {
 
   fn write_path_to_config(&self, event: &WindowMenuEvent) {
     let config_path = cache_dir(event).join("config.json");
-    std::fs::write(config_path, serde_json::to_string(&Config { game_folder: self.folder_path.clone() }).unwrap()).unwrap();
+
+    let mut config: CacheConfig = match std::fs::read_to_string(&config_path) {
+      Ok(config) => serde_json::from_str(&config).unwrap(),
+      Err(_) => CacheConfig::new(),
+    };
+    config.game_folder = Some(self.folder_path.clone());
+    std::fs::write(config_path, serde_json::to_string(&config).unwrap()).unwrap();
   }
 
   fn load_flatmap(&self, event: &WindowMenuEvent) {

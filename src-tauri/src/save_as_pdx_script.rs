@@ -2,13 +2,14 @@ use std::{collections::HashMap, path::PathBuf};
 
 use tauri::{Manager, WindowMenuEvent};
 
-use crate::{game_folder::{Config, STATES_PATH}, get_countries::Country, get_states::{get_states, State, SubState}};
+use crate::{cache_config::CacheConfig, game_folder::STATES_PATH, get_countries::Country, get_states::{get_states, State, SubState}};
 
 pub fn save_as_pdx_script(event: WindowMenuEvent) {
   let start = std::time::Instant::now();
   let cache_dir = event.window().app_handle().path_resolver().app_cache_dir().unwrap();
-  let cache_config: Config = serde_json::from_str(&std::fs::read_to_string(cache_dir.join("config.json")).unwrap()).unwrap();
-  let game_folder = cache_config.game_folder;
+  let cache_config: CacheConfig = serde_json::from_str(&std::fs::read_to_string(cache_dir.join("config.json")).unwrap()).unwrap();
+  let game_folder = cache_config.game_folder.unwrap();
+  let working_dir = cache_config.working_dir.unwrap();
 
   let states = get_states(game_folder.join(STATES_PATH));
 
@@ -46,7 +47,9 @@ pub fn save_as_pdx_script(event: WindowMenuEvent) {
     }
   });
 
-  write_changed_states_to_pdx_script(game_states, current_state_map, cache_dir);
+  let states_dir = working_dir.join("common/history/states");
+  std::fs::create_dir_all(&states_dir).unwrap();
+  write_changed_states_to_pdx_script(game_states, current_state_map, states_dir);
   println!("Saved as mod in: {:?}", start.elapsed());
 }
 
@@ -96,5 +99,5 @@ fn write_changed_states_to_pdx_script(game_states: Vec<State>, current_state_map
   });
   pdx_script.push_str("}\n");
 
-  std::fs::write(path.join("states.txt"), pdx_script).unwrap();
+  std::fs::write(path.join("v3mh_states.txt"), pdx_script).unwrap();
 }
