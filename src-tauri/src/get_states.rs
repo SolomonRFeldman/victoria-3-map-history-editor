@@ -9,13 +9,14 @@ use crate::pdx_script_parser::parse_script;
 pub struct SubState {
   pub provinces: Vec<String>,
   pub owner: String,
-  pub coordinates: Vec<Vec<(f32, f32)>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct State {
   pub name: String,
-  pub sub_states: Vec<SubState>
+  pub sub_states: Vec<SubState>,
+  pub homelands: Vec<String>,
+  pub claims: Vec<String>
 }
 
 pub fn get_states(state_definition_path: PathBuf) -> Vec<State> {
@@ -39,12 +40,22 @@ fn get_sub_states_from_state(state: &Vec<JsonValue>) -> State {
 
     SubState {
       provinces: filtered_sub_state_provinces,
-      owner: sub_state_owner.to_string(),
-      coordinates: vec![]
+      owner: sub_state_owner.to_string()
     }
   }).collect::<Vec<SubState>>();
+
+  let homelands = state[1].as_array().unwrap().iter().filter(|item| item[0] == "add_homeland").map(|homeland| {
+    homeland[1].as_str().unwrap().to_string()
+  }).collect::<Vec<String>>();
+
+  let claims = state[1].as_array().unwrap().iter().filter(|item| item[0] == "add_claim").map(|claim| {
+    claim[1].as_str().unwrap().to_string()
+  }).collect::<Vec<String>>();
+
   State {
     name: state[0].as_str().unwrap().to_string(),
-    sub_states
+    sub_states,
+    homelands,
+    claims
   }
 }

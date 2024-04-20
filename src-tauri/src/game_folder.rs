@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 use image_dds::image::Rgba;
+use serde::{Deserialize, Serialize};
 use tauri::{Manager, WindowMenuEvent};
 use crate::{dds_to_png::DdsToPng, get_countries::get_countries, get_states::get_states, province_map_to_geojson::{country_map_to_geojson, province_map_to_geojson, state_map_to_geojson}};
 
@@ -7,20 +8,31 @@ const FLATMAP_PATH: &str = "game/dlc/dlc004_voice_of_the_people/gfx/map/textures
 const LAND_MASK_PATH: &str = "game/gfx/map/textures/land_mask.dds";
 const FLATMAP_OVERLAY_PATH: &str = "game/dlc/dlc004_voice_of_the_people/gfx/map/textures/flatmap_overlay_votp.dds";
 const PROVINCE_PATH: &str = "game/map_data/provinces.png";
-const STATES_PATH: &str = "game/common/history/states/00_states.txt";
+pub const STATES_PATH: &str = "game/common/history/states/00_states.txt";
 
 pub struct GameFolder {
   pub folder_path: PathBuf,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct Config {
+  pub game_folder: PathBuf,
+}
+
 impl GameFolder {
   pub fn load(&self, event: WindowMenuEvent) {
+    self.write_path_to_config(&event);
     self.load_flatmap(&event);
     self.load_land_mask(&event);
     self.load_flatmap_overlay(&event);
     self.load_states(&event);
     self.load_countries(&event);
     self.load_provinces(&event);
+  }
+
+  fn write_path_to_config(&self, event: &WindowMenuEvent) {
+    let config_path = cache_dir(event).join("config.json");
+    std::fs::write(config_path, serde_json::to_string(&Config { game_folder: self.folder_path.clone() }).unwrap()).unwrap();
   }
 
   fn load_flatmap(&self, event: &WindowMenuEvent) {

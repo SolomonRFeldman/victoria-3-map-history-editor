@@ -2,8 +2,10 @@ use tauri::{CustomMenuItem, Menu, Submenu, WindowMenuEvent};
 use tauri::api::dialog::FileDialogBuilder;
 
 use crate::game_folder::GameFolder;
+use crate::save_as_pdx_script::save_as_pdx_script;
 
 const OPEN_GAME_FOLDER: &str = "open-game-folder";
+const SAVE: &str = "save";
 const EXIT: &str = "exit";
 
 pub struct MainMenu {}
@@ -11,14 +13,16 @@ pub struct MainMenu {}
 impl MainMenu {
   pub fn create_menu() -> Menu {
     let open_game_folder = CustomMenuItem::new(OPEN_GAME_FOLDER, "Open Game Folder");
+    let save = CustomMenuItem::new(SAVE, "Save");
     let exit = CustomMenuItem::new(EXIT, "Exit");
-    let submenu = Submenu::new("File", Menu::new().add_item(open_game_folder).add_item(exit));
+    let submenu = Submenu::new("File", Menu::new().add_item(open_game_folder).add_item(save).add_item(exit));
     Menu::new().add_submenu(submenu)
   }
 
   pub fn handler(event: WindowMenuEvent) {
     match event.menu_item_id() {
       OPEN_GAME_FOLDER => { handle_open_game_folder(event); },
+      SAVE => { handle_save(event); },
       EXIT => { event.window().close().unwrap(); }
       _ => {}
     }
@@ -31,4 +35,8 @@ fn handle_open_game_folder(event: WindowMenuEvent) {
       GameFolder { folder_path: file_path }.load(event)
     }
   });
+}
+
+fn handle_save(event: WindowMenuEvent) {
+  save_as_pdx_script(event);
 }

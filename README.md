@@ -8,7 +8,7 @@ Immediate TO-DO in order of priority:
 - [x] Transfer selected state to selected country
 - [x] Click on state to reveal its provinces
 - [x] Transfer selected province to selected country
-- [ ] Persist state and province transfers as pdx script
+- [x] Persist state and province transfers as pdx script
 - [ ] Allow opening of working directory, save state and province transfer data there
 
 Low Priority TO-DO:
