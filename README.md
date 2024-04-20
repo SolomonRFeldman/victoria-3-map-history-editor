@@ -10,6 +10,10 @@ Immediate TO-DO in order of priority:
 - [x] Transfer selected province to selected country
 - [x] Persist state and province transfers as pdx script
 - [x] Allow opening of working directory, save state and province transfer data there
+- [ ] add population info to states
+- [ ] add editing population info of states
+- [ ] add building info to states
+- [ ] add editing building info of states
 
 Low Priority TO-DO:
 - [ ] Color in land mask and flatmap overlay properly.
