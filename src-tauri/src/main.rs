@@ -13,6 +13,8 @@ mod transfer_provinces;
 mod geo_converters;
 mod save_as_pdx_script;
 mod cache_config;
+mod get_state_populations;
+mod merge_pops;
 
 use std::{collections::HashMap, thread};
 use get_countries::Country;

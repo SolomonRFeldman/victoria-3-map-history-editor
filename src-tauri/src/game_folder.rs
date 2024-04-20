@@ -1,13 +1,14 @@
 use std::path::PathBuf;
 use image_dds::image::Rgba;
 use tauri::{Manager, WindowMenuEvent};
-use crate::{cache_config::CacheConfig, dds_to_png::DdsToPng, get_countries::get_countries, get_states::get_states, province_map_to_geojson::{country_map_to_geojson, province_map_to_geojson, state_map_to_geojson}};
+use crate::{cache_config::CacheConfig, dds_to_png::DdsToPng, get_countries::get_countries, get_state_populations::get_state_populations, get_states::get_states, province_map_to_geojson::{country_map_to_geojson, province_map_to_geojson, state_map_to_geojson}};
 
 const FLATMAP_PATH: &str = "game/dlc/dlc004_voice_of_the_people/gfx/map/textures/flatmap_votp.dds";
 const LAND_MASK_PATH: &str = "game/gfx/map/textures/land_mask.dds";
 const FLATMAP_OVERLAY_PATH: &str = "game/dlc/dlc004_voice_of_the_people/gfx/map/textures/flatmap_overlay_votp.dds";
 const PROVINCE_PATH: &str = "game/map_data/provinces.png";
 pub const STATES_PATH: &str = "game/common/history/states/00_states.txt";
+pub const STATE_POPS_PATH: &str = "game/common/history/pops";
 
 pub struct GameFolder {
   pub folder_path: PathBuf,
@@ -94,7 +95,7 @@ impl GameFolder {
   }
 
   fn load_countries(&self, event: &WindowMenuEvent) {
-    let countries = get_countries(get_states(self.states()));
+    let countries = get_countries(get_states(self.states()), get_state_populations(self.state_pops()));
     let countries_with_coords = country_map_to_geojson(cache_dir(event).join("states.png"), cache_dir(event).join("countries.png"), countries.clone());
     std::fs::write(cache_dir(event).join("countries.json"), serde_json::to_string(&countries_with_coords).unwrap()).unwrap();
 
@@ -122,6 +123,10 @@ impl GameFolder {
 
   fn states(&self) -> PathBuf {
     self.folder_path.join(PathBuf::from(STATES_PATH))
+  }
+
+  fn state_pops(&self) -> PathBuf {
+    self.folder_path.join(PathBuf::from(STATE_POPS_PATH))
   }
 }
 
