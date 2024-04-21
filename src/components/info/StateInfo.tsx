@@ -16,6 +16,11 @@ export default function StateInfo({ selectedState, onStateChange }: StateInfoPro
     onStateChange({...selectedState, pops: newPops})
   }
 
+  const handleRemovePop = (pop: Pop) => {
+    const newPops = selectedState.pops.filter((p) => p !== pop)
+    onStateChange({...selectedState, pops: newPops})
+  }
+
   return(
     <div>
       <h2 className="card-title text-base">State: {selectedState.name}</h2>
@@ -30,6 +35,7 @@ export default function StateInfo({ selectedState, onStateChange }: StateInfoPro
             <th>Religion</th>
             <th>Size</th>
             <th>Population Type</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -38,8 +44,13 @@ export default function StateInfo({ selectedState, onStateChange }: StateInfoPro
             <tr key={pop.culture + pop.religion + pop.pop_type}>
               <td>{pop.culture}</td>
               <td>{pop.religion}</td>
-              <td><input type="text" placeholder="0" className="input input-xs" value={pop.size} onChange={(e) => handlePopulationChange(pop, parseInt(e.target.value))} /></td>
+              <td><input type="text" placeholder="0" className="input input-sm" value={pop.size} onChange={(e) => handlePopulationChange(pop, parseInt(e.target.value))} /></td>
               <td>{pop.pop_type}</td>
+              <td><button className="btn btn-square btn-xs btn-error" onClick={() => handleRemovePop(pop)}>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
+                </svg>
+              </button></td>
             </tr>
           )
         })}
