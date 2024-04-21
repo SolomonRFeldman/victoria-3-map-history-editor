@@ -3,6 +3,7 @@ use serde::Serialize;
 
 use crate::get_countries::{Country, State};
 use crate::geo_converters::{multi_poly_to_vec, vec_to_multi_poly};
+use crate::merge_buildings::merge_buildings;
 use crate::merge_pops::merge_pops;
 
 #[derive(Serialize)]
@@ -40,11 +41,13 @@ fn add_state_to_country(mut country: Country, from_country: &Country, state: &st
       let from_state = from_country.states.iter().find(|from_state| from_state.name == state).unwrap();
       new_provinces.extend(from_state.provinces.clone());
       let new_pops = merge_pops(to_state.pops.clone(), from_state.pops.clone());
+      let new_buildings = merge_buildings(to_state.buildings.clone(), from_state.buildings.clone());
       country.states = country.states.iter().filter(|to_state| to_state.name != state).cloned().collect();
       country.states.push(State {
         name: state.to_string(),
         provinces: new_provinces,
         pops: new_pops,
+        buildings: new_buildings
       });
     },
     None => {

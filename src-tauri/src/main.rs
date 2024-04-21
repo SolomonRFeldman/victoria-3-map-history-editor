@@ -15,6 +15,8 @@ mod save_as_pdx_script;
 mod cache_config;
 mod get_state_populations;
 mod merge_pops;
+mod get_state_buildings;
+mod merge_buildings;
 
 use std::{collections::HashMap, thread};
 use get_countries::Country;
@@ -22,7 +24,6 @@ use tauri::{App, Manager, Window};
 use main_menu::MainMenu;
 use transfer_state::{transfer_state as handle_transfer_state, TransferStateResponse};
 use transfer_provinces::{transfer_province as handle_transfer_province, TransferProvinceResponse};
-
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]

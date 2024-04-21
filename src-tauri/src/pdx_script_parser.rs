@@ -48,6 +48,7 @@ fn sp<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a str, &'a str, E
   recognize(many0(alt((
       multispace1,
       comment_line,
+      recognize(char('"'))
   ))))(input)
 }
 

@@ -4,7 +4,9 @@ use serde::Serialize;
 
 use crate::get_countries::{Country, State};
 use crate::geo_converters::{multi_poly_to_vec, vec_to_multi_poly};
+use crate::get_state_buildings::Building;
 use crate::get_state_populations::Pop;
+use crate::merge_buildings::merge_buildings;
 use crate::merge_pops::merge_pops;
 
 #[derive(Serialize)]
@@ -21,8 +23,8 @@ pub fn transfer_province (state: &str, province: &str, from_country: Country, to
   let province_coords = vec_to_multi_poly(province_coords);
   let from_state_coords = vec_to_multi_poly(from_coords).difference(&province_coords);
   let to_state_coords = vec_to_multi_poly(to_coords).union(&province_coords);
-  let (new_from_country, pops_given) = remove_province_from_country(from_country.clone(), state, province, &province_coords);
-  let new_to_country = add_province_to_country(to_country.clone(), state, province, &province_coords, pops_given);
+  let (new_from_country, pops_given, buildings_given) = remove_province_from_country(from_country.clone(), state, province, &province_coords);
+  let new_to_country = add_province_to_country(to_country.clone(), state, province, &province_coords, pops_given, buildings_given);
 
   println!("Time to transfer province: {:?}", start.elapsed());
   TransferProvinceResponse {
@@ -33,11 +35,12 @@ pub fn transfer_province (state: &str, province: &str, from_country: Country, to
   }
 }
 
-fn add_province_to_country(mut country: Country, state: &str, province: &str, province_coords: &MultiPolygon<f32>, pops_given: Vec<Pop>) -> Country {
+fn add_province_to_country(mut country: Country, state: &str, province: &str, province_coords: &MultiPolygon<f32>, pops_given: Vec<Pop>, buildings_given: Vec<Building>) -> Country {
   let existing_state = country.states.iter().find(|to_state| to_state.name == state);
   match existing_state {
     Some(to_state) => {
       let new_pops = merge_pops(to_state.pops.clone(), pops_given);
+      let new_buildings = merge_buildings(to_state.buildings.clone(), buildings_given);
       let mut new_provinces = to_state.provinces.clone();
       new_provinces.push(province.to_string());
       country.states = country.states.iter().filter(|to_state| to_state.name != state).cloned().collect();
@@ -45,6 +48,7 @@ fn add_province_to_country(mut country: Country, state: &str, province: &str, pr
         name: state.to_string(),
         provinces: new_provinces,
         pops: new_pops,
+        buildings: new_buildings
       });
     },
     None => {
@@ -52,6 +56,7 @@ fn add_province_to_country(mut country: Country, state: &str, province: &str, pr
         name: state.to_string(),
         provinces: vec![province.to_string()],
         pops: vec![],
+        buildings: vec![]
       };
       country.states.push(new_state);
     },
@@ -61,26 +66,27 @@ fn add_province_to_country(mut country: Country, state: &str, province: &str, pr
   country
 }
 
-fn remove_province_from_country(mut country: Country, state: &str, province: &str, province_coords: &MultiPolygon<f32>) -> (Country, Vec<Pop>) {
+fn remove_province_from_country(mut country: Country, state: &str, province: &str, province_coords: &MultiPolygon<f32>) -> (Country, Vec<Pop>, Vec<Building>) {
   let existing_state = country.states.iter().find(|from_state| from_state.name == state).unwrap();
   let new_pops = existing_state.pops.clone();
+  let new_buildings = existing_state.buildings.clone();
   
   let new_provinces: Vec<String> = existing_state.provinces.iter().filter(|from_province| **from_province != province.to_string()).cloned().collect();
   country.states = country.states.iter().filter(|from_state| from_state.name != state).cloned().collect();
 
-  let pops_given = match new_provinces.len() > 0 {
+  let (pops_given, buildings_given) = match new_provinces.len() > 0 {
     true => {
       country.states.push(State {
         name: state.to_string(),
         provinces: new_provinces,
-        pops: new_pops
+        pops: new_pops,
+        buildings: new_buildings
       });
-      vec![]
-      
+      (vec![], vec![])
     },
-    false => new_pops,
+    false => (new_pops, new_buildings)
   };
 
   country.coordinates = multi_poly_to_vec(vec_to_multi_poly(country.coordinates).difference(&province_coords));
-  (country, pops_given)
+  (country, pops_given, buildings_given)
 }
