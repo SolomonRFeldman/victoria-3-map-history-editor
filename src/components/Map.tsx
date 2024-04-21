@@ -171,7 +171,7 @@ export default function Map() {
   }
 
   const handleClickCountry = (event: LeafletMouseEvent) => {
-    if (event.originalEvent.ctrlKey) { return handleControlClickCountry(event) }
+    if (event.originalEvent.ctrlKey || event.originalEvent.metaKey) { return handleControlClickCountry(event) }
 
     const country = event.sourceTarget.feature.properties as Country
     setSelectedProvince(null)
