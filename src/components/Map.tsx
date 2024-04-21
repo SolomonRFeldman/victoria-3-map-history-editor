@@ -10,6 +10,7 @@ import Provinces from './Provinces'
 import Background from './Background'
 import { exists, readTextFile } from '@tauri-apps/api/fs';
 import { appCacheDir } from '@tauri-apps/api/path'
+import SelectionInfo from './info/SelectionInfo'
 
 export type Coords = [number, number][][]
 
@@ -217,6 +218,7 @@ export default function Map() {
       <Countries countries={countries} renderBreaker={renderBreaker} eventHandlers={{ click: handleClickCountry }} />
       { selectedCountry && <States country={selectedCountry} stateCoords={stateCoords} renderBreaker={renderBreaker} eventHandlers={{ click: handleClickState }} selectedState={selectedState} /> }
       { selectedState && <Provinces state={selectedState} provinceCoords={provinceCoords} renderBreaker={renderBreaker} eventHandlers={{ click: handleClickProvince }} selectedProvince={selectedProvince} /> }
+      { selectedCountry && <SelectionInfo selectedCountry={selectedCountry} selectedState={selectedState} selectedProvince={selectedProvince} /> }
     </MapContainer>
   ) 
 }
