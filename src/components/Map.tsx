@@ -209,8 +209,13 @@ export default function Map() {
       }
     }, 3000);
     return () => clearTimeout(timer);
-  }, [countries, stateCoords]
-)
+  }, [countries, stateCoords])
+
+  const handleCountryChange = (country: Country) => {
+    setCountries(countries.map((c) => c.name === country.name ? country : c))
+    setSelectedCountry(country)
+    setSelectedState((state) => state?.name === selectedState?.name ? country.states.find((s) => s.name === selectedState?.name) || null : state)
+  }
 
   return (
     <MapContainer center={[0, 0]} minZoom={-2} maxZoom={2} doubleClickZoom={false} crs={CRS.Simple} bounds={bounds}>
@@ -218,7 +223,7 @@ export default function Map() {
       <Countries countries={countries} renderBreaker={renderBreaker} eventHandlers={{ click: handleClickCountry }} />
       { selectedCountry && <States country={selectedCountry} stateCoords={stateCoords} renderBreaker={renderBreaker} eventHandlers={{ click: handleClickState }} selectedState={selectedState} /> }
       { selectedState && <Provinces state={selectedState} provinceCoords={provinceCoords} renderBreaker={renderBreaker} eventHandlers={{ click: handleClickProvince }} selectedProvince={selectedProvince} /> }
-      { selectedCountry && <SelectionInfo selectedCountry={selectedCountry} selectedState={selectedState} selectedProvince={selectedProvince} /> }
+      { selectedCountry && <SelectionInfo selectedCountry={selectedCountry} selectedState={selectedState} selectedProvince={selectedProvince} onCountryChange={handleCountryChange} /> }
     </MapContainer>
   ) 
 }

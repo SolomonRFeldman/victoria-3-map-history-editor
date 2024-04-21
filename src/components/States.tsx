@@ -4,7 +4,7 @@ import { FeatureCollection, Feature, Geometry } from 'geojson'
 import { LeafletEventHandlerFnMap } from "leaflet"
 import { Country } from "./Countries"
 
-type Pop = {
+export type Pop = {
   culture: string,
   religion?: string,
   size: number,

@@ -1,14 +1,20 @@
-import { State } from "../States"
+import { Pop, State } from "../States"
 
 type StateInfoProps = {
-  selectedState: State
+  selectedState: State,
+  onStateChange: (state: State) => void
 }
 
-export default function StateInfo({ selectedState }: StateInfoProps) {
+export default function StateInfo({ selectedState, onStateChange }: StateInfoProps) {
   // Will come in use once building info is added
   // const [tabSelection, setTabSelection] = useState('population')
   // const handleTabSelection = (tab: string) => setTabSelection(tab)
   // const isSelected = (tab: string) => tab === tabSelection ? 'bg-purple-400' : ''
+  const handlePopulationChange = (pop: Pop, size: number) => {
+    const newPop = {...pop, size}
+    const newPops = selectedState.pops.map((p) => p === pop ? newPop : p)
+    onStateChange({...selectedState, pops: newPops})
+  }
 
   return(
     <div>
@@ -29,10 +35,10 @@ export default function StateInfo({ selectedState }: StateInfoProps) {
         <tbody>
         {selectedState?.pops.sort((pop1, pop2) => pop2.size - pop1.size).map((pop) => {
           return (
-            <tr>
+            <tr key={pop.culture + pop.religion + pop.pop_type}>
               <td>{pop.culture}</td>
               <td>{pop.religion}</td>
-              <td>{pop.size}</td>
+              <td><input type="text" placeholder="0" className="input input-xs" value={pop.size} onChange={(e) => handlePopulationChange(pop, parseInt(e.target.value))} /></td>
               <td>{pop.pop_type}</td>
             </tr>
           )
