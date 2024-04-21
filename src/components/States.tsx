@@ -6,9 +6,9 @@ import { Country } from "./Countries"
 
 export type Pop = {
   culture: string,
-  religion?: string,
+  religion: string | null,
   size: number,
-  pop_type?: string,
+  pop_type?: string | null,
 }
 
 export type State = {
