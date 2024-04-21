@@ -30,12 +30,12 @@ const CreatePopForm = ({ onCreatePop, onCancel }: { onCreatePop: (pop: Pop) => v
 
   return (
     <tr>
-      <td><button className="btn btn-square btn-xs btn-success"  onClick={handleCreatePop}><PlusIcon /></button></td>
+      <td><button className="btn btn-square btn-xs btn-success" onClick={handleCreatePop}><PlusIcon className="w-5 h-5" /></button></td>
       <td><input ref={inputRef} type="text" placeholder="Culture" className="input input-sm w-24 -ml-3" value={culture} onChange={(e) => setCulture(e.target.value)} /></td>
       <td><input type="text" placeholder="Religion" className="input input-sm w-24 -ml-3" value={religion} onChange={(e) => setReligion(e.target.value)} /></td>
       <td><input type="text" placeholder="Size" className="input input-sm w-24 -ml-3" value={size} onChange={(e) => setSize(parseInt(e.target.value) || 0)} /></td>
       <td><input type="text" placeholder="Population Type" className="input input-sm w-24 -ml-3" value={popType} onChange={(e) => setPopType(e.target.value)} /></td>
-      <td><button className="btn btn-square btn-xs btn-error" onClick={onCancel}><MinusIcon /></button></td>
+      <td><button className="btn btn-square btn-xs btn-error" onClick={onCancel}><MinusIcon className="w-5 h-5" /></button></td>
     </tr>
   )
 }
@@ -65,7 +65,7 @@ export default function PopsInfo({ pops, onPopsChange }: PopsInfoProps) {
     <table className="table">
       <thead>
         <tr>
-          <th>{ !isCreatingPop && <button className="btn btn-square btn-xs btn-success"  onClick={() => setIsCreatingPop(true)}><PlusIcon /></button> }</th>
+          <th>{ !isCreatingPop && <button className="btn btn-square btn-xs btn-success"  onClick={() => setIsCreatingPop(true)}><PlusIcon className="w-5 h-5" /></button> }</th>
           <th>Culture</th>
           <th>Religion</th>
           <th>Size</th>
@@ -84,7 +84,7 @@ export default function PopsInfo({ pops, onPopsChange }: PopsInfoProps) {
               <td><input type="text" placeholder="0" className="input input-sm w-24 -ml-3" value={pop.size} onChange={(e) => handlePopulationChange(pop, parseInt(e.target.value) || 0)} /></td>
               <td>{pop.pop_type}</td>
               <td><button className="btn btn-square btn-xs btn-error" onClick={() => handleRemovePop(pop)}>
-                <MinusIcon className="w-6 h-6" />
+                <MinusIcon className="w-5 h-5" />
               </button></td>
             </tr>
           )
