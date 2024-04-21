@@ -11,11 +11,21 @@ export type Pop = {
   pop_type?: string | null,
 }
 
+export type Building = {
+  name: string,
+  level: number | null,
+  activate_production_methods: string[] | null
+  condition: BuildingCondition | null
+}
+
+type BuildingCondition = [string, string][]
+
 export type State = {
   name: string,
   color: string
   provinces: string[]
   pops: Pop[]
+  buildings: Building[]
 }
 
 type StatesProps = {
