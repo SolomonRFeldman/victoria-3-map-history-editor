@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { Pop } from "../States"
+import { MinusIcon, PlusIcon } from "@heroicons/react/24/outline"
 
 type PopsInfoProps = {
   pops: Pop[]
@@ -7,26 +8,6 @@ type PopsInfoProps = {
 }
 
 const presentString = (value: string) => value === '' ? null : value
-
-const PlusButton = ({ onClick }: { onClick: () => void }) => {
-  return (
-    <button className="btn btn-square btn-xs btn-success" onClick={onClick}>
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-      </svg>
-    </button>
-  )
-}
-
-const MinusButton = ({ onClick }: { onClick: () => void }) => {
-  return (
-    <button className="btn btn-square btn-xs btn-error" onClick={onClick}>
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
-      </svg>
-    </button>
-  )
-}
 
 const CreatePopForm = ({ onCreatePop, onCancel }: { onCreatePop: (pop: Pop) => void, onCancel: () => void }) => {
   const [culture, setCulture] = useState('')
@@ -49,12 +30,12 @@ const CreatePopForm = ({ onCreatePop, onCancel }: { onCreatePop: (pop: Pop) => v
 
   return (
     <tr>
-      <td><PlusButton onClick={handleCreatePop} /></td>
+      <td><button className="btn btn-square btn-xs btn-success"  onClick={handleCreatePop}><PlusIcon /></button></td>
       <td><input ref={inputRef} type="text" placeholder="Culture" className="input input-sm w-24 -ml-3" value={culture} onChange={(e) => setCulture(e.target.value)} /></td>
       <td><input type="text" placeholder="Religion" className="input input-sm w-24 -ml-3" value={religion} onChange={(e) => setReligion(e.target.value)} /></td>
       <td><input type="text" placeholder="Size" className="input input-sm w-24 -ml-3" value={size} onChange={(e) => setSize(parseInt(e.target.value) || 0)} /></td>
       <td><input type="text" placeholder="Population Type" className="input input-sm w-24 -ml-3" value={popType} onChange={(e) => setPopType(e.target.value)} /></td>
-      <td><MinusButton onClick={onCancel} /></td>
+      <td><button className="btn btn-square btn-xs btn-error" onClick={onCancel}><MinusIcon /></button></td>
     </tr>
   )
 }
@@ -84,7 +65,7 @@ export default function PopsInfo({ pops, onPopsChange }: PopsInfoProps) {
     <table className="table">
       <thead>
         <tr>
-          <th>{ !isCreatingPop && <PlusButton onClick={() => setIsCreatingPop(true)} /> }</th>
+          <th>{ !isCreatingPop && <button className="btn btn-square btn-xs btn-success"  onClick={() => setIsCreatingPop(true)}><PlusIcon /></button> }</th>
           <th>Culture</th>
           <th>Religion</th>
           <th>Size</th>
@@ -103,9 +84,7 @@ export default function PopsInfo({ pops, onPopsChange }: PopsInfoProps) {
               <td><input type="text" placeholder="0" className="input input-sm w-24 -ml-3" value={pop.size} onChange={(e) => handlePopulationChange(pop, parseInt(e.target.value) || 0)} /></td>
               <td>{pop.pop_type}</td>
               <td><button className="btn btn-square btn-xs btn-error" onClick={() => handleRemovePop(pop)}>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
-                </svg>
+                <MinusIcon className="w-6 h-6" />
               </button></td>
             </tr>
           )
