@@ -177,7 +177,7 @@ export default function Map() {
     const country = event.sourceTarget.feature.properties as Country
     setSelectedProvince(null)
     setSelectedState(null)
-    setSelectedCountry(country)
+    setSelectedCountry(countries.find((c) => c.name === country.name) || null)
   }
 
   const handleClickState = (event: LeafletMouseEvent) => {
