@@ -31,10 +31,10 @@ const CreatePopForm = ({ onCreatePop, onCancel }: { onCreatePop: (pop: Pop) => v
   return (
     <tr>
       <td><button className="btn btn-square btn-xs btn-success" onClick={handleCreatePop}><PlusIcon className="w-5 h-5" /></button></td>
-      <td><input ref={inputRef} type="text" placeholder="Culture" className="input input-sm w-24 -ml-3" value={culture} onChange={(e) => setCulture(e.target.value)} /></td>
-      <td><input type="text" placeholder="Religion" className="input input-sm w-24 -ml-3" value={religion} onChange={(e) => setReligion(e.target.value)} /></td>
-      <td><input type="text" placeholder="Size" className="input input-sm w-24 -ml-3" value={size} onChange={(e) => setSize(parseInt(e.target.value) || 0)} /></td>
-      <td><input type="text" placeholder="Population Type" className="input input-sm w-24 -ml-3" value={popType} onChange={(e) => setPopType(e.target.value)} /></td>
+      <td className="max-w-20"><input ref={inputRef} type="text" placeholder="Culture" className="input input-xs w-24 -ml-2" value={culture} onChange={(e) => setCulture(e.target.value)} /></td>
+      <td className="max-w-20"><input type="text" placeholder="Religion" className="input input-xs w-24 -ml-2" value={religion} onChange={(e) => setReligion(e.target.value)} /></td>
+      <td className="max-w-20"><input type="text" placeholder="Size" className="input input-xs w-24 -ml-2" value={size} onChange={(e) => setSize(parseInt(e.target.value) || 0)} /></td>
+      <td><input type="text" placeholder="Population Type" className="input input-xs w-28 -ml-2" value={popType} onChange={(e) => setPopType(e.target.value)} /></td>
       <td><button className="btn btn-square btn-xs btn-error" onClick={onCancel}><MinusIcon className="w-5 h-5" /></button></td>
     </tr>
   )
@@ -62,14 +62,14 @@ export default function PopsInfo({ pops, onPopsChange }: PopsInfoProps) {
 
   const [isCreatingPop, setIsCreatingPop] = useState(false)
   return(
-    <table className="table">
+    <table className="table table-xs">
       <thead>
         <tr>
-          <th>{ !isCreatingPop && <button className="btn btn-square btn-xs btn-success"  onClick={() => setIsCreatingPop(true)}><PlusIcon className="w-5 h-5" /></button> }</th>
-          <th>Culture</th>
+          <th className="max-w-6">{ !isCreatingPop && <button className="btn btn-square btn-xs btn-success"  onClick={() => setIsCreatingPop(true)}><PlusIcon className="w-5 h-5" /></button> }</th>
+          <th className="max-w-16">Culture</th>
           <th>Religion</th>
-          <th>Size</th>
-          <th>Population Type</th>
+          <th className="max-w-16">Size</th>
+          <th className="max-w-20">Population Type</th>
           <th></th>
         </tr>
       </thead>
@@ -79,9 +79,9 @@ export default function PopsInfo({ pops, onPopsChange }: PopsInfoProps) {
           return (
             <tr key={pop.culture + pop.religion + pop.pop_type}>
               <td></td>
-              <td>{pop.culture}</td>
+              <td className="max-w-16">{pop.culture}</td>
               <td>{pop.religion}</td>
-              <td><input type="text" placeholder="0" className="input input-sm w-24 -ml-3" value={pop.size} onChange={(e) => handlePopulationChange(pop, parseInt(e.target.value) || 0)} /></td>
+              <td className="max-w-16"><input type="text" placeholder="0" className="input input-xs w-24 -ml-3" value={pop.size} onChange={(e) => handlePopulationChange(pop, parseInt(e.target.value) || 0)} /></td>
               <td>{pop.pop_type}</td>
               <td><button className="btn btn-square btn-xs btn-error" onClick={() => handleRemovePop(pop)}>
                 <MinusIcon className="w-5 h-5" />
