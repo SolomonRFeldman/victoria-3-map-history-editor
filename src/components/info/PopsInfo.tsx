@@ -12,7 +12,7 @@ const presentString = (value: string) => value === '' ? null : value
 const usePopHistory = (initialPops: Pop[]) => {
   const [popBackHistory, setPopBackHistory] = useState<Pop[][]>([initialPops])
   const [popForwardHistory, setPopForwardHistory] = useState<Pop[][]>([])
-console.log(popBackHistory, popForwardHistory)
+
   const back = () => {
     const backPops = popBackHistory[popBackHistory.length - 2]
     if (backPops) {
