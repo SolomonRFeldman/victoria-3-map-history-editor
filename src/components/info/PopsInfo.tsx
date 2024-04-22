@@ -98,7 +98,7 @@ export default function PopsInfo({ pops, onPopsChange }: PopsInfoProps) {
   
   const divRef = useRef<HTMLTableElement>(null)
   const handleOnKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Tab' || event.key === 'e' || event.key === 'n') {
+    if (event.key === 'Tab' || event.key === 'e') {
       event.stopPropagation()
     }
     if (event.key === 'Escape') {
