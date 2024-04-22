@@ -9,6 +9,38 @@ type PopsInfoProps = {
 
 const presentString = (value: string) => value === '' ? null : value
 
+const usePopHistory = (initialPops: Pop[]) => {
+  const [popBackHistory, setPopBackHistory] = useState<Pop[][]>([initialPops])
+  const [popForwardHistory, setPopForwardHistory] = useState<Pop[][]>([])
+console.log(popBackHistory, popForwardHistory)
+  const back = () => {
+    const backPops = popBackHistory[popBackHistory.length - 2]
+    if (backPops) {
+      setPopForwardHistory([...popForwardHistory, popBackHistory[popBackHistory.length - 1]])
+      setPopBackHistory(popBackHistory.slice(0, -1))
+
+      return backPops
+    }
+  }
+
+  const forward = () => {
+    const lastPop = popForwardHistory[popForwardHistory.length - 1]
+    if (lastPop) {
+      setPopForwardHistory(popForwardHistory.slice(0, -1))
+      setPopBackHistory([...popBackHistory, lastPop])
+
+      return lastPop
+    }
+  }
+  
+  const push = (pop: Pop[]) => {
+    setPopBackHistory([...popBackHistory, pop])
+    setPopForwardHistory([])
+  }
+
+  return { back, forward, push }
+}
+
 const CreatePopForm = ({ onCreatePop, onCancel }: { onCreatePop: (pop: Pop) => void, onCancel: () => void }) => {
   const [culture, setCulture] = useState('')
   const [religion, setReligion] = useState('')
@@ -41,20 +73,24 @@ const CreatePopForm = ({ onCreatePop, onCancel }: { onCreatePop: (pop: Pop) => v
 }
 
 export default function PopsInfo({ pops, onPopsChange }: PopsInfoProps) {
+  const popHistory = usePopHistory(pops)
   const handlePopulationChange = (pop: Pop, size: number) => {
     const newPop = {...pop, size}
     const newPops = pops.map((p) => p === pop ? newPop : p)
+    popHistory.push(newPops)
     onPopsChange(newPops)
   }
 
   const handleRemovePop = (pop: Pop) => {
     const newPops = pops.filter((p) => p !== pop)
+    popHistory.push(newPops)
     onPopsChange(newPops)
   }
 
   const handleAddPop = (pop: Pop) => {
     if (!pops.find((p) => p.culture === pop.culture && p.religion === pop.religion && p.pop_type === pop.pop_type)) {
       const newPops = [...pops, pop]
+      popHistory.push(newPops)
       onPopsChange(newPops)
       setIsCreatingPop(false)
     }
@@ -91,10 +127,21 @@ export default function PopsInfo({ pops, onPopsChange }: PopsInfoProps) {
       if (event.key === 'e') {
         divRef.current?.focus()
       }
+      if (event.ctrlKey && event.key === 'z') {
+        event.preventDefault()
+        const lastPop = popHistory.back()
+        if (lastPop) { onPopsChange(lastPop) }
+      }
+      console.log(event.shiftKey, event.ctrlKey, event.key)
+      if (event.shiftKey && event.ctrlKey && event.key === 'Z') {
+        event.preventDefault()
+        const lastPop = popHistory.forward()
+        if (lastPop) { onPopsChange(lastPop) }
+      }
     }
     window.addEventListener('keydown', handlePopsHotkeys)
     return () => window.removeEventListener('keydown', handlePopsHotkeys)
-  }, [isCreatingPop])
+  }, [isCreatingPop, popHistory])
 
   return(
     <table tabIndex={0} ref={divRef} onKeyDown={handleOnKeyDown} className="table table-xs">
