@@ -14,6 +14,7 @@ export type Pop = {
 export type Building = {
   name: string,
   level: number | null,
+  reserves: number | null,
   activate_production_methods: string[] | null
   condition: BuildingCondition | null
 }

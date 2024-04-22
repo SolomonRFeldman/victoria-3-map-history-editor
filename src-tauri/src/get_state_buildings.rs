@@ -8,6 +8,7 @@ use crate::pdx_script_parser::parse_script;
 pub struct Building {
   pub name: String,
   pub level: Option<i64>,
+  pub reserves: Option<i64>,
   pub activate_production_methods: Option<Vec<String>>,
   pub condition: Option<Value>,
 }
@@ -42,6 +43,10 @@ pub fn get_state_buildings(state_buildings_path: PathBuf) -> HashMap<String, Vec
             Some(level) => Some(level[1].as_str().unwrap().parse().unwrap()),
             None => None
           };
+          let reserves: Option<i64> = match building.iter().find(|item| item[0] == "reserves") {
+            Some(level) => Some(level[1].as_str().unwrap().parse().unwrap()),
+            None => None
+          };
           let activate_production_methods = match building.iter().find(|item| item[0] == "activate_production_methods") {
             Some(activate_production_methods) => Some(activate_production_methods[1].as_array().unwrap().iter().map(|method| method.as_str().unwrap().trim_matches('"').to_string()).collect()),
             None => None
@@ -50,6 +55,7 @@ pub fn get_state_buildings(state_buildings_path: PathBuf) -> HashMap<String, Vec
           Building {
             name,
             level,
+            reserves,
             activate_production_methods,
             condition: condition.cloned()
           }
