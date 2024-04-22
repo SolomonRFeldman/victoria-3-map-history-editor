@@ -47,12 +47,12 @@ pub fn save_as_pdx_script(event: WindowMenuEvent) {
 
   let state_pop_path = working_dir.join("common/history/pops");
   std::fs::create_dir_all(&state_pop_path).unwrap();
-  write_changes_state_pops_to_pdx_script(&current_state_map, &state_pop_path);
+  write_state_pops_to_pdx_script(&current_state_map, &state_pop_path);
   overwrite_existing_pops(&state_pop_path, &game_folder.join("game/common/history/pops"));
 
   let states_dir = working_dir.join("common/history/states");
   std::fs::create_dir_all(&states_dir).unwrap();
-  write_changed_states_to_pdx_script(states, current_state_map, states_dir);
+  write_states_to_pdx_script(states, current_state_map, states_dir);
   println!("Saved as mod in: {:?}", start.elapsed());
 }
 
@@ -72,7 +72,7 @@ pub fn save_as_pdx_script(event: WindowMenuEvent) {
 //   state1_map == state2_map
 // }
 
-fn write_changed_states_to_pdx_script(game_states: Vec<State>, current_state_map: HashMap<String, Vec<SubState>>, path: PathBuf) {
+fn write_states_to_pdx_script(game_states: Vec<State>, current_state_map: HashMap<String, Vec<SubState>>, path: PathBuf) {
   let mut pdx_script = String::new();
 
   pdx_script.push_str("STATES = {\n");
@@ -106,7 +106,7 @@ fn write_changed_states_to_pdx_script(game_states: Vec<State>, current_state_map
   std::fs::write(path.join("00_states.txt"), pdx_script).unwrap();
 }
 
-fn write_changes_state_pops_to_pdx_script(current_state_map: &HashMap<String, Vec<SubState>>, path: &PathBuf) {
+fn write_state_pops_to_pdx_script(current_state_map: &HashMap<String, Vec<SubState>>, path: &PathBuf) {
   let mut pdx_script = String::new();
 
   pdx_script.push_str("POPS = {\n");
