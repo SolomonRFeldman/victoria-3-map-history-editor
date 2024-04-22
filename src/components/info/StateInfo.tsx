@@ -3,13 +3,16 @@ import { State } from "../States"
 import PopsInfo from "./PopsInfo"
 import BuildingsInfo from "./BuildingsInfo"
 
+type TabSelection = 'population' | 'buildings'
+
 type StateInfoProps = {
   selectedState: State,
   onStateChange: (state: State) => void
 }
+
 export default function StateInfo({ selectedState, onStateChange }: StateInfoProps) {
-  const [tabSelection, setTabSelection] = useState('population')
-  const handleTabSelection = (tab: string) => setTabSelection(tab)
+  const [tabSelection, setTabSelection] = useState<TabSelection>('population')
+  const handleTabSelection = (tab: TabSelection) => setTabSelection(tab)
   const isSelected = (tab: string) => tab === tabSelection ? 'bg-purple-400' : ''
 
   useEffect(() => {
