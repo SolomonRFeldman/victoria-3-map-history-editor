@@ -14,4 +14,9 @@ impl CacheConfig {
       working_dir: None,
     }
   }
+
+  pub fn get_config(path: PathBuf) -> Self {
+    let config = std::fs::read_to_string(path).unwrap();
+    serde_json::from_str(&config).unwrap()
+  }
 }

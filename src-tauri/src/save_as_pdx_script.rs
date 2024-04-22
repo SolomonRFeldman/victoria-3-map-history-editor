@@ -15,7 +15,7 @@ struct SubState {
 pub fn save_as_pdx_script(event: WindowMenuEvent) {
   let start = std::time::Instant::now();
   let cache_dir = event.window().app_handle().path_resolver().app_cache_dir().unwrap();
-  let cache_config: CacheConfig = serde_json::from_str(&std::fs::read_to_string(cache_dir.join("config.json")).unwrap()).unwrap();
+  let cache_config: CacheConfig = CacheConfig::get_config(cache_dir.join("config.json"));
   let game_folder = cache_config.game_folder.unwrap();
   let working_dir = cache_config.working_dir.unwrap();
 

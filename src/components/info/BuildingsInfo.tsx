@@ -1,5 +1,6 @@
 import { MinusIcon, PlusIcon } from "@heroicons/react/24/solid"
 import { Building } from "../States"
+import { invoke } from "@tauri-apps/api"
 
 type BuildingsInfoProps = {
   buildings: Building[]
@@ -15,6 +16,10 @@ export default function BuildingsInfo({ buildings, onBuildingsChange }: Building
     const newBuilding = {...building, level: building.level + amount}
     const newBuildings = buildings.map((b) => b === building ? newBuilding : b)
     onBuildingsChange(newBuildings)
+  }
+
+  const handleClickProductionMethod = async (name: string) => {
+    await invoke("get_building", { name })
   }
   
   return(
@@ -33,9 +38,9 @@ export default function BuildingsInfo({ buildings, onBuildingsChange }: Building
             <tr key={building.name}>
               <td className="max-w-32">{building.name}</td>
               <td className="max-w-24">
-                <div className="tooltip tooltip-bottom max-w-full" data-tip={productionMethods || ''}>
+                <button className="btn btn-xs btn-accent min-h-4 h-4 tooltip tooltip-bottom max-w-full" onClick={() => handleClickProductionMethod(building.name)} data-tip={productionMethods || ''}>
                   <div className="overflow-hidden truncate">{productionMethods}</div>
-                </div>
+                </button>
               </td>
               <td className="flex justify-center items-center max-w-16">
                 <button className="btn btn-square btn-xs btn-error w-4 min-h-4 h-4" onClick={() => adjustBuildingLevel(building, -1)}><MinusIcon/></button>

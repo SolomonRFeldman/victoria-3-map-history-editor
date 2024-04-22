@@ -2,11 +2,11 @@ use serde_json::Value as JsonValue;
 use nom::{
   branch::alt,
   bytes::complete::{escaped, is_not, take_while},
-  character::complete::{char, multispace1, one_of},
+  character::complete::{char, multispace1, one_of, space0},
   combinator::{cut, map, opt, recognize},
   error::{context, ContextError, ParseError},
   multi::{many0, separated_list0},
-  sequence::{delimited, preceded, separated_pair, terminated}, IResult, Parser,
+  sequence::{delimited, preceded, terminated}, IResult, Parser,
 };
 
 pub fn parse_script(script: &str) -> JsonValue {
@@ -17,10 +17,18 @@ fn bom(input: &str) -> IResult<&str, Option<char>> {
   opt(char('\u{feff}'))(input)
 }
 
-fn key_value<'a, E: ParseError<&'a str> + ContextError<&'a str>>(
+fn key_value<'a, E>(
   i: &'a str,
-) -> IResult<&'a str, (&'a str, JsonValue), E> {
-  separated_pair(delimited(sp, parse_str, sp), delimited(sp, char('='), sp), delimited(sp, json_value, sp)).parse(i)
+) -> IResult<&'a str, (&'a str, JsonValue), E>
+where
+  E: ParseError<&'a str> + ContextError<&'a str>,
+{
+  let comparison_op = one_of("=><");
+  let (i, key) = delimited(sp, parse_str, sp)(i)?;
+  let (i, _) = delimited(sp, space0, comparison_op)(i)?;
+  let (i, _) = delimited(sp, space0, opt(char('=')))(i)?;
+  let (i, value) = delimited(sp, json_value, sp)(i)?;
+  Ok((i, (key, value)))
 }
 
 fn keys_and_values<'a, E: ParseError<&'a str> + ContextError<&'a str>>(
@@ -60,7 +68,7 @@ fn comment_line<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a str, 
 }
 
 fn parse_str<'a, E: ParseError<&'a str>>(i: &'a str) -> IResult<&'a str, &'a str, E> {
-  escaped(one_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:_"), '\\', one_of("\"n\\"))(i)
+  escaped(one_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:_/.-"), '\\', one_of("\"n\\"))(i)
 }
 
 fn string<'a, E: ParseError<&'a str> + ContextError<&'a str>>(

@@ -17,8 +17,10 @@ mod get_state_populations;
 mod merge_pops;
 mod get_state_buildings;
 mod merge_buildings;
+mod building;
 
 use std::{collections::HashMap, thread};
+use building::Building;
 use get_countries::Country;
 use tauri::{App, Manager, Window};
 use main_menu::MainMenu;
@@ -42,6 +44,10 @@ fn cache_state(window: Window, countries: Vec<Country>, states: HashMap<String, 
     std::fs::write(cache_dir.join("countries.json"), serde_json::to_string(&countries).unwrap()).unwrap();
   });
 }
+#[tauri::command]
+fn get_building(window: Window, name: String) -> Building {
+  Building::parse_from_game_folder(window).iter().find(|building| building.building_name == name).unwrap().clone()
+}
 
 fn main() {
     tauri::Builder::default()
@@ -54,7 +60,7 @@ fn main() {
         })
         .menu(MainMenu::create_menu())
         .on_menu_event(MainMenu::handler)
-        .invoke_handler(tauri::generate_handler![transfer_state, transfer_province, cache_state])
+        .invoke_handler(tauri::generate_handler![transfer_state, transfer_province, cache_state, get_building])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
