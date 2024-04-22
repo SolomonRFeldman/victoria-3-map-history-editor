@@ -9,6 +9,9 @@ type BuildingsInfoProps = {
 export default function BuildingsInfo({ buildings, onBuildingsChange }: BuildingsInfoProps) {
   const adjustBuildingLevel = (building: Building, amount: number) => {
     if (!building.level) return
+    const newLevel = building.level + amount
+    if (newLevel < 1) return
+
     const newBuilding = {...building, level: building.level + amount}
     const newBuildings = buildings.map((b) => b === building ? newBuilding : b)
     onBuildingsChange(newBuildings)
