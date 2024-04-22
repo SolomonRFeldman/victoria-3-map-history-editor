@@ -1,10 +1,19 @@
+import { MinusIcon, PlusIcon } from "@heroicons/react/24/solid"
 import { Building } from "../States"
 
 type BuildingsInfoProps = {
   buildings: Building[]
+  onBuildingsChange: (building: Building[]) => void
 }
 
-export default function BuildingsInfo({ buildings }: BuildingsInfoProps) {  
+export default function BuildingsInfo({ buildings, onBuildingsChange }: BuildingsInfoProps) {
+  const adjustBuildingLevel = (building: Building, amount: number) => {
+    if (!building.level) return
+    const newBuilding = {...building, level: building.level + amount}
+    const newBuildings = buildings.map((b) => b === building ? newBuilding : b)
+    onBuildingsChange(newBuildings)
+  }
+  
   return(
     <table className="table table-xs">
       <thead>
@@ -25,7 +34,11 @@ export default function BuildingsInfo({ buildings }: BuildingsInfoProps) {
                   <div className="overflow-hidden truncate">{productionMethods}</div>
                 </div>
               </td>
-              <td>{building.level}</td>
+              <td className="flex justify-center items-center max-w-16">
+                <button className="btn btn-square btn-xs btn-error w-4 min-h-4 h-4" onClick={() => adjustBuildingLevel(building, -1)}><MinusIcon/></button>
+                <p className="px-2 text-center">{building.level}</p>
+                <button className="btn btn-square btn-xs btn-success w-4 min-h-4 h-4" onClick={() => adjustBuildingLevel(building, 1)}><PlusIcon/></button>
+              </td>
             </tr>
           )
         })}
