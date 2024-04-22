@@ -39,8 +39,6 @@ pub fn get_countries(state_histories: Vec<StateHistory>, state_pops: HashMap<Str
         },
         None => {
           let color = format!("x{:02x}{:02x}{:02x}", state.owner.chars().nth(0).unwrap() as u8, state.owner.chars().nth(1).unwrap() as u8, state.owner.chars().nth(2).unwrap() as u8);
-          println!("{:?}", state_history_copy.name);
-          println!("{:?}", state.owner);
 
           countries.push(Country {
             name: state.owner.clone(),
