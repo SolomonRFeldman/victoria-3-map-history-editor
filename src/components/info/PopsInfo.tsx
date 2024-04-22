@@ -59,13 +59,48 @@ export default function PopsInfo({ pops, onPopsChange }: PopsInfoProps) {
       setIsCreatingPop(false)
     }
   }
-
+  
+  const divRef = useRef<HTMLTableElement>(null)
+  const handleOnKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Tab' || event.key === 'e' || event.key === 'n') {
+      event.stopPropagation()
+    }
+    if (event.key === 'Escape') {
+      event.stopPropagation()
+      if (isCreatingPop) {
+        setIsCreatingPop(false)
+      } else {
+        divRef.current?.focus()
+        divRef.current?.blur()
+      }
+    }
+    if (event.key === 'e') {
+      event.stopPropagation()
+    }
+  }
   const [isCreatingPop, setIsCreatingPop] = useState(false)
+
+  useEffect(() => {
+    const handlePopsHotkeys = (event: KeyboardEvent) => {
+      if (event.key === 'n') {
+        if(!isCreatingPop) {
+          event.preventDefault()
+          setIsCreatingPop(true)
+        }
+      }
+      if (event.key === 'e') {
+        divRef.current?.focus()
+      }
+    }
+    window.addEventListener('keydown', handlePopsHotkeys)
+    return () => window.removeEventListener('keydown', handlePopsHotkeys)
+  }, [isCreatingPop])
+
   return(
-    <table className="table table-xs">
+    <table tabIndex={0} ref={divRef} onKeyDown={handleOnKeyDown} className="table table-xs">
       <thead>
         <tr>
-          <th className="max-w-6">{ !isCreatingPop && <button className="btn btn-square btn-xs btn-success"  onClick={() => setIsCreatingPop(true)}><PlusIcon className="w-5 h-5" /></button> }</th>
+          <th className="max-w-6">{ !isCreatingPop && <button className="btn btn-square btn-xs btn-success tooltip tooltip-bottom" data-tip="n" onClick={() => setIsCreatingPop(true)}><PlusIcon className="w-5 h-5" /></button> }</th>
           <th className="max-w-16">Culture</th>
           <th>Religion</th>
           <th className="max-w-16">Size</th>
