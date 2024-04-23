@@ -1,8 +1,9 @@
 use std::{collections::HashMap, path::PathBuf};
-use serde::Serialize;
+use jomini::text::de::from_utf8_reader;
+use serde::{Deserialize, Serialize};
 use tauri::{Manager, Window};
 
-use crate::{cache_config::CacheConfig, pdx_script_parser::parse_script};
+use crate::cache_config::CacheConfig;
 
 // const PRODUCTION_METHODS_PATH: &str = "common/production_methods";
 const PRODUCTION_METHOD_GROUPS_PATH: &str = "common/production_method_groups";
@@ -35,30 +36,37 @@ impl Building {
 
   fn parse_from(path: PathBuf) -> Vec<Building> {
     let production_method_groups_map = parse_production_method_groups(path.join(PRODUCTION_METHOD_GROUPS_PATH));
-    parse_building(path.join(BUILDINGS_PATH), production_method_groups_map)
+    parse_buildings(path.join(BUILDINGS_PATH), production_method_groups_map)
   }
 }
 
-fn parse_building(path: PathBuf, pmg_map: HashMap<String, ProductionMethodGroup>) -> Vec<Building> {
-  let mut bpm_vec: Vec<Building> = Vec::new();
+#[derive(Deserialize)]
+struct RawBuilding {
+  production_method_groups: Vec<String>,
+}
 
-  for entry in std::fs::read_dir(path).unwrap() {
+pub fn parse_buildings(buildings_path: PathBuf, pmg_map: HashMap<String, ProductionMethodGroup>) -> Vec<Building> {
+  let mut buildings: Vec<Building> = Vec::new();
+
+  for entry in std::fs::read_dir(buildings_path).unwrap() {
     let entry = entry.unwrap().path();
     if entry.extension().unwrap() != "txt" { continue };
-    let parsed_buildings = parse_script(&std::fs::read_to_string(entry).unwrap());
+    let parsed_buildings: HashMap<String, RawBuilding> = from_utf8_reader(&*std::fs::read(entry).unwrap()).unwrap();
 
-    for building in parsed_buildings.as_array().unwrap() {
-      let building_name = building[0].as_str().unwrap().to_string();
-      let parsed_production_method_groups: Vec<ProductionMethodGroup> = building[1].as_array().unwrap().iter()
-        .find(|item| item[0] == "production_method_groups").unwrap()[1].as_array().unwrap().iter()
-        .map(|group| pmg_map.get(&group.as_str().unwrap().to_string()).unwrap().clone()).collect();
-      let building = Building { building_name, production_method_groups: parsed_production_method_groups };
+    for (building_name, raw_building) in parsed_buildings {
+      let production_method_groups: Vec<ProductionMethodGroup> = raw_building.production_method_groups.iter().map(|group| pmg_map.get(group).unwrap().clone()).collect();
+      let building = Building { building_name: building_name.clone(), production_method_groups };
 
-      bpm_vec.push(building);
+      buildings.push(building);
     }
   }
 
-  bpm_vec
+  buildings
+}
+
+#[derive(Deserialize)]
+struct RawProductionMethodGroup {
+  production_methods: Vec<String>,
 }
 
 fn parse_production_method_groups(path: PathBuf) -> HashMap<String, ProductionMethodGroup> {
@@ -67,16 +75,13 @@ fn parse_production_method_groups(path: PathBuf) -> HashMap<String, ProductionMe
   for entry in std::fs::read_dir(path).unwrap() {
     let entry = entry.unwrap().path();
     if entry.extension().unwrap() != "txt" { continue };
-    let parsed_production_method_groups = parse_script(&std::fs::read_to_string(entry).unwrap());
+    let parsed_production_method_groups: HashMap<String, RawProductionMethodGroup> = from_utf8_reader(&*std::fs::read(entry).unwrap()).unwrap();
 
-    for production_method_group in parsed_production_method_groups.as_array().unwrap() {
-      let production_group_name = production_method_group[0].as_str().unwrap().to_string();
-      let parsed_production_methods: Vec<ProductionMethod> = production_method_group[1].as_array().unwrap().iter()
-        .find(|item| item[0] == "production_methods").unwrap()[1].as_array().unwrap().iter()
-        .map(|method| ProductionMethod { name: method.as_str().unwrap().to_string() }).collect();
-      let production_method_group = ProductionMethodGroup { name: production_group_name, production_methods: parsed_production_methods };
+    for (group_name, raw_group) in parsed_production_method_groups {
+      let production_methods: Vec<ProductionMethod> = raw_group.production_methods.iter().map(|method| ProductionMethod { name: method.clone() }).collect();
+      let production_method_group = ProductionMethodGroup { name: group_name.clone(), production_methods };
 
-      pmg_map.insert(production_method_group.name.clone(), production_method_group);
+      pmg_map.insert(group_name, production_method_group);
     }
   }
 
