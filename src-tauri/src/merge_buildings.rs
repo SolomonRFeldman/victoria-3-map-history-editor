@@ -1,6 +1,6 @@
-use crate::get_state_buildings::Building;
+use crate::get_state_buildings::StateBuilding;
 
-pub fn merge_buildings(buildings1: Vec<Building>, buildings2: Vec<Building>) -> Vec<Building> {
+pub fn merge_state_buildings(buildings1: Vec<StateBuilding>, buildings2: Vec<StateBuilding>) -> Vec<StateBuilding> {
   let mut new_buildings = buildings1.clone();
   for building in buildings2 {
     let existing_building = new_buildings.iter_mut().find(|new_building| new_building.name == building.name);

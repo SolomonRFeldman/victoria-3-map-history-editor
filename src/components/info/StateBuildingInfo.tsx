@@ -1,11 +1,11 @@
 import { MinusIcon, PlusIcon } from "@heroicons/react/24/solid"
-import { Building as StateBuilding } from "../States"
+import { StateBuilding } from "../States"
 import { invoke } from "@tauri-apps/api"
 import { ArrowLeftIcon } from "@heroicons/react/24/outline"
 import ChooseProductionMethod, { ProductionMethodGroup } from "./ChooseProductionMethod"
 import { useRef, useState } from "react"
 
-type BuildingInfoProps = { 
+type StateBuildingInfoProps = { 
   stateBuilding: StateBuilding
   onBuildingChange: (building: StateBuilding) => void
 }
@@ -14,7 +14,7 @@ type Building = {
   production_method_groups: ProductionMethodGroup[]
 }
 
-export default function ({ stateBuilding, onBuildingChange }: BuildingInfoProps) {
+export default function ({ stateBuilding, onBuildingChange }: StateBuildingInfoProps) {
   const adjustStateBuildingLevel = (stateBuilding: StateBuilding, amount: number) => {
     if (!stateBuilding.level) return
     const newLevel = stateBuilding.level + amount

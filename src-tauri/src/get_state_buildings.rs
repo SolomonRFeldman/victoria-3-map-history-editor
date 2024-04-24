@@ -5,7 +5,7 @@ use serde_json::Value;
 use crate::pdx_script_parser::parse_script;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Building {
+pub struct StateBuilding {
   pub name: String,
   pub level: Option<i64>,
   pub reserves: Option<i64>,
@@ -13,8 +13,8 @@ pub struct Building {
   pub condition: Option<Value>,
 }
 
-pub fn get_state_buildings(state_buildings_path: PathBuf) -> HashMap<String, Vec<Building>> {
-  let mut state_buildings_map: HashMap<String, Vec<Building>> = HashMap::new();
+pub fn get_state_buildings(state_buildings_path: PathBuf) -> HashMap<String, Vec<StateBuilding>> {
+  let mut state_buildings_map: HashMap<String, Vec<StateBuilding>> = HashMap::new();
 
   for entry in std::fs::read_dir(state_buildings_path).unwrap() {
     let entry = entry.unwrap().path();
@@ -36,7 +36,7 @@ pub fn get_state_buildings(state_buildings_path: PathBuf) -> HashMap<String, Vec
       state_buildings.iter().for_each(|raw_sub_state_buildings| {
         let country_name = raw_sub_state_buildings[0].as_str().unwrap().strip_prefix("region_state:").unwrap();
 
-        let parsed_sub_state_buildings: Vec<Building> = raw_sub_state_buildings[1].as_array().unwrap().iter().map(|raw_building| {
+        let parsed_sub_state_buildings: Vec<StateBuilding> = raw_sub_state_buildings[1].as_array().unwrap().iter().map(|raw_building| {
           let building = raw_building[1].as_array().unwrap();
           let name = building.iter().find(|item| item[0] == "building").unwrap()[1].as_str().unwrap().to_string();
           let level: Option<i64> = match building.iter().find(|item| item[0] == "level") {
@@ -52,7 +52,7 @@ pub fn get_state_buildings(state_buildings_path: PathBuf) -> HashMap<String, Vec
             None => None
           };
 
-          Building {
+          StateBuilding {
             name,
             level,
             reserves,

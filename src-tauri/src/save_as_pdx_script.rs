@@ -2,14 +2,14 @@ use std::{collections::HashMap, path::PathBuf};
 use serde::{Deserialize, Serialize};
 use tauri::{Manager, WindowMenuEvent};
 
-use crate::{cache_config::CacheConfig, game_folder::STATES_PATH, get_countries::Country, get_state_buildings::Building, get_state_populations::Pop, get_states::{get_states, State}};
+use crate::{cache_config::CacheConfig, game_folder::STATES_PATH, get_countries::Country, get_state_buildings::StateBuilding, get_state_populations::Pop, get_states::{get_states, State}};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct SubState {
   pub provinces: Vec<String>,
   pub owner: String,
   pub pops: Vec<Pop>,
-  pub buildings: Vec<Building>
+  pub state_buildings: Vec<StateBuilding>
 }
 
 pub fn save_as_pdx_script(event: WindowMenuEvent) {
@@ -32,7 +32,7 @@ pub fn save_as_pdx_script(event: WindowMenuEvent) {
             provinces: state.provinces.clone(),
             owner: country.name.clone(),
             pops: state.pops.clone(),
-            buildings: state.buildings.clone()
+            state_buildings: state.state_buildings.clone()
           });
           current_state_map.insert(state.name.clone(), new_sub_states);
         },
@@ -41,7 +41,7 @@ pub fn save_as_pdx_script(event: WindowMenuEvent) {
             provinces: state.provinces.clone(),
             owner: country.name.clone(),
             pops: state.pops.clone(),
-            buildings: state.buildings.clone()
+            state_buildings: state.state_buildings.clone()
           }]);
         }
       }
@@ -164,10 +164,10 @@ fn write_state_buildings_to_pdx_script(current_state_map: &HashMap<String, Vec<S
     sub_states.iter().for_each(|sub_state| {
       pdx_script.push_str(&format!("    region_state:{} = ", sub_state.owner));
       pdx_script.push_str("{\n");
-      for building in &sub_state.buildings {
+      for building in &sub_state.state_buildings {
         if building.condition.is_some() { 
           let mut conditioned_sub_state = sub_state.clone();
-          conditioned_sub_state.buildings = vec![building.clone()];
+          conditioned_sub_state.state_buildings = vec![building.clone()];
           conditioned_sub_state_buildings.push(conditioned_sub_state);
           continue;
         }
@@ -204,7 +204,7 @@ fn parse_building_edge_case_conditional_to_string(state_name: String, sub_states
   sub_states_with_conditional_buildings.iter().for_each(|sub_state| {
     pdx_script.push_str("  if = {\n");
     pdx_script.push_str("    limit = {\n");
-    let condition = sub_state.buildings[0].condition.as_ref().unwrap().as_array();
+    let condition = sub_state.state_buildings[0].condition.as_ref().unwrap().as_array();
     condition.unwrap().iter().for_each(|item| {
       pdx_script.push_str(&format!("      {} = {}\n", item[0], item[1]));
     });
@@ -213,7 +213,7 @@ fn parse_building_edge_case_conditional_to_string(state_name: String, sub_states
     pdx_script.push_str("{\n");
     pdx_script.push_str(&format!("      region_state:{} = ", sub_state.owner));
     pdx_script.push_str("{\n");
-    sub_state.buildings.iter().for_each(|building| {
+    sub_state.state_buildings.iter().for_each(|building| {
       pdx_script.push_str("        create_building = {\n");
       pdx_script.push_str(&format!("          building=\"{}\"\n", building.name));
       if let Some(level) = building.level {

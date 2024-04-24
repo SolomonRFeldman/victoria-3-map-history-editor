@@ -11,7 +11,7 @@ export type Pop = {
   pop_type?: string | null,
 }
 
-export type Building = {
+export type StateBuilding = {
   name: string,
   level: number | null,
   reserves: number | null,
@@ -26,7 +26,7 @@ export type State = {
   color: string
   provinces: string[]
   pops: Pop[]
-  buildings: Building[]
+  state_buildings: StateBuilding[]
 }
 
 type StatesProps = {

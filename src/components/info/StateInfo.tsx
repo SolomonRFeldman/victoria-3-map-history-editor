@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { State } from "../States"
 import PopsInfo from "./PopsInfo"
-import BuildingsInfo from "./BuildingsInfo"
+import StateBuildingsInfo from "./StateBuildingsInfo"
 
 type TabSelection = 'population' | 'buildings'
 
@@ -35,7 +35,7 @@ export default function StateInfo({ selectedState, onStateChange }: StateInfoPro
         <div role="tab" className={`tab ${isSelected('buildings')}`} onClick={() => handleTabSelection('buildings')}>Buildings</div>
       </div>
       { tabSelection === 'population' && <PopsInfo key={selectedState.name} pops={selectedState.pops} onPopsChange={(pops) => onStateChange({...selectedState, pops})} /> }
-      { tabSelection === 'buildings' && <BuildingsInfo buildings={selectedState.buildings} onBuildingsChange={(buildings) => onStateChange({...selectedState, buildings})} /> }
+      { tabSelection === 'buildings' && <StateBuildingsInfo buildings={selectedState.state_buildings} onBuildingsChange={(state_buildings) => onStateChange({...selectedState, state_buildings})} /> }
     </div>
   )
 }

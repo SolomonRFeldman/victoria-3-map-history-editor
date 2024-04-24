@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
-use crate::{get_state_buildings::Building, get_state_populations::{Pop, StatePopulation}, get_states::State as StateHistory};
+use crate::{get_state_buildings::StateBuilding, get_state_populations::{Pop, StatePopulation}, get_states::State as StateHistory};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Country {
@@ -16,10 +16,10 @@ pub struct State {
   pub name: String,
   pub provinces: Vec<String>,
   pub pops: Vec<Pop>,
-  pub buildings: Vec<Building>
+  pub state_buildings: Vec<StateBuilding>
 }
 
-pub fn get_countries(state_histories: Vec<StateHistory>, state_pops: HashMap<String, StatePopulation>, state_buildings: HashMap<String, Vec<Building>>) -> Vec<Country> {
+pub fn get_countries(state_histories: Vec<StateHistory>, state_pops: HashMap<String, StatePopulation>, state_buildings: HashMap<String, Vec<StateBuilding>>) -> Vec<Country> {
   let mut countries: Vec<Country> = vec![];
 
   for state_history in state_histories {
@@ -34,7 +34,7 @@ pub fn get_countries(state_histories: Vec<StateHistory>, state_pops: HashMap<Str
             name: state_history_copy.name.clone(),
             provinces: state.provinces,
             pops: state_pops.get(&format!("{}:{}", state.owner, state_history_copy.name)).unwrap().pops.clone(),
-            buildings: state_buildings.get(&format!("{}:{}", state.owner, state_history_copy.name)).unwrap().clone(),
+            state_buildings: state_buildings.get(&format!("{}:{}", state.owner, state_history_copy.name)).unwrap().clone(),
           });
         },
         None => {
@@ -47,7 +47,7 @@ pub fn get_countries(state_histories: Vec<StateHistory>, state_pops: HashMap<Str
               name: state_history_copy.name.clone(),
               provinces: state.provinces,
               pops: state_pops.get(&format!("{}:{}", state.owner, state_history_copy.name)).unwrap().pops.clone(),
-              buildings: state_buildings.get(&format!("{}:{}", state.owner, state_history_copy.name)).unwrap().clone(),
+              state_buildings: state_buildings.get(&format!("{}:{}", state.owner, state_history_copy.name)).unwrap().clone(),
             }],
             coordinates: vec![],
           });
