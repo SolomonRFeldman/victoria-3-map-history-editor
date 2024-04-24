@@ -2,7 +2,7 @@ import { MinusIcon, PlusIcon } from "@heroicons/react/24/solid"
 import { StateBuilding } from "../States"
 import { invoke } from "@tauri-apps/api"
 import { ArrowLeftIcon } from "@heroicons/react/24/outline"
-import ChooseProductionMethod, { ProductionMethodGroup } from "./ChooseProductionMethod"
+import ChooseProductionMethods, { ProductionMethodGroup } from "./ChooseProductionMethods"
 import { useRef, useState } from "react"
 
 type StateBuildingInfoProps = { 
@@ -39,7 +39,7 @@ export default function ({ stateBuilding, onBuildingChange }: StateBuildingInfoP
       <td className="max-w-2 pl-3 dropdown dropdown-left">
         <button tabIndex={0} className="btn btn-square btn-xs btn-accent w-4 min-h-4 h-4" onClick={() => getBuilding(stateBuilding.name)}><ArrowLeftIcon className="w-3 h-3"/></button>
         <div tabIndex={0} className="dropdown-content" ref={renderBuildingsRef} >
-          <ChooseProductionMethod pmgs={pmgs} stateBuildingPms={stateBuilding.activate_production_methods} onPmChange={handlePmChange}/>
+          <ChooseProductionMethods pmgs={pmgs} stateBuildingPms={stateBuilding.activate_production_methods} onPmChange={handlePmChange}/>
         </div>
       </td>
       <td className="max-w-32">{stateBuilding.name}</td>
