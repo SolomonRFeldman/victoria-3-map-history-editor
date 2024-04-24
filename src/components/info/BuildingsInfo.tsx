@@ -1,6 +1,5 @@
-import { MinusIcon, PlusIcon } from "@heroicons/react/24/solid"
 import { Building } from "../States"
-import { invoke } from "@tauri-apps/api"
+import BuildingInfo from "./BuildingInfo"
 
 type BuildingsInfoProps = {
   buildings: Building[]
@@ -8,48 +7,23 @@ type BuildingsInfoProps = {
 }
 
 export default function BuildingsInfo({ buildings, onBuildingsChange }: BuildingsInfoProps) {
-  const adjustBuildingLevel = (building: Building, amount: number) => {
-    if (!building.level) return
-    const newLevel = building.level + amount
-    if (newLevel < 1) return
-
-    const newBuilding = {...building, level: building.level + amount}
-    const newBuildings = buildings.map((b) => b === building ? newBuilding : b)
+  const onBuildingChange = (building: Building) => {
+    const newBuildings = buildings.map((b) => b.name === building.name ? building : b)
     onBuildingsChange(newBuildings)
-  }
-
-  const handleClickProductionMethod = async (name: string) => {
-    await invoke("get_building", { name })
   }
   
   return(
     <table className="table table-xs">
       <thead>
         <tr>
+          <th className="max-w-5">PMs</th>
           <th className="max-w-32">Building</th>
           <th className="max-w-24">Production Methods</th>
           <th>Level</th>
         </tr>
       </thead>
       <tbody>
-        {buildings.sort((building1, building2) => (building2.level || 0) - (building1.level || 0)).map((building) => {
-          const productionMethods = building.activate_production_methods?.join(', ')
-          return (
-            <tr key={building.name}>
-              <td className="max-w-32">{building.name}</td>
-              <td className="max-w-24">
-                <button className="btn btn-xs btn-accent min-h-4 h-4 tooltip tooltip-bottom max-w-full" onClick={() => handleClickProductionMethod(building.name)} data-tip={productionMethods || ''}>
-                  <div className="overflow-hidden truncate">{productionMethods}</div>
-                </button>
-              </td>
-              <td className="flex justify-center items-center max-w-16">
-                <button className="btn btn-square btn-xs btn-error w-4 min-h-4 h-4" onClick={() => adjustBuildingLevel(building, -1)}><MinusIcon/></button>
-                <p className="px-2 text-center">{building.level}</p>
-                <button className="btn btn-square btn-xs btn-success w-4 min-h-4 h-4" onClick={() => adjustBuildingLevel(building, 1)}><PlusIcon/></button>
-              </td>
-            </tr>
-          )
-        })}
+        {buildings.sort((building1, building2) => (building2.level || 0) - (building1.level || 0)).map((building) => <BuildingInfo key={building.name} stateBuilding={building} onBuildingChange={onBuildingChange} />)}
       </tbody>
     </table>
   )
