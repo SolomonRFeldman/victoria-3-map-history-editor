@@ -1,5 +1,6 @@
 import { StateBuilding } from "../States"
 import StateBuildingInfo from "./StateBuildingInfo"
+import AddStateBuilding from "./AddStateBuilding"
 
 type BuildingsInfoProps = {
   buildings: StateBuilding[]
@@ -24,6 +25,7 @@ export default function BuildingsInfo({ buildings, onBuildingsChange }: Building
       </thead>
       <tbody>
         {buildings.sort((building1, building2) => (building2.level || 0) - (building1.level || 0)).map((building) => <StateBuildingInfo key={building.name} stateBuilding={building} onBuildingChange={onBuildingChange} />)}
+        <AddStateBuilding />
       </tbody>
     </table>
   )
