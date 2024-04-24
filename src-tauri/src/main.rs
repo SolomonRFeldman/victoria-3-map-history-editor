@@ -46,7 +46,7 @@ fn cache_state(window: Window, countries: Vec<Country>, states: HashMap<String, 
 }
 #[tauri::command]
 fn get_building(window: Window, name: String) -> Building {
-  Building::parse_from_game_folder(window).iter().find(|building| building.building_name == name).unwrap().clone()
+  Building::parse_from_game_folder(window).iter().find(|building| building.name == name).unwrap().clone()
 }
 
 fn main() {

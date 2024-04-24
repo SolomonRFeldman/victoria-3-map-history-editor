@@ -22,7 +22,7 @@ pub struct ProductionMethodGroup {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Building {
-  pub building_name: String,
+  pub name: String,
   pub production_method_groups: Vec<ProductionMethodGroup>,
 }
 
@@ -53,9 +53,9 @@ pub fn parse_buildings(buildings_path: PathBuf, pmg_map: HashMap<String, Product
     if entry.extension().unwrap() != "txt" { continue };
     let parsed_buildings: HashMap<String, RawBuilding> = from_utf8_reader(&*std::fs::read(entry).unwrap()).unwrap();
 
-    for (building_name, raw_building) in parsed_buildings {
+    for (name, raw_building) in parsed_buildings {
       let production_method_groups: Vec<ProductionMethodGroup> = raw_building.production_method_groups.iter().map(|group| pmg_map.get(group).unwrap().clone()).collect();
-      let building = Building { building_name: building_name.clone(), production_method_groups };
+      let building = Building { name: name.clone(), production_method_groups };
 
       buildings.push(building);
     }
