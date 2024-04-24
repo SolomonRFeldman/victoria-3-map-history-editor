@@ -1,8 +1,11 @@
 import Map from './components/Map'
+import './App.css'
 
 function App() {
   return (
-    <Map />
+    <div className="app">
+      <Map />
+    </div>
   )
 }
 

@@ -1,0 +1,4 @@
+.app .leaflet-container a {
+  color: inherit;
+  -webkit-tap-highlight-color: inherit;
+}
