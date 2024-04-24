@@ -132,7 +132,6 @@ export default function PopsInfo({ pops, onPopsChange }: PopsInfoProps) {
         const lastPop = popHistory.back()
         if (lastPop) { onPopsChange(lastPop) }
       }
-      console.log(event.shiftKey, event.ctrlKey, event.key)
       if (event.shiftKey && event.ctrlKey && event.key === 'Z') {
         event.preventDefault()
         const lastPop = popHistory.forward()

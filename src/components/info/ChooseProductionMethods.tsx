@@ -16,7 +16,6 @@ type ChooseProductionMethodProps = {
 
 export default function ChooseProductionMethods({ pmgs, stateBuildingPms, onPmChange }: ChooseProductionMethodProps) {
   const handleChoosePm = (newPm: string, oldPm?: string) => {
-    console.log(newPm, oldPm)
     const newPms = stateBuildingPms?.map((pm) => pm === oldPm ? newPm : pm) || []
     onPmChange(newPms)
   }
