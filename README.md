@@ -13,7 +13,7 @@ Immediate TO-DO in order of priority:
 - [x] add population info to states
 - [x] add editing population info of states
 - [x] add building info to states
-- [ ] add editing building info of states
+- [x] add editing building info of states
 
 Low Priority TO-DO:
 - [ ] Color in land mask and flatmap overlay properly.
