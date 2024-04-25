@@ -51,7 +51,7 @@ export default function StateInfo({ selectedState, onStateChange }: StateInfoPro
     <div>
       <h2 className="card-title text-base justify-end">State: {selectedState.name}</h2>
       <div className='grid grid-cols-2 justify-items-stretch items-end pb-1'>
-        <div className="kbd justify-self-start h-6">e</div>
+        <div className="kbd kbd-sm justify-self-start">e</div>
         <div role="tablist" className="tabs tabs-boxed tooltip tooltip-left justify-self-end" data-tip='Tab'>
           <div role="tab" className={`tab ${isSelected('population')}`} onClick={() => handleTabSelection('population')}>Population</div>
           <div role="tab" className={`tab ${isSelected('buildings')}`} onClick={() => handleTabSelection('buildings')}>Buildings</div>
