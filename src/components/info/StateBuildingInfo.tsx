@@ -31,13 +31,13 @@ export default function ({ stateBuilding, onBuildingChange }: StateBuildingInfoP
   const renderBuildingsRef = useRef<HTMLDivElement>(null)
 
   const [pmgs, setPmgs] = useState<ProductionMethodGroup[]>([])
-  const getBuilding = async (name: string) => { setPmgs((await invoke<Building>("get_building", { name })).production_method_groups) }
+  const handleGetBuilding = async () => { setPmgs((await invoke<Building>("get_building", { name: stateBuilding.name })).production_method_groups) }
 
   const productionMethods = stateBuilding.activate_production_methods?.join(', ')
   return (
     <tr key={stateBuilding.name}>
       <td className="pl-3 dropdown dropdown-left">
-        <button tabIndex={0} className="btn btn-square btn-xs btn-accent w-4 min-h-4 h-4" onClick={() => getBuilding(stateBuilding.name)}><ArrowLeftIcon className="w-3 h-3"/></button>
+        <button tabIndex={0} className="btn btn-square btn-xs btn-accent w-4 min-h-4 h-4" onClick={handleGetBuilding} onFocus={handleGetBuilding}><ArrowLeftIcon className="w-3 h-3"/></button>
         <div tabIndex={0} className="dropdown-content" ref={renderBuildingsRef} >
           <ChooseProductionMethods pmgs={pmgs} stateBuildingPms={stateBuilding.activate_production_methods} onPmChange={handlePmChange}/>
         </div>
