@@ -9,9 +9,11 @@ type StateBuildingInfoProps = {
   stateBuilding: StateBuilding
   onBuildingChange: (building: StateBuilding) => void
 }
-type Building = {
+export type Building = {
   name: string,
   production_method_groups: ProductionMethodGroup[]
+  buildable: boolean,
+  unique: boolean
 }
 
 export default function ({ stateBuilding, onBuildingChange }: StateBuildingInfoProps) {

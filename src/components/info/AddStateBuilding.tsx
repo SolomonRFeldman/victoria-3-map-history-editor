@@ -1,18 +1,27 @@
 import { PlusIcon } from "@heroicons/react/24/solid";
 import { FocusEvent, useEffect, useRef, useState } from "react";
+import { Building } from "./StateBuildingInfo";
+import { invoke } from "@tauri-apps/api";
+
+const buildingsFilter = (buildings: Building[], search: string) => buildings.filter(building => {
+  return !building.unique && building.buildable && building.name.toLowerCase().includes(search.toLowerCase())
+})
 
 export default function AddStateBuilding({}) {
-  const items = ['Item 1', 'Item 2', 'Jeff']
   const [showBuildings, setShowBuildings] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null);
-  const itemRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const buildingRefs = useRef<(HTMLButtonElement | null)[]>([])
   const [, setFocusedIndex] = useState(0)
   const [search, setSearch] = useState('')
-  const filteredItems = items.filter(item => item.toLowerCase().includes(search.toLowerCase()))
+  const [buildings, setBuildings] = useState<Building[]>([])
+
+  const handleGetBuildings = async () => { setBuildings((await invoke<Building[]>("get_buildings", {}))) }
+  const filteredBuildings = buildingsFilter(buildings, search)
+  useEffect(() => { handleGetBuildings() }, [])
 
   useEffect(() => {
-    itemRefs.current = itemRefs.current.slice(0, filteredItems.length);
-  }, [items, search]);
+    buildingRefs.current = buildingRefs.current.slice(0, filteredBuildings.length);
+  }, [buildings, search]);
 
   const handleOptionsKeyDown = (event: React.KeyboardEvent) => {
     const shiftTab = event.shiftKey && event.key === 'Tab'
@@ -24,13 +33,13 @@ export default function AddStateBuilding({}) {
           return 0
         } else {
           const index = focusedIndex - 1
-          itemRefs.current[index]?.focus()
+          buildingRefs.current[index]?.focus()
           return index
         }
       })
     } else if (event.key === 'ArrowDown' || event.key === 'Tab') {
       setFocusedIndex((focusedIndex) => {
-        if (focusedIndex === filteredItems.length - 1) {
+        if (focusedIndex === filteredBuildings.length - 1) {
           if(event.key !== 'Tab') {
             event.preventDefault()
             inputRef.current?.focus()
@@ -40,7 +49,7 @@ export default function AddStateBuilding({}) {
         } else {
           event.preventDefault()
           const index = focusedIndex + 1
-          itemRefs.current[index]?.focus()
+          buildingRefs.current[index]?.focus()
           return index
         }
       })
@@ -69,12 +78,12 @@ export default function AddStateBuilding({}) {
     if (event.key === 'ArrowDown') {
       event.preventDefault()
       setFocusedIndex(0)
-      itemRefs.current[0]?.focus()
+      buildingRefs.current[0]?.focus()
     }
     if (event.key === 'ArrowUp') {
       event.preventDefault()
-      setFocusedIndex(filteredItems.length - 1)
-      itemRefs.current[filteredItems.length - 1]?.focus()
+      setFocusedIndex(filteredBuildings.length - 1)
+      buildingRefs.current[filteredBuildings.length - 1]?.focus()
     }
   }
 
@@ -100,8 +109,8 @@ export default function AddStateBuilding({}) {
       <td className="max-w-16" onBlur={handleFormBlur} onFocus={handleFormFocus}>
         <div className="dropdown">
           <input ref={inputRef} value={search} onChange={event => setSearch(event.target.value)} className="input input-xs -ml-2" tabIndex={0} role="button" placeholder={(showBuildings || '') && "select building"} onKeyDown={handleInputKeyDown} />
-          <ul className="menu-xs dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52" onKeyDown={handleOptionsKeyDown}>
-            {filteredItems.map((item, index) => <li key={item}><button className="button" onClick={() => console.log(item)} tabIndex={0} ref={el => itemRefs.current[index] = el}>{item}</button></li>)}
+          <ul className="menu-xs dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-60 max-h-60 overflow-y-scroll block" onKeyDown={handleOptionsKeyDown}>
+            {filteredBuildings.map((building, index) => <li key={building.name}><button className="button" onClick={() => console.log(building.name)} tabIndex={0} ref={el => buildingRefs.current[index] = el}>{building.name}</button></li>)}
           </ul>
         </div>
       </td>

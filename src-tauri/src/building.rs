@@ -24,6 +24,8 @@ pub struct ProductionMethodGroup {
 pub struct Building {
   pub name: String,
   pub production_method_groups: Vec<ProductionMethodGroup>,
+  pub buildable: bool,
+  pub unique: bool
 }
 
 impl Building {
@@ -40,9 +42,14 @@ impl Building {
   }
 }
 
+fn default_as_true() -> bool { true }
 #[derive(Deserialize)]
 struct RawBuilding {
   production_method_groups: Vec<String>,
+  #[serde(default = "default_as_true")]
+  buildable: bool,
+  #[serde(default)]
+  unique: bool
 }
 
 pub fn parse_buildings(buildings_path: PathBuf, pmg_map: HashMap<String, ProductionMethodGroup>) -> Vec<Building> {
@@ -54,8 +61,9 @@ pub fn parse_buildings(buildings_path: PathBuf, pmg_map: HashMap<String, Product
     let parsed_buildings: HashMap<String, RawBuilding> = from_utf8_reader(&*std::fs::read(entry).unwrap()).unwrap();
 
     for (name, raw_building) in parsed_buildings {
-      let production_method_groups: Vec<ProductionMethodGroup> = raw_building.production_method_groups.iter().map(|group| pmg_map.get(group).unwrap().clone()).collect();
-      let building = Building { name: name.clone(), production_method_groups };
+      let RawBuilding { production_method_groups, buildable, unique } = raw_building;
+      let production_method_groups: Vec<ProductionMethodGroup> = production_method_groups.iter().map(|group| pmg_map.get(group).unwrap().clone()).collect();
+      let building = Building { name: name.clone(), production_method_groups, buildable, unique };
 
       buildings.push(building);
     }

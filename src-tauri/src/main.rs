@@ -48,6 +48,10 @@ fn cache_state(window: Window, countries: Vec<Country>, states: HashMap<String, 
 fn get_building(window: Window, name: String) -> Building {
   Building::parse_from_game_folder(window).iter().find(|building| building.name == name).unwrap().clone()
 }
+#[tauri::command]
+fn get_buildings(window: Window) -> Vec<Building> {
+  Building::parse_from_game_folder(window)
+}
 
 fn main() {
     tauri::Builder::default()
@@ -60,7 +64,7 @@ fn main() {
         })
         .menu(MainMenu::create_menu())
         .on_menu_event(MainMenu::handler)
-        .invoke_handler(tauri::generate_handler![transfer_state, transfer_province, cache_state, get_building])
+        .invoke_handler(tauri::generate_handler![transfer_state, transfer_province, cache_state, get_building, get_buildings])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
