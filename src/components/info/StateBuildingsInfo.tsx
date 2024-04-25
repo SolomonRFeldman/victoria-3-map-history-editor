@@ -8,7 +8,7 @@ type BuildingsInfoProps = {
 }
 
 export default function StateBuildingsInfo({ buildings, onBuildingsChange }: BuildingsInfoProps) {
-  const onBuildingChange = (building: StateBuilding) => {
+  const handleBuildingChange = (building: StateBuilding) => {
     const newBuildings = buildings.map((b) => b.name === building.name ? building : b)
     onBuildingsChange(newBuildings)
   }
@@ -24,7 +24,7 @@ export default function StateBuildingsInfo({ buildings, onBuildingsChange }: Bui
         </tr>
       </thead>
       <tbody>
-        {buildings.sort((building1, building2) => (building2.level || 0) - (building1.level || 0)).map((building) => <StateBuildingInfo key={building.name} stateBuilding={building} onBuildingChange={onBuildingChange} />)}
+        {buildings.sort((building1, building2) => (building2.level || 0) - (building1.level || 0)).map((building) => <StateBuildingInfo key={building.name} stateBuilding={building} onBuildingChange={handleBuildingChange} />)}
         <AddStateBuilding stateBuildings={buildings} />
       </tbody>
     </table>
