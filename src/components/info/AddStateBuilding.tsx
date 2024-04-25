@@ -80,7 +80,7 @@ export default function AddStateBuilding({}) {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => { 
-      if (event.key === 'n' && !showBuildings) {
+      if (event.key === 'a' && !showBuildings) {
         event.preventDefault()
         inputRef.current?.focus() 
       }

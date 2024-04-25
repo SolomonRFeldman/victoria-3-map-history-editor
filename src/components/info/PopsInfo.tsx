@@ -109,7 +109,7 @@ export default function PopsInfo({ pops, onPopsChange }: PopsInfoProps) {
 
   useEffect(() => {
     const handlePopsHotkeys = (event: KeyboardEvent) => {
-      if (event.key === 'n') {
+      if (event.key === 'a') {
         if(!isCreatingPop) {
           event.preventDefault()
           setIsCreatingPop(true)
@@ -134,7 +134,7 @@ export default function PopsInfo({ pops, onPopsChange }: PopsInfoProps) {
     <table ref={divRef} onKeyDown={handleOnKeyDown} className="table table-xs">
       <thead>
         <tr>
-          <th>{ !isCreatingPop && <button className="btn btn-square btn-xs btn-success tooltip tooltip-bottom" data-tip="n" onClick={() => setIsCreatingPop(true)}><PlusIcon className="w-5 h-5" /></button> }</th>
+          <th>{ !isCreatingPop && <button className="btn btn-square btn-xs btn-success tooltip tooltip-bottom" data-tip='a' onClick={() => setIsCreatingPop(true)}><PlusIcon className="w-5 h-5" /></button> }</th>
           <th>Culture</th>
           <th>Religion</th>
           <th>Size</th>
