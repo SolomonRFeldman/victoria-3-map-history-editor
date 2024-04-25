@@ -93,7 +93,7 @@ export default function AddStateBuilding({}) {
   return(
     <tr className="">
       <td>
-        <button className="btn btn-square btn-xs btn-success w-4 min-h-4 h-4 ml-1" onClick={handleClick}>
+        <button className="btn btn-square btn-xs btn-success w-4 min-h-4 h-4 ml-1 tooltip tooltip-bottom" data-tip='a' onClick={handleClick}>
           <PlusIcon className="w-3 h-3"/>
         </button>
       </td>
