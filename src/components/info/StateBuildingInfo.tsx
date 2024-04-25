@@ -16,7 +16,7 @@ export type Building = {
   unique: boolean
 }
 
-export default function ({ stateBuilding, onBuildingChange }: StateBuildingInfoProps) {
+export default function StateBuildingInfo({ stateBuilding, onBuildingChange }: StateBuildingInfoProps) {
   const adjustStateBuildingLevel = (stateBuilding: StateBuilding, amount: number) => {
     if (!stateBuilding.level) return
     const newLevel = stateBuilding.level + amount

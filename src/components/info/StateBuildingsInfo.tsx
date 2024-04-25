@@ -7,7 +7,7 @@ type BuildingsInfoProps = {
   onBuildingsChange: (building: StateBuilding[]) => void
 }
 
-export default function BuildingsInfo({ buildings, onBuildingsChange }: BuildingsInfoProps) {
+export default function StateBuildingsInfo({ buildings, onBuildingsChange }: BuildingsInfoProps) {
   const onBuildingChange = (building: StateBuilding) => {
     const newBuildings = buildings.map((b) => b.name === building.name ? building : b)
     onBuildingsChange(newBuildings)
