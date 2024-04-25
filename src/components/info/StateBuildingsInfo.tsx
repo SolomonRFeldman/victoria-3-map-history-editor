@@ -25,7 +25,7 @@ export default function BuildingsInfo({ buildings, onBuildingsChange }: Building
       </thead>
       <tbody>
         {buildings.sort((building1, building2) => (building2.level || 0) - (building1.level || 0)).map((building) => <StateBuildingInfo key={building.name} stateBuilding={building} onBuildingChange={onBuildingChange} />)}
-        <AddStateBuilding />
+        <AddStateBuilding stateBuildings={buildings} />
       </tbody>
     </table>
   )

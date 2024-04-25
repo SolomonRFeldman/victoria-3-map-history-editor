@@ -2,12 +2,20 @@ import { PlusIcon } from "@heroicons/react/24/solid";
 import { FocusEvent, useEffect, useRef, useState } from "react";
 import { Building } from "./StateBuildingInfo";
 import { invoke } from "@tauri-apps/api";
+import { StateBuilding } from "../States";
 
-const buildingsFilter = (buildings: Building[], search: string) => buildings.filter(building => {
-  return !building.unique && building.buildable && building.name.toLowerCase().includes(search.toLowerCase())
+const buildingsFilter = (buildings: Building[], stateBuildings: StateBuilding[], search: string) => buildings.filter(building => {
+  return !building.unique &&
+    building.buildable &&
+    !stateBuildings.some(stateBuilding => stateBuilding.name === building.name) &&
+    building.name.toLowerCase().includes(search.toLowerCase())
 })
 
-export default function AddStateBuilding({}) {
+type AddStateBuildingProps = {
+  stateBuildings: StateBuilding[]
+}
+
+export default function AddStateBuilding({ stateBuildings }: AddStateBuildingProps) {
   const [showBuildings, setShowBuildings] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null);
   const buildingRefs = useRef<(HTMLButtonElement | null)[]>([])
@@ -16,7 +24,7 @@ export default function AddStateBuilding({}) {
   const [buildings, setBuildings] = useState<Building[]>([])
 
   const handleGetBuildings = async () => { setBuildings((await invoke<Building[]>("get_buildings", {}))) }
-  const filteredBuildings = buildingsFilter(buildings, search)
+  const filteredBuildings = buildingsFilter(buildings, stateBuildings, search)
   useEffect(() => { handleGetBuildings() }, [])
 
   useEffect(() => {
