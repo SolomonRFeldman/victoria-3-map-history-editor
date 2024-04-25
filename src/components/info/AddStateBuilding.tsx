@@ -13,9 +13,10 @@ const buildingsFilter = (buildings: Building[], stateBuildings: StateBuilding[],
 
 type AddStateBuildingProps = {
   stateBuildings: StateBuilding[]
+  onAddStateBuilding: (building: StateBuilding) => void
 }
 
-export default function AddStateBuilding({ stateBuildings }: AddStateBuildingProps) {
+export default function AddStateBuilding({ stateBuildings, onAddStateBuilding }: AddStateBuildingProps) {
   const [showBuildings, setShowBuildings] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null);
   const buildingRefs = useRef<(HTMLButtonElement | null)[]>([])
@@ -114,6 +115,13 @@ export default function AddStateBuilding({ stateBuildings }: AddStateBuildingPro
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [showBuildings])
 
+  const handleClickBuilding = (building: Building) => {
+    const activate_production_methods = building.production_method_groups.map(pmGroup => pmGroup.production_methods[0].name)
+
+    onAddStateBuilding({ name: building.name, level: 1, activate_production_methods, reserves: 1, condition: null })
+  }
+
+
   return(
     <tr>
       <td>
@@ -125,7 +133,7 @@ export default function AddStateBuilding({ stateBuildings }: AddStateBuildingPro
         <div className="dropdown">
           <input ref={inputRef} value={search} onChange={event => setSearch(event.target.value)} className="input input-xs -ml-2" tabIndex={0} role="button" placeholder={(showBuildings || '') && "select building"} onKeyDown={handleInputKeyDown} />
           <ul className="menu-xs dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-60 max-h-60 overflow-y-scroll block" onKeyDown={handleOptionsKeyDown}>
-            {filteredBuildings.map((building, index) => <li key={building.name}><button className="button" onClick={() => console.log(building.name)} tabIndex={0} ref={el => buildingRefs.current[index] = el}>{building.name}</button></li>)}
+            {filteredBuildings.map((building, index) => <li key={building.name}><button className="button" onClick={() => handleClickBuilding(building)} tabIndex={0} ref={el => buildingRefs.current[index] = el}>{building.name}</button></li>)}
           </ul>
         </div>
       </td>

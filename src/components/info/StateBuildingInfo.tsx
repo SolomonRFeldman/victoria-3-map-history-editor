@@ -19,8 +19,6 @@ export type Building = {
 export default function StateBuildingInfo({ stateBuilding, onBuildingChange }: StateBuildingInfoProps) {
   const adjustStateBuildingLevel = (stateBuilding: StateBuilding, amount: number) => {
     if (!stateBuilding.level) return
-    const newLevel = stateBuilding.level + amount
-    if (newLevel < 1) return
 
     const newBuilding = {...stateBuilding, level: stateBuilding.level + amount}
     onBuildingChange(newBuilding)
