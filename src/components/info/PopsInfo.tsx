@@ -98,20 +98,11 @@ export default function PopsInfo({ pops, onPopsChange }: PopsInfoProps) {
   
   const divRef = useRef<HTMLTableElement>(null)
   const handleOnKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Tab' || event.key === 'e') {
-      event.stopPropagation()
-    }
     if (event.key === 'Escape') {
-      event.stopPropagation()
       if (isCreatingPop) {
+        event.stopPropagation()
         setIsCreatingPop(false)
-      } else {
-        divRef.current?.focus()
-        divRef.current?.blur()
       }
-    }
-    if (event.key === 'e') {
-      event.stopPropagation()
     }
   }
   const [isCreatingPop, setIsCreatingPop] = useState(false)
@@ -123,9 +114,6 @@ export default function PopsInfo({ pops, onPopsChange }: PopsInfoProps) {
           event.preventDefault()
           setIsCreatingPop(true)
         }
-      }
-      if (event.key === 'e') {
-        divRef.current?.focus()
       }
       if (event.ctrlKey && event.key === 'z') {
         event.preventDefault()
@@ -143,7 +131,7 @@ export default function PopsInfo({ pops, onPopsChange }: PopsInfoProps) {
   }, [isCreatingPop, popHistory])
 
   return(
-    <table tabIndex={0} ref={divRef} onKeyDown={handleOnKeyDown} className="table table-xs">
+    <table ref={divRef} onKeyDown={handleOnKeyDown} className="table table-xs">
       <thead>
         <tr>
           <th>{ !isCreatingPop && <button className="btn btn-square btn-xs btn-success tooltip tooltip-bottom" data-tip="n" onClick={() => setIsCreatingPop(true)}><PlusIcon className="w-5 h-5" /></button> }</th>
