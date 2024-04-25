@@ -115,7 +115,7 @@ export default function AddStateBuilding({ stateBuildings }: AddStateBuildingPro
   }, [showBuildings])
 
   return(
-    <tr className="">
+    <tr>
       <td>
         <button className="btn btn-square btn-xs btn-success w-4 min-h-4 h-4 ml-1 tooltip tooltip-bottom" data-tip='a' onClick={handleClick}>
           <PlusIcon className="w-3 h-3"/>
