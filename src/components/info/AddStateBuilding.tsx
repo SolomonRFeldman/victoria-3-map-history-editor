@@ -78,6 +78,18 @@ export default function AddStateBuilding({}) {
     }
   }
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => { 
+      if (event.key === 'n' && !showBuildings) {
+        event.preventDefault()
+        inputRef.current?.focus() 
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [showBuildings])
+
   return(
     <tr className="">
       <td>
