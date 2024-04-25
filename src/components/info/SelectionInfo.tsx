@@ -24,8 +24,8 @@ export default function SelectionInfo({ selectedCountry, selectedState, selected
   }
 
   return (
-    <div ref={infoRef} className='leaflet-top leaflet-right card card-compact bg-base-100 m-4'>
-      <div className="card-body leaflet-control">
+    <div ref={infoRef} className='fixed top-4 right-4 card card-compact bg-base-100 z-[400]'>
+      <div className="card-body">
         <h1 className="card-title justify-end">Country: {selectedCountry.name}</h1>
         { selectedState && <StateInfo selectedState={selectedState} onStateChange={handleStateChange} /> }
         { selectedProvince && <h3 className="card-title text-sm">Province: {selectedProvince}</h3> }

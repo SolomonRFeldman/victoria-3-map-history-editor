@@ -1,8 +1,0 @@
-.app .leaflet-container a {
-  color: inherit;
-  -webkit-tap-highlight-color: inherit;
-}
-.app .leaflet-container {
-  -webkit-tap-highlight-color: inherit;
-  font-family: inherit;
-}
