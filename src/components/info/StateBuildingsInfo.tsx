@@ -17,9 +17,9 @@ export default function BuildingsInfo({ buildings, onBuildingsChange }: Building
     <table className="table table-xs">
       <thead>
         <tr>
-          <th className="max-w-5">PMs</th>
-          <th className="max-w-32">Building</th>
-          <th className="max-w-24">Production Methods</th>
+          <th>PMs</th>
+          <th>Building</th>
+          <th>Production Methods</th>
           <th>Level</th>
         </tr>
       </thead>

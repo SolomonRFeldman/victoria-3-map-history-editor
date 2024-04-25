@@ -34,8 +34,10 @@ export default function StateInfo({ selectedState, onStateChange }: StateInfoPro
         <div role="tab" className={`tab ${isSelected('population')}`} onClick={() => handleTabSelection('population')}>Population</div>
         <div role="tab" className={`tab ${isSelected('buildings')}`} onClick={() => handleTabSelection('buildings')}>Buildings</div>
       </div>
-      { tabSelection === 'population' && <PopsInfo key={selectedState.name} pops={selectedState.pops} onPopsChange={(pops) => onStateChange({...selectedState, pops})} /> }
-      { tabSelection === 'buildings' && <StateBuildingsInfo buildings={selectedState.state_buildings} onBuildingsChange={(state_buildings) => onStateChange({...selectedState, state_buildings})} /> }
+      <div>
+        { tabSelection === 'population' && <PopsInfo key={selectedState.name} pops={selectedState.pops} onPopsChange={(pops) => onStateChange({...selectedState, pops})} /> }
+        { tabSelection === 'buildings' && <StateBuildingsInfo buildings={selectedState.state_buildings} onBuildingsChange={(state_buildings) => onStateChange({...selectedState, state_buildings})} /> }
+      </div>
     </div>
   )
 }

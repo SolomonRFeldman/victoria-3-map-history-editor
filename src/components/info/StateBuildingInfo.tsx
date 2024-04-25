@@ -36,19 +36,19 @@ export default function ({ stateBuilding, onBuildingChange }: StateBuildingInfoP
   const productionMethods = stateBuilding.activate_production_methods?.join(', ')
   return (
     <tr key={stateBuilding.name}>
-      <td className="max-w-2 pl-3 dropdown dropdown-left">
+      <td className="pl-3 dropdown dropdown-left">
         <button tabIndex={0} className="btn btn-square btn-xs btn-accent w-4 min-h-4 h-4" onClick={() => getBuilding(stateBuilding.name)}><ArrowLeftIcon className="w-3 h-3"/></button>
         <div tabIndex={0} className="dropdown-content" ref={renderBuildingsRef} >
           <ChooseProductionMethods pmgs={pmgs} stateBuildingPms={stateBuilding.activate_production_methods} onPmChange={handlePmChange}/>
         </div>
       </td>
-      <td className="max-w-32">{stateBuilding.name}</td>
-      <td className="max-w-24">
+      <td>{stateBuilding.name}</td>
+      <td className="max-w-36">
         <button className="btn btn-xs btn-accent min-h-4 h-4 tooltip tooltip-bottom max-w-full" data-tip={productionMethods || ''}>
           <div className="overflow-hidden truncate">{productionMethods}</div>
         </button>
       </td>
-      <td className="flex justify-center items-center max-w-16">
+      <td className="flex justify-center items-center">
         <button className="btn btn-square btn-xs btn-error w-4 min-h-4 h-4" onClick={() => adjustStateBuildingLevel(stateBuilding, -1)}>
           <MinusIcon className="w-3 h-3"/>
         </button>
