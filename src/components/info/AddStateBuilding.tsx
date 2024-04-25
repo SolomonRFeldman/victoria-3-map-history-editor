@@ -11,7 +11,7 @@ export default function AddStateBuilding({}) {
   const [showBuildings, setShowBuildings] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null);
   const buildingRefs = useRef<(HTMLButtonElement | null)[]>([])
-  const [, setFocusedIndex] = useState(0)
+  const [focusedIndex, setFocusedIndex] = useState(0)
   const [search, setSearch] = useState('')
   const [buildings, setBuildings] = useState<Building[]>([])
 
@@ -21,6 +21,7 @@ export default function AddStateBuilding({}) {
 
   useEffect(() => {
     buildingRefs.current = buildingRefs.current.slice(0, filteredBuildings.length);
+    setFocusedIndex(0)
   }, [buildings, search]);
 
   const handleOptionsKeyDown = (event: React.KeyboardEvent) => {
@@ -53,6 +54,9 @@ export default function AddStateBuilding({}) {
           return index
         }
       })
+    } else if (event.key === 'a') { 
+      event.preventDefault()
+      inputRef.current?.focus()
     }
   }
 
@@ -77,13 +81,16 @@ export default function AddStateBuilding({}) {
   const handleInputKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'ArrowDown') {
       event.preventDefault()
-      setFocusedIndex(0)
-      buildingRefs.current[0]?.focus()
+      buildingRefs.current[focusedIndex]?.focus()
     }
     if (event.key === 'ArrowUp') {
       event.preventDefault()
-      setFocusedIndex(filteredBuildings.length - 1)
-      buildingRefs.current[filteredBuildings.length - 1]?.focus()
+      if (focusedIndex === 0) {
+        setFocusedIndex(filteredBuildings.length - 1)
+        buildingRefs.current[filteredBuildings.length - 1]?.focus()
+      } else {
+        buildingRefs.current[focusedIndex]?.focus()
+      }
     }
   }
 
