@@ -1,58 +1,96 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod main_menu;
-mod game_folder;
-mod dds_to_png;
-mod province_map_to_geojson;
-mod pdx_script_parser;
-mod get_states;
-mod get_countries;
-mod transfer_state;
-mod transfer_provinces;
-mod geo_converters;
-mod save_as_pdx_script;
-mod cache_config;
-mod get_state_populations;
-mod merge_pops;
-mod get_state_buildings;
-mod merge_buildings;
 mod building;
-mod country_definition;
+mod cache_config;
 mod color_converter;
+mod country_definition;
+mod dds_to_png;
+mod game_folder;
+mod geo_converters;
+mod get_countries;
+mod get_state_buildings;
+mod get_state_populations;
+mod get_states;
+mod main_menu;
+mod merge_buildings;
+mod merge_pops;
+mod pdx_script_parser;
+mod province_map_to_geojson;
+mod save_as_pdx_script;
+mod transfer_provinces;
+mod transfer_state;
 
-use std::{collections::HashMap, thread};
 use building::Building;
 use get_countries::Country;
-use tauri::{App, Manager, Window};
 use main_menu::MainMenu;
-use transfer_state::{transfer_state as handle_transfer_state, TransferStateResponse};
+use std::{collections::HashMap, thread};
+use tauri::{App, Manager, Window};
 use transfer_provinces::{transfer_province as handle_transfer_province, TransferProvinceResponse};
+use transfer_state::{transfer_state as handle_transfer_state, TransferStateResponse};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
-fn transfer_state(state: String, from_country: Country, to_country: Country, from_coords: Vec<Vec<(f32, f32)>>, to_coords: Vec<Vec<(f32, f32)>>) -> TransferStateResponse {
-  handle_transfer_state(&state, from_country, to_country, from_coords, to_coords)
+fn transfer_state(
+    state: String,
+    from_country: Country,
+    to_country: Country,
+    from_coords: Vec<Vec<(f32, f32)>>,
+    to_coords: Vec<Vec<(f32, f32)>>,
+) -> TransferStateResponse {
+    handle_transfer_state(&state, from_country, to_country, from_coords, to_coords)
 }
 #[tauri::command]
-fn transfer_province(state: String, province: String, from_country: Country, to_country: Country, from_coords: Vec<Vec<(f32, f32)>>, to_coords: Vec<Vec<(f32, f32)>>, province_coords: Vec<Vec<(f32, f32)>>) -> TransferProvinceResponse {
-  handle_transfer_province(&state, &province, from_country, to_country, from_coords, to_coords, province_coords)
+fn transfer_province(
+    state: String,
+    province: String,
+    from_country: Country,
+    to_country: Country,
+    from_coords: Vec<Vec<(f32, f32)>>,
+    to_coords: Vec<Vec<(f32, f32)>>,
+    province_coords: Vec<Vec<(f32, f32)>>,
+) -> TransferProvinceResponse {
+    handle_transfer_province(
+        &state,
+        &province,
+        from_country,
+        to_country,
+        from_coords,
+        to_coords,
+        province_coords,
+    )
 }
 #[tauri::command]
-fn cache_state(window: Window, countries: Vec<Country>, states: HashMap<String, Vec<Vec<(f32, f32)>>>) {
-  thread::spawn(move || {
-    let cache_dir = window.app_handle().path_resolver().app_cache_dir().unwrap();
-    std::fs::write(cache_dir.join("states.json"), serde_json::to_string(&states).unwrap()).unwrap();
-    std::fs::write(cache_dir.join("countries.json"), serde_json::to_string(&countries).unwrap()).unwrap();
-  });
+fn cache_state(
+    window: Window,
+    countries: Vec<Country>,
+    states: HashMap<String, Vec<Vec<(f32, f32)>>>,
+) {
+    thread::spawn(move || {
+        let cache_dir = window.app_handle().path_resolver().app_cache_dir().unwrap();
+        std::fs::write(
+            cache_dir.join("states.json"),
+            serde_json::to_string(&states).unwrap(),
+        )
+        .unwrap();
+        std::fs::write(
+            cache_dir.join("countries.json"),
+            serde_json::to_string(&countries).unwrap(),
+        )
+        .unwrap();
+    });
 }
 #[tauri::command]
 fn get_building(window: Window, name: String) -> Building {
-  Building::parse_from_game_folder(window).iter().find(|building| building.name == name).unwrap().clone()
+    Building::parse_from_game_folder(window)
+        .iter()
+        .find(|building| building.name == name)
+        .unwrap()
+        .clone()
 }
 #[tauri::command]
 fn get_buildings(window: Window) -> Vec<Building> {
-  Building::parse_from_game_folder(window)
+    Building::parse_from_game_folder(window)
 }
 
 fn main() {
@@ -66,11 +104,17 @@ fn main() {
         })
         .menu(MainMenu::create_menu())
         .on_menu_event(MainMenu::handler)
-        .invoke_handler(tauri::generate_handler![transfer_state, transfer_province, cache_state, get_building, get_buildings])
+        .invoke_handler(tauri::generate_handler![
+            transfer_state,
+            transfer_province,
+            cache_state,
+            get_building,
+            get_buildings
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
 
 fn initialize_app_dir(app: &mut App) {
-  std::fs::create_dir_all(app.path_resolver().app_cache_dir().unwrap()).unwrap();
+    std::fs::create_dir_all(app.path_resolver().app_cache_dir().unwrap()).unwrap();
 }
