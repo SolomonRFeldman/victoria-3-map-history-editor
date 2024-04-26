@@ -17,6 +17,8 @@ Immediate TO-DO in order of priority:
 - [x] add country color
 - [ ] add bureaucracy balance
 - [ ] add creating countries
+- [ ] add industrial goods balance
+- [ ] add estimated unemployment
 
 Low Priority TO-DO:
 - [ ] Color in land mask and flatmap overlay properly.
