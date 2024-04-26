@@ -27,7 +27,7 @@ pub fn get_states(state_definition_path: PathBuf) -> Vec<State> {
   }).collect::<Vec<_>>()
 }
 
-fn get_sub_states_from_state(state: &Vec<JsonValue>) -> State {
+fn get_sub_states_from_state(state: &[JsonValue]) -> State {
   let sub_states = state[1].as_array().unwrap().iter().filter(|item| item[0] == "create_state").map(|sub_state| {
     let sub_state_data = sub_state[1].as_array().unwrap();
     let sub_state_provinces = sub_state_data.iter().find(|item| item[0] == "owned_provinces").unwrap().as_array().unwrap()[1].as_array().unwrap();
@@ -35,7 +35,7 @@ fn get_sub_states_from_state(state: &Vec<JsonValue>) -> State {
 
     let filtered_sub_state_provinces = sub_state_provinces.iter()
       .map(|province| province.as_str().unwrap().trim_matches('"').to_string()).collect::<Vec<String>>().iter()
-      .filter(|province| province.len() == 7 && province.chars().nth(0).unwrap() == 'x' ).collect::<Vec<&String>>().iter()
+      .filter(|province| province.len() == 7 && province.starts_with('x') ).collect::<Vec<&String>>().iter()
       .map(|province| format!("x{}", province[1..].to_uppercase())).collect::<Vec<String>>();
 
     SubState {

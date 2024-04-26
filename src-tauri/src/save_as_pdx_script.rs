@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, path::{Path, PathBuf}};
 use serde::{Deserialize, Serialize};
 use tauri::{Manager, WindowMenuEvent};
 
@@ -114,7 +114,7 @@ fn write_states_to_pdx_script(game_states: Vec<State>, current_state_map: HashMa
   std::fs::write(path.join("00_states.txt"), pdx_script).unwrap();
 }
 
-fn write_state_pops_to_pdx_script(current_state_map: &HashMap<String, Vec<SubState>>, path: &PathBuf) {
+fn write_state_pops_to_pdx_script(current_state_map: &HashMap<String, Vec<SubState>>, path: &Path) {
   let mut pdx_script = String::new();
 
   pdx_script.push_str("POPS = {\n");
@@ -145,14 +145,14 @@ fn write_state_pops_to_pdx_script(current_state_map: &HashMap<String, Vec<SubSta
   std::fs::write(path.join("00_pops.txt"), pdx_script).unwrap();
 }
 
-fn overwrite_existing_pops(path: &PathBuf, game_pops_path: &PathBuf) {
+fn overwrite_existing_pops(path: &Path, game_pops_path: &PathBuf) {
   for entry in std::fs::read_dir(game_pops_path).unwrap() {
     let entry_name = entry.unwrap().file_name().to_str().unwrap().to_string();
     std::fs::write(path.join(entry_name), "").unwrap();
   }
 }
 
-fn write_state_buildings_to_pdx_script(current_state_map: &HashMap<String, Vec<SubState>>, path: &PathBuf) {
+fn write_state_buildings_to_pdx_script(current_state_map: &HashMap<String, Vec<SubState>>, path: &Path) {
   let mut pdx_script = String::new();
 
   pdx_script.push_str("BUILDINGS = {\n");
@@ -239,7 +239,7 @@ fn parse_building_edge_case_conditional_to_string(state_name: String, sub_states
   pdx_script
 }
 
-fn overwrite_existing_buildings(path: &PathBuf, game_buildings_path: &PathBuf) {
+fn overwrite_existing_buildings(path: &Path, game_buildings_path: &PathBuf) {
   for entry in std::fs::read_dir(game_buildings_path).unwrap() {
     let entry_name = entry.unwrap().file_name().to_str().unwrap().to_string();
     std::fs::write(path.join(entry_name), "").unwrap();

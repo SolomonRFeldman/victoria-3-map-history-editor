@@ -39,18 +39,12 @@ pub fn get_state_buildings(state_buildings_path: PathBuf) -> HashMap<String, Vec
         let parsed_sub_state_buildings: Vec<StateBuilding> = raw_sub_state_buildings[1].as_array().unwrap().iter().map(|raw_building| {
           let building = raw_building[1].as_array().unwrap();
           let name = building.iter().find(|item| item[0] == "building").unwrap()[1].as_str().unwrap().to_string();
-          let level: Option<i64> = match building.iter().find(|item| item[0] == "level") {
-            Some(level) => Some(level[1].as_str().unwrap().parse().unwrap()),
-            None => None
-          };
-          let reserves: Option<i64> = match building.iter().find(|item| item[0] == "reserves") {
-            Some(level) => Some(level[1].as_str().unwrap().parse().unwrap()),
-            None => None
-          };
-          let activate_production_methods = match building.iter().find(|item| item[0] == "activate_production_methods") {
-            Some(activate_production_methods) => Some(activate_production_methods[1].as_array().unwrap().iter().map(|method| method.as_str().unwrap().trim_matches('"').to_string()).collect()),
-            None => None
-          };
+          let level: Option<i64> = building.iter().find(|item| item[0] == "level").map(|level| level[1].as_str().unwrap().parse().unwrap());
+          let reserves: Option<i64> = building.iter().find(|item| item[0] == "reserves").map(|level| level[1].as_str().unwrap().parse().unwrap());
+          let activate_production_methods = building.iter()
+            .find(|item| item[0] == "activate_production_methods")
+            .map(|activate_production_methods| activate_production_methods[1].as_array().unwrap().iter()
+            .map(|method| method.as_str().unwrap().trim_matches('"').to_string()).collect());
 
           StateBuilding {
             name,

@@ -43,7 +43,7 @@ fn add_province_to_country(mut country: Country, state: &str, province: &str, pr
       let new_state_buildings = merge_state_buildings(to_state.state_buildings.clone(), new_state_buildings);
       let mut new_provinces = to_state.provinces.clone();
       new_provinces.push(province.to_string());
-      country.states = country.states.iter().filter(|to_state| to_state.name != state).cloned().collect();
+      country.states.retain(|to_state| to_state.name != state);
       country.states.push(State {
         name: state.to_string(),
         provinces: new_provinces,
@@ -62,7 +62,7 @@ fn add_province_to_country(mut country: Country, state: &str, province: &str, pr
     },
   };
 
-  country.coordinates = multi_poly_to_vec(vec_to_multi_poly(country.coordinates).union(&province_coords));
+  country.coordinates = multi_poly_to_vec(vec_to_multi_poly(country.coordinates).union(province_coords));
   country
 }
 
@@ -71,10 +71,10 @@ fn remove_province_from_country(mut country: Country, state: &str, province: &st
   let new_pops = existing_state.pops.clone();
   let new_state_buildings = existing_state.state_buildings.clone();
   
-  let new_provinces: Vec<String> = existing_state.provinces.iter().filter(|from_province| **from_province != province.to_string()).cloned().collect();
-  country.states = country.states.iter().filter(|from_state| from_state.name != state).cloned().collect();
+  let new_provinces: Vec<String> = existing_state.provinces.iter().filter(|from_province| *from_province != province).cloned().collect();
+  country.states.retain(|from_state| from_state.name != state);
 
-  let (pops_given, state_buildings_given) = match new_provinces.len() > 0 {
+  let (pops_given, state_buildings_given) = match !new_provinces.is_empty() {
     true => {
       country.states.push(State {
         name: state.to_string(),
@@ -87,6 +87,6 @@ fn remove_province_from_country(mut country: Country, state: &str, province: &st
     false => (new_pops, new_state_buildings)
   };
 
-  country.coordinates = multi_poly_to_vec(vec_to_multi_poly(country.coordinates).difference(&province_coords));
+  country.coordinates = multi_poly_to_vec(vec_to_multi_poly(country.coordinates).difference(province_coords));
   (country, pops_given, state_buildings_given)
 }

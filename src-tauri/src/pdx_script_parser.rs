@@ -123,5 +123,5 @@ fn convert_tuple_to_array(tuple: (&str, JsonValue)) -> JsonValue {
 }
 
 fn convert_vector_of_tuples_to_vector_of_vectors(array: Vec<(&str, JsonValue)>) -> JsonValue {
-  JsonValue::Array(array.into_iter().map(|tuple| convert_tuple_to_array(tuple)).collect())
+  JsonValue::Array(array.into_iter().map(convert_tuple_to_array).collect())
 }

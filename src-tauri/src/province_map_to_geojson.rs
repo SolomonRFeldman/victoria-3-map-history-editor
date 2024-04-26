@@ -75,8 +75,8 @@ impl Rotation {
 // TO-DO: Code quality is in a bad state, should be refactored and broken up
 // detect whether it intersects itself at a point where it looks like a T
 pub fn border_to_geojson_coords(border_coords: Vec<(i32, i32)>) -> Vec<Vec<(f32, f32)>> {
-  let border_coords: Vec<(i32, i32)> = border_coords.into_iter().map(|(x, y)| (x as i32, y as i32)).collect();
-  let hash_coords: std::collections::HashSet<_> = border_coords.clone().into_iter().map(|(x, y)| (x as i32, y as i32)).collect();
+  let border_coords: Vec<(i32, i32)> = border_coords.into_iter().collect();
+  let hash_coords: std::collections::HashSet<_> = border_coords.clone().into_iter().collect();
 
   let origin_coord = border_coords[0];
 
@@ -137,12 +137,12 @@ fn parse_hash_set(mut hash_coords: std::collections::HashSet<(i32, i32)>, start_
   if geo_trace.first() == geo_trace.last() && geo_trace.len() > 1 {
     let geo_json_coordinate = remove_unnecessary_coords(geo_trace);
   
-    geo_json_coordinate_array.push(geo_json_coordinate.iter().map(|(x, y)| (*x as f32 / 2 as f32, *y as f32 / 2 as f32)).collect());
+    geo_json_coordinate_array.push(geo_json_coordinate.iter().map(|(x, y)| (*x as f32 / 2_f32, *y as f32 / 2_f32)).collect());
   }
 
 
-  if hash_coords.len() > 0 {
-    let next_start_point = hash_coords.iter().next().unwrap().clone();
+  if !hash_coords.is_empty() {
+    let next_start_point = *hash_coords.iter().next().unwrap();
     geo_json_coordinate_array = parse_hash_set(hash_coords, next_start_point, geo_json_coordinate_array);
   }
 
@@ -171,7 +171,7 @@ fn remove_unnecessary_coords(geo_trace: Vec<(i32, i32)>) -> Vec<(i32, i32)> {
 
   new_geo_trace.push(Some(*geo_trace.last().unwrap()));
 
-  new_geo_trace.into_iter().filter_map(|x| x).collect()
+  new_geo_trace.into_iter().flatten().collect()
 }
 
 pub fn province_map_to_geojson(provinces: PathBuf) -> HashMap<String, Vec<Vec<(f32, f32)>>> {
@@ -215,7 +215,7 @@ pub fn state_map_to_geojson(province_map: PathBuf, state_map: PathBuf, states: V
     let mut color_map = HashMap::<Rgb<u8>, Rgb<u8>>::new();
     states.iter().for_each(|state| {
       state.sub_states.iter().for_each(|sub_state| {
-        if sub_state.provinces.len() == 0 {
+        if sub_state.provinces.is_empty() {
           println!("No valid provinces for state: {:?}", state.name);
           return;
         }
@@ -239,7 +239,7 @@ pub fn state_map_to_geojson(province_map: PathBuf, state_map: PathBuf, states: V
     let mut provinces = ImageReader::open(province_map).unwrap().decode().unwrap().into_rgb8();
   
     provinces.enumerate_pixels_mut().for_each(|(_, _, pixel)| {
-      let color = color_map.get(&pixel).unwrap_or(&Rgb([0, 0, 0]));
+      let color = color_map.get(pixel).unwrap_or(&Rgb([0, 0, 0]));
       *pixel = *color;
     });
     provinces.save(&state_map).unwrap();
@@ -262,7 +262,7 @@ pub fn country_map_to_geojson(state_map: PathBuf, country_map: PathBuf, countrie
   if fs::metadata(&country_map).is_err() {
     let mut color_map = HashMap::<Rgb<u8>, Rgb<u8>>::new();
     countries.iter().for_each(|country| {
-      let color_to_turn = Rgb([country.name.chars().nth(0).unwrap() as u8, country.name.chars().nth(1).unwrap() as u8, country.name.chars().nth(2).unwrap() as u8]);
+      let color_to_turn = Rgb([country.name.chars().next().unwrap() as u8, country.name.chars().nth(1).unwrap() as u8, country.name.chars().nth(2).unwrap() as u8]);
 
       country.states.iter().for_each(|state| {
         let state_color_id = &state.provinces[0];
@@ -277,7 +277,7 @@ pub fn country_map_to_geojson(state_map: PathBuf, country_map: PathBuf, countrie
     let mut state_map_image = ImageReader::open(state_map).unwrap().decode().unwrap().into_rgb8();
   
     state_map_image.enumerate_pixels_mut().for_each(|(_, _, pixel)| {
-      let color = color_map.get(&pixel).unwrap_or(&Rgb([0, 0, 0]));
+      let color = color_map.get(pixel).unwrap_or(&Rgb([0, 0, 0]));
       *pixel = *color;
     });
     state_map_image.save(&country_map).unwrap();
@@ -288,14 +288,14 @@ pub fn country_map_to_geojson(state_map: PathBuf, country_map: PathBuf, countrie
   let country_borders = province_map_to_geojson(country_map);
 
   countries.iter().map(|country| {
-    let color = format!("{:02x}{:02x}{:02x}", country.name.chars().nth(0).unwrap() as u8, country.name.chars().nth(1).unwrap() as u8, country.name.chars().nth(2).unwrap() as u8).to_uppercase();
+    let color = format!("{:02x}{:02x}{:02x}", country.name.chars().next().unwrap() as u8, country.name.chars().nth(1).unwrap() as u8, country.name.chars().nth(2).unwrap() as u8).to_uppercase();
     let country_coords = country_borders.get(&format!("x{}", color));
 
     match country_coords {
       Some(geometries) => {
         Country {
           name: country.name.clone(),
-          color: country.color.clone(),
+          color: country.color,
           states: country.states.clone(),
           coordinates: geometries.to_vec()
         }
@@ -304,7 +304,7 @@ pub fn country_map_to_geojson(state_map: PathBuf, country_map: PathBuf, countrie
         println!("No geometries for country: {:?}, {:?}", country.name, country.color);
         Country {
           name: country.name.clone(),
-          color: country.color.clone(),
+          color: country.color,
           states: country.states.clone(),
           coordinates: vec![]
         }

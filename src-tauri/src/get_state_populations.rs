@@ -33,14 +33,8 @@ pub fn get_state_populations(state_pop_path: PathBuf) -> HashMap<String, StatePo
           let pop = raw_pop[1].as_array().unwrap();
           let culture = pop.iter().find(|item| item[0] == "culture").unwrap()[1].as_str().unwrap().to_string();
           let size: i64 = pop.iter().find(|item| item[0] == "size").unwrap()[1].as_str().unwrap().parse().unwrap();
-          let religion = match pop.iter().find(|item| item[0] == "religion") {
-            Some(religion) => Some(religion[1].as_str().unwrap().to_string()),
-            None => None,
-          };
-          let pop_type = match pop.iter().find(|item| item[0] == "pop_type") {
-            Some(pop_type) => Some(pop_type[1].as_str().unwrap().to_string()),
-            None => None,
-          };
+          let religion = pop.iter().find(|item| item[0] == "religion").map(|religion| religion[1].as_str().unwrap().to_string());
+          let pop_type = pop.iter().find(|item| item[0] == "pop_type").map(|pop_type| pop_type[1].as_str().unwrap().to_string());
 
           Pop {
             culture,

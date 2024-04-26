@@ -6,11 +6,8 @@ pub fn merge_state_buildings(buildings1: Vec<StateBuilding>, buildings2: Vec<Sta
     let existing_building = new_buildings.iter_mut().find(|new_building| new_building.name == building.name);
     match existing_building {
       Some(existing_building) => {
-        match existing_building.level {
-          Some(level) => {
-            existing_building.level = Some(level + building.level.unwrap());
-          },
-          None => {},
+        if let Some(level) = existing_building.level {
+          existing_building.level = Some(level + building.level.unwrap());
         }
       },
       None => {

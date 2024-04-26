@@ -33,7 +33,7 @@ pub fn transfer_state (state: &str, from_country: Country, to_country: Country, 
 }
 
 fn add_state_to_country(mut country: Country, from_country: &Country, state: &str, to_coords: &MultiPolygon<f32>) -> Country {
-  country.coordinates = multi_poly_to_vec(vec_to_multi_poly(country.coordinates).union(&to_coords));
+  country.coordinates = multi_poly_to_vec(vec_to_multi_poly(country.coordinates).union(to_coords));
   let existing_state = country.states.iter().find(|to_state| to_state.name == state);
   match existing_state {
     Some(to_state) => {
@@ -42,7 +42,7 @@ fn add_state_to_country(mut country: Country, from_country: &Country, state: &st
       new_provinces.extend(from_state.provinces.clone());
       let new_pops = merge_pops(to_state.pops.clone(), from_state.pops.clone());
       let new_state_buildings = merge_state_buildings(to_state.state_buildings.clone(), from_state.state_buildings.clone());
-      country.states = country.states.iter().filter(|to_state| to_state.name != state).cloned().collect();
+      country.states.retain(|to_state| to_state.name != state);
       country.states.push(State {
         name: state.to_string(),
         provinces: new_provinces,
@@ -59,8 +59,8 @@ fn add_state_to_country(mut country: Country, from_country: &Country, state: &st
 }
 
 fn remove_state_from_country(mut country: Country, state: &str, coords: &MultiPolygon<f32>) -> Country {
-  country.states = country.states.iter().filter(|from_state| from_state.name != state).cloned().collect();
-  country.coordinates = multi_poly_to_vec(vec_to_multi_poly(country.coordinates).difference(&coords));
+  country.states.retain(|from_state| from_state.name != state);
+  country.coordinates = multi_poly_to_vec(vec_to_multi_poly(country.coordinates).difference(coords));
 
   country
 }
