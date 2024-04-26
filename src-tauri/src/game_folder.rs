@@ -1,7 +1,7 @@
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 use image_dds::image::Rgba;
 use tauri::{Manager, WindowMenuEvent};
-use crate::{cache_config::CacheConfig, dds_to_png::DdsToPng, get_countries::get_countries, get_state_buildings::get_state_buildings, get_state_populations::get_state_populations, get_states::get_states, province_map_to_geojson::{country_map_to_geojson, province_map_to_geojson, state_map_to_geojson}};
+use crate::{cache_config::CacheConfig, country_definition::CountryDefinition, dds_to_png::DdsToPng, get_countries::get_countries, get_state_buildings::get_state_buildings, get_state_populations::get_state_populations, get_states::get_states, province_map_to_geojson::{country_map_to_geojson, province_map_to_geojson, state_map_to_geojson}};
 
 const FLATMAP_PATH: &str = "game/dlc/dlc004_voice_of_the_people/gfx/map/textures/flatmap_votp.dds";
 const LAND_MASK_PATH: &str = "game/gfx/map/textures/land_mask.dds";
@@ -10,6 +10,7 @@ const PROVINCE_PATH: &str = "game/map_data/provinces.png";
 pub const STATES_PATH: &str = "game/common/history/states/00_states.txt";
 pub const STATE_POPS_PATH: &str = "game/common/history/pops";
 const STATE_BUILDINGS_PATH: &str = "game/common/history/buildings";
+const COUNTRY_DEFINITIONS_PATH: &str = "common/country_definitions";
 
 pub struct GameFolder {
   pub folder_path: PathBuf,
@@ -96,7 +97,7 @@ impl GameFolder {
   }
 
   fn load_countries(&self, event: &WindowMenuEvent) {
-    let countries = get_countries(get_states(self.states()), get_state_populations(self.state_pops()), get_state_buildings(self.state_buildings()));
+    let countries = get_countries(get_states(self.states()), get_state_populations(self.state_pops()), get_state_buildings(self.state_buildings()), self.country_definitions());
     let countries_with_coords = country_map_to_geojson(cache_dir(event).join("states.png"), cache_dir(event).join("countries.png"), countries.clone());
     std::fs::write(cache_dir(event).join("countries.json"), serde_json::to_string(&countries_with_coords).unwrap()).unwrap();
 
@@ -132,6 +133,14 @@ impl GameFolder {
 
   fn state_buildings(&self) -> PathBuf {
     self.folder_path.join(PathBuf::from(STATE_BUILDINGS_PATH))
+  }
+
+  fn game_path(&self) -> PathBuf {
+    self.folder_path.join(PathBuf::from("game"))
+  }
+  
+  fn country_definitions(&self) -> HashMap<String, CountryDefinition> {
+    CountryDefinition::parse_from(self.game_path().join(PathBuf::from(COUNTRY_DEFINITIONS_PATH)))
   }
 }
 

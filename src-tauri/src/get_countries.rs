@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
-use crate::{get_state_buildings::StateBuilding, get_state_populations::{Pop, StatePopulation}, get_states::State as StateHistory};
+use crate::{country_definition::CountryDefinition, get_state_buildings::StateBuilding, get_state_populations::{Pop, StatePopulation}, get_states::State as StateHistory};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Country {
   pub name: String,
-  pub color: String,
+  pub color: (u8, u8, u8),
   pub states: Vec<State>,
   pub coordinates: Vec<Vec<(f32, f32)>>,
 }
@@ -19,7 +19,7 @@ pub struct State {
   pub state_buildings: Vec<StateBuilding>
 }
 
-pub fn get_countries(state_histories: Vec<StateHistory>, state_pops: HashMap<String, StatePopulation>, state_buildings: HashMap<String, Vec<StateBuilding>>) -> Vec<Country> {
+pub fn get_countries(state_histories: Vec<StateHistory>, state_pops: HashMap<String, StatePopulation>, state_buildings: HashMap<String, Vec<StateBuilding>>, country_definitions: HashMap<String, CountryDefinition>) -> Vec<Country> {
   let mut countries: Vec<Country> = vec![];
 
   for state_history in state_histories {
@@ -38,11 +38,9 @@ pub fn get_countries(state_histories: Vec<StateHistory>, state_pops: HashMap<Str
           });
         },
         None => {
-          let color = format!("x{:02x}{:02x}{:02x}", state.owner.chars().nth(0).unwrap() as u8, state.owner.chars().nth(1).unwrap() as u8, state.owner.chars().nth(2).unwrap() as u8);
-
           countries.push(Country {
             name: state.owner.clone(),
-            color,
+            color: country_definitions.get(&state.owner).unwrap().color,
             states: vec![State {
               name: state_history_copy.name.clone(),
               provinces: state.provinces,

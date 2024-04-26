@@ -262,10 +262,7 @@ pub fn country_map_to_geojson(state_map: PathBuf, country_map: PathBuf, countrie
   if fs::metadata(&country_map).is_err() {
     let mut color_map = HashMap::<Rgb<u8>, Rgb<u8>>::new();
     countries.iter().for_each(|country| {
-      let r = u8::from_str_radix(&country.color[1..3], 16).ok().unwrap();
-      let g = u8::from_str_radix(&country.color[3..5], 16).ok().unwrap();
-      let b = u8::from_str_radix(&country.color[5..7], 16).ok().unwrap();
-      let color_to_turn = Rgb([r, g, b]);
+      let color_to_turn = Rgb([country.name.chars().nth(0).unwrap() as u8, country.name.chars().nth(1).unwrap() as u8, country.name.chars().nth(2).unwrap() as u8]);
 
       country.states.iter().for_each(|state| {
         let state_color_id = &state.provinces[0];
@@ -291,7 +288,8 @@ pub fn country_map_to_geojson(state_map: PathBuf, country_map: PathBuf, countrie
   let country_borders = province_map_to_geojson(country_map);
 
   countries.iter().map(|country| {
-    let country_coords = country_borders.get(&format!("x{}", &country.color[1..].to_uppercase()));
+    let color = format!("{:02x}{:02x}{:02x}", country.name.chars().nth(0).unwrap() as u8, country.name.chars().nth(1).unwrap() as u8, country.name.chars().nth(2).unwrap() as u8).to_uppercase();
+    let country_coords = country_borders.get(&format!("x{}", color));
 
     match country_coords {
       Some(geometries) => {

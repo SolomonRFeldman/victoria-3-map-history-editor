@@ -6,7 +6,7 @@ import { LeafletEventHandlerFnMap } from "leaflet"
 
 export type Country = {
   name: string,
-  color: string,
+  color: [number, number, number],
   coordinates: Coords,
   states: State[]
 }
@@ -19,8 +19,9 @@ type CountriesProps = {
 
 export default function Countries({ countries, renderBreaker, eventHandlers }: CountriesProps) {
   const countryStyle = (feature?: Feature<Geometry, { name: string, color: string }>) => {
+    const color = feature?.properties.color as [number, number, number] | undefined
     return {
-      fillColor: feature ? feature.properties.color.replace('x', '#') : 'transparent',
+      fillColor: color ? `rgb(${color[0]}, ${color[1]}, ${color[2]})` : 'transparent',
       fillOpacity: 0.5,
       color: 'black',
       weight: 1

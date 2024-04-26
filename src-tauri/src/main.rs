@@ -18,6 +18,8 @@ mod merge_pops;
 mod get_state_buildings;
 mod merge_buildings;
 mod building;
+mod country_definition;
+mod color_converter;
 
 use std::{collections::HashMap, thread};
 use building::Building;
