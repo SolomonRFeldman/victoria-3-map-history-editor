@@ -10,6 +10,8 @@ enum Direction {
     Left,
 }
 
+pub type Coords = Vec<Vec<(f32, f32)>>;
+
 struct Rotation {
     position: usize,
 }
@@ -71,21 +73,21 @@ impl Rotation {
 
 // TO-DO: Code quality is in a bad state, should be refactored and broken up
 // detect whether it intersects itself at a point where it looks like a T
-pub fn border_to_geojson_coords(border_coords: Vec<(i32, i32)>) -> Vec<Vec<(f32, f32)>> {
+pub fn border_to_geojson_coords(border_coords: Vec<(i32, i32)>) -> Coords {
     let border_coords: Vec<(i32, i32)> = border_coords.into_iter().collect();
     let hash_coords: std::collections::HashSet<_> = border_coords.clone().into_iter().collect();
 
     let origin_coord = border_coords[0];
 
-    let mut geo_json_coordinate_array: Vec<Vec<(f32, f32)>> = vec![];
+    let mut geo_json_coordinate_array: Coords = vec![];
     parse_hash_set(hash_coords, origin_coord, &mut geo_json_coordinate_array).to_vec()
 }
 
 fn parse_hash_set(
     mut hash_coords: std::collections::HashSet<(i32, i32)>,
     start_point: (i32, i32),
-    mut geo_json_coordinate_array: &mut Vec<Vec<(f32, f32)>>,
-) -> &mut Vec<Vec<(f32, f32)>> {
+    mut geo_json_coordinate_array: &mut Coords,
+) -> &mut Coords {
     let mut rotation = Rotation::new();
 
     let origin_coord = start_point;
@@ -180,7 +182,7 @@ fn remove_unnecessary_coords(geo_trace: Vec<(i32, i32)>) -> Vec<(i32, i32)> {
     new_geo_trace.into_iter().flatten().collect()
 }
 
-pub fn province_map_to_geojson(provinces: PathBuf) -> HashMap<String, Vec<Vec<(f32, f32)>>> {
+pub fn province_map_to_geojson(provinces: PathBuf) -> HashMap<String, Coords> {
     let provinces = ImageReader::open(provinces)
         .unwrap()
         .decode()
@@ -248,7 +250,7 @@ pub fn state_map_to_geojson(
     province_map: PathBuf,
     state_map: PathBuf,
     states: Vec<State>,
-) -> HashMap<String, Vec<Vec<(f32, f32)>>> {
+) -> HashMap<String, Coords> {
     if fs::metadata(&state_map).is_err() {
         let mut color_map = HashMap::<Rgb<u8>, Rgb<u8>>::new();
         states.iter().for_each(|state| {
@@ -299,7 +301,7 @@ pub fn state_map_to_geojson(
 
     let state_borders = province_map_to_geojson(state_map);
 
-    let mut state_map: HashMap<String, Vec<Vec<(f32, f32)>>> = HashMap::new();
+    let mut state_map: HashMap<String, Coords> = HashMap::new();
     states.iter().for_each(|state| {
         state.sub_states.iter().for_each(|sub_state| {
             state_map.insert(
