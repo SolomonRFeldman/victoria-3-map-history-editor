@@ -78,4 +78,86 @@ impl Country {
 
         self
     }
+
+    pub fn add_province(
+        mut self,
+        state: &str,
+        province: &str,
+        province_coords: &MultiPolygon<f32>,
+        pops_given: Vec<Pop>,
+        new_state_buildings: Vec<StateBuilding>,
+    ) -> Country {
+        let existing_state = self.states.iter().find(|to_state| to_state.name == state);
+        match existing_state {
+            Some(to_state) => {
+                let new_pops = merge_pops(to_state.pops.clone(), pops_given);
+                let new_state_buildings =
+                    merge_state_buildings(to_state.state_buildings.clone(), new_state_buildings);
+                let mut new_provinces = to_state.provinces.clone();
+                new_provinces.push(province.to_string());
+                self.states.retain(|to_state| to_state.name != state);
+                self.states.push(State {
+                    name: state.to_string(),
+                    provinces: new_provinces,
+                    pops: new_pops,
+                    state_buildings: new_state_buildings,
+                });
+            }
+            None => {
+                let new_state = State {
+                    name: state.to_string(),
+                    provinces: vec![province.to_string()],
+                    pops: vec![],
+                    state_buildings: vec![],
+                };
+                self.states.push(new_state);
+            }
+        };
+
+        self.coordinates =
+            multi_poly_to_vec(vec_to_multi_poly(self.coordinates).union(province_coords));
+
+        self
+    }
+
+    pub fn remove_province(
+        mut self,
+        state: &str,
+        province: &str,
+        province_coords: &MultiPolygon<f32>,
+    ) -> (Country, Vec<Pop>, Vec<StateBuilding>) {
+        let existing_state = self
+            .states
+            .iter()
+            .find(|from_state| from_state.name == state)
+            .unwrap();
+        let new_pops = existing_state.pops.clone();
+        let new_state_buildings = existing_state.state_buildings.clone();
+
+        let new_provinces: Vec<String> = existing_state
+            .provinces
+            .iter()
+            .filter(|from_province| *from_province != province)
+            .cloned()
+            .collect();
+        self.states.retain(|from_state| from_state.name != state);
+
+        let (pops_given, state_buildings_given) = match !new_provinces.is_empty() {
+            true => {
+                self.states.push(State {
+                    name: state.to_string(),
+                    provinces: new_provinces,
+                    pops: new_pops,
+                    state_buildings: new_state_buildings,
+                });
+                (vec![], vec![])
+            }
+            false => (new_pops, new_state_buildings),
+        };
+
+        self.coordinates =
+            multi_poly_to_vec(vec_to_multi_poly(self.coordinates).difference(province_coords));
+
+        (self, pops_given, state_buildings_given)
+    }
 }
