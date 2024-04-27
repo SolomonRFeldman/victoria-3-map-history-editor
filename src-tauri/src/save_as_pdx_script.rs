@@ -7,8 +7,8 @@ use tauri::{Manager, WindowMenuEvent};
 
 use crate::{
     cache_config::CacheConfig,
+    country::Country,
     game_folder::STATES_PATH,
-    get_countries::Country,
     get_state_buildings::StateBuilding,
     get_state_populations::Pop,
     get_states::{get_states, State},

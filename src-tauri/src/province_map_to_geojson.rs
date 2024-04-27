@@ -1,4 +1,4 @@
-use crate::{get_countries::Country, get_states::State};
+use crate::{country::Country, get_states::State};
 use image::{io::Reader as ImageReader, Rgb};
 use std::{collections::HashMap, fs, path::PathBuf};
 

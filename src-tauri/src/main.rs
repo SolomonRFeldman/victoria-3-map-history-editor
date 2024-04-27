@@ -4,6 +4,7 @@
 mod building;
 mod cache_config;
 mod color_converter;
+mod country;
 mod country_definition;
 mod dds_to_png;
 mod game_folder;
@@ -22,7 +23,7 @@ mod transfer_provinces;
 mod transfer_state;
 
 use building::Building;
-use get_countries::Country;
+use country::Country;
 use main_menu::MainMenu;
 use std::{collections::HashMap, thread};
 use tauri::{App, Manager, Window};
