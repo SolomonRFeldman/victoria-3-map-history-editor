@@ -1,16 +1,21 @@
 use jomini::TextTape;
+use serde::Serialize;
 use std::{collections::HashMap, path::PathBuf};
 
 use crate::color_converter::ColorConverter;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct CountryDefinition {
     pub tag: String,
     pub color: (u8, u8, u8),
 }
 
 impl CountryDefinition {
-    pub fn parse_from(path: PathBuf) -> HashMap<String, CountryDefinition> {
+    pub fn parse_from(path: PathBuf) -> Vec<CountryDefinition> {
+        Self::parse_map_from(path).values().cloned().collect()
+    }
+
+    pub fn parse_map_from(path: PathBuf) -> HashMap<String, CountryDefinition> {
         let mut country_definitions: HashMap<String, CountryDefinition> = HashMap::new();
 
         for entry in std::fs::read_dir(path).unwrap() {

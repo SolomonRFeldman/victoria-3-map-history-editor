@@ -22,7 +22,7 @@ const PROVINCE_PATH: &str = "game/map_data/provinces.png";
 pub const STATES_PATH: &str = "game/common/history/states/00_states.txt";
 pub const STATE_POPS_PATH: &str = "game/common/history/pops";
 const STATE_BUILDINGS_PATH: &str = "game/common/history/buildings";
-const COUNTRY_DEFINITIONS_PATH: &str = "common/country_definitions";
+pub const COUNTRY_DEFINITIONS_PATH: &str = "common/country_definitions";
 
 pub struct GameFolder {
     pub folder_path: PathBuf,
@@ -189,7 +189,7 @@ impl GameFolder {
     }
 
     fn country_definitions(&self) -> HashMap<String, CountryDefinition> {
-        CountryDefinition::parse_from(
+        CountryDefinition::parse_map_from(
             self.game_path()
                 .join(PathBuf::from(COUNTRY_DEFINITIONS_PATH)),
         )

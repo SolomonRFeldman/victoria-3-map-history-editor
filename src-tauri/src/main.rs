@@ -13,6 +13,7 @@ mod get_countries;
 mod get_state_buildings;
 mod get_state_populations;
 mod get_states;
+mod get_uncreated_country_definitions;
 mod main_menu;
 mod merge_buildings;
 mod merge_pops;
@@ -24,8 +25,12 @@ mod transfer_state;
 
 use building::Building;
 use country::Country;
+use country_definition::CountryDefinition;
 use main_menu::MainMenu;
-use std::{collections::HashMap, thread};
+use std::{
+    collections::{HashMap, HashSet},
+    thread,
+};
 use tauri::{App, Manager, Window};
 use transfer_provinces::{transfer_province as handle_transfer_province, TransferProvinceResponse};
 use transfer_state::{transfer_state as handle_transfer_state, TransferStateResponse};
@@ -93,6 +98,13 @@ fn get_building(window: Window, name: String) -> Building {
 fn get_buildings(window: Window) -> Vec<Building> {
     Building::parse_from_game_folder(window)
 }
+#[tauri::command]
+fn get_uncreated_country_definitions(
+    window: Window,
+    created_tag_set: HashSet<String>,
+) -> Vec<CountryDefinition> {
+    get_uncreated_country_definitions::get_uncreated_country_definitions(window, created_tag_set)
+}
 
 fn main() {
     tauri::Builder::default()
@@ -110,7 +122,8 @@ fn main() {
             transfer_province,
             cache_state,
             get_building,
-            get_buildings
+            get_buildings,
+            get_uncreated_country_definitions
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
