@@ -1,10 +1,10 @@
 use jomini::TextTape;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::PathBuf};
 
 use crate::color_converter::ColorConverter;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CountryDefinition {
     pub tag: String,
     pub color: (u8, u8, u8),

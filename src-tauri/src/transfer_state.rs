@@ -6,9 +6,9 @@ use crate::geo_converters::{multi_poly_to_vec, vec_to_multi_poly};
 
 #[derive(Serialize)]
 pub struct TransferStateResponse {
-    to_country: Country,
-    from_country: Country,
-    state_coords: Vec<Vec<(f32, f32)>>,
+    pub to_country: Country,
+    pub from_country: Country,
+    pub state_coords: Vec<Vec<(f32, f32)>>,
 }
 
 pub fn transfer_state(

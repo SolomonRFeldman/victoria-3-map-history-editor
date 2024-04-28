@@ -2,16 +2,17 @@ import { useEffect, useState } from "react";
 import { Country } from "./Countries";
 import { invoke } from "@tauri-apps/api";
 
-type CountryDefinition = {
+export type CountryDefinition = {
   tag: string
   color: string
 }
 
 type CreateCountryProps = {
   createdCountries: Country[]
+  onCreateCountry: (countryDefinition: CountryDefinition) => void
 }
 
-export default function CreateCountry({ createdCountries }: CreateCountryProps) {
+export default function CreateCountry({ createdCountries, onCreateCountry }: CreateCountryProps) {
   const [countryDefinitions, setCountryDefinitions] = useState<CountryDefinition[]>([]);
   const [filter, setFilter] = useState<string>("");
 
@@ -30,7 +31,7 @@ export default function CreateCountry({ createdCountries }: CreateCountryProps) 
         <input type="text" value={filter} placeholder="Search Tags" className="input input-bordered input-sm" onChange={event => setFilter(event.target.value)} />
         <ul className="menu menu-vertical p-2 max-h-60 overflow-y-scroll block">
           {filteredCountryDefinitions.map(countryDefinition => (
-            <li className="block w-full"><a>{countryDefinition.tag}</a></li>
+            <li className="block w-full" onClick={() => onCreateCountry(countryDefinition)}><a>{countryDefinition.tag}</a></li>
           ))}
         </ul>
       </div>

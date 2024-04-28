@@ -24,9 +24,11 @@ mod transfer_provinces;
 mod transfer_state;
 
 use building::Building;
-use country::Country;
+use country::{Country, State};
 use country_definition::CountryDefinition;
+use geo_converters::vec_to_multi_poly;
 use main_menu::MainMenu;
+use province_map_to_geojson::Coords;
 use std::{
     collections::{HashMap, HashSet},
     thread,
@@ -105,6 +107,23 @@ fn get_uncreated_country_definitions(
 ) -> Vec<CountryDefinition> {
     get_uncreated_country_definitions::get_uncreated_country_definitions(window, created_tag_set)
 }
+#[tauri::command]
+fn create_country(
+    country_definition: CountryDefinition,
+    from_country: Country,
+    state: State,
+    coords: Coords,
+) -> TransferStateResponse {
+    let from_country = from_country
+        .remove_state(&state.name, &vec_to_multi_poly(coords.clone()))
+        .clone();
+    let new_country = Country::create_from_state(country_definition, state, coords.clone());
+    TransferStateResponse {
+        from_country,
+        to_country: new_country,
+        state_coords: coords,
+    }
+}
 
 fn main() {
     tauri::Builder::default()
@@ -123,7 +142,8 @@ fn main() {
             cache_state,
             get_building,
             get_buildings,
-            get_uncreated_country_definitions
+            get_uncreated_country_definitions,
+            create_country
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

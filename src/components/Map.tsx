@@ -11,7 +11,7 @@ import Background from './Background'
 import { exists, readTextFile } from '@tauri-apps/api/fs';
 import { appCacheDir } from '@tauri-apps/api/path'
 import SelectionInfo from './info/SelectionInfo'
-import CreateCountry from './CreateCountry'
+import CreateCountry, { CountryDefinition } from './CreateCountry'
 
 export type Coords = [number, number][][]
 
@@ -163,6 +163,7 @@ export default function Map() {
     const fromCountryIndex = countries.findIndex((country) => country.name === fromCountry.name)
     const toCountryIndex = countries.findIndex((country) => country.name === toCountry.name)
 
+    if (toCountryIndex === -1) { countries.push(toCountry) }
     countries[toCountryIndex] = toCountry
     fromCountry.states.length > 0 ? countries[fromCountryIndex] = fromCountry : countries.splice(fromCountryIndex, 1)
 
@@ -218,6 +219,21 @@ export default function Map() {
     setSelectedState((state) => state?.name === selectedState?.name ? country.states.find((s) => s.name === selectedState?.name) || null : state)
   }
 
+  const handleCreateCountry = async (countryDefinition: CountryDefinition) => {
+    console.log("Creating country", countryDefinition)
+    if (selectedCountry && selectedState) {
+      const { to_country: responseToCountry, from_country: responseFromCountry, state_coords: responseStateCoords } = await invoke<TransferStateResponse>("create_country", { 
+        countryDefinition,
+        fromCountry: selectedCountry,
+        state: selectedState,
+        coords: stateCoords[`${selectedCountry.name}:${selectedState.name}`]
+      })
+
+      handleTransferResponse({ toCountry: responseToCountry, fromCountry: responseFromCountry, toStateCoords: responseStateCoords, fromStateCoords: [], selectedState })
+      setSelectedState((state) => state?.name === selectedState.name ? null : state)
+    }
+  }
+
   return (
     <div>
       <MapContainer center={[0, 0]} minZoom={-2} maxZoom={2} doubleClickZoom={false} crs={CRS.Simple} bounds={bounds}>
@@ -227,7 +243,7 @@ export default function Map() {
         { selectedState && <Provinces state={selectedState} provinceCoords={provinceCoords} renderBreaker={renderBreaker} eventHandlers={{ click: handleClickProvince }} selectedProvince={selectedProvince} /> }
       </MapContainer>
       { selectedCountry && <SelectionInfo selectedCountry={selectedCountry} selectedState={selectedState} selectedProvince={selectedProvince} onCountryChange={handleCountryChange} /> }
-      { selectedState && <CreateCountry createdCountries={countries} /> }
+      { selectedState && <CreateCountry createdCountries={countries} onCreateCountry={handleCreateCountry} /> }
     </div>
   ) 
 }

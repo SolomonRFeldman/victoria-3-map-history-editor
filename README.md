@@ -16,7 +16,9 @@ Immediate TO-DO in order of priority:
 - [x] add editing building info of states
 - [x] add country color
 - [ ] add bureaucracy balance
-- [ ] add creating countries
+- [x] add creating countries
+- [ ] add editing country starting laws
+- [ ] add editing country starting techs
 - [ ] add industrial goods balance
 - [ ] add estimated unemployment
 
