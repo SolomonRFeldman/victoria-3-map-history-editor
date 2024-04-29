@@ -21,14 +21,19 @@ export default function CreateCountry({ createdCountries, onCreateCountry }: Cre
     handleGetUncreatedCountryDefinitions(createdTagSet)
   }, [createdCountries])
   
-  const handleGetUncreatedCountryDefinitions = async (createdTagSet: string[]) => { setCountryDefinitions((await invoke<CountryDefinition[]>("get_uncreated_country_definitions", { createdTagSet: createdTagSet }))) }
+  const handleGetUncreatedCountryDefinitions = async (createdTagSet: string[]) => { 
+    setCountryDefinitions((await invoke<CountryDefinition[]>("get_uncreated_country_definitions", { createdTagSet: createdTagSet }))) 
+  }
+
+  const handleKeyDown = (event: React.KeyboardEvent) => { event.stopPropagation() }
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => { setFilter(event.target.value) }
 
   const filteredCountryDefinitions = countryDefinitions.filter(countryDefinition => countryDefinition.tag.toLowerCase().includes(filter.toLowerCase()))
   return (
-    <div className="dropdown fixed top-3 left-16 z-[400]">
+    <div className="dropdown fixed top-3 left-16 z-[400]" onKeyDown={handleKeyDown}>
       <div tabIndex={0} role="button" className="btn">Create Country</div>
       <div tabIndex={0} className="dropdown-content z-[1] card bg-base-100 shadow-xl">
-        <input type="text" value={filter} placeholder="Search Tags" className="input input-bordered input-sm" onChange={event => setFilter(event.target.value)} />
+        <input type="text" value={filter} placeholder="Search Tags" className="input input-bordered input-sm" onChange={handleChange} />
         <ul className="menu menu-vertical p-2 max-h-60 overflow-y-scroll block">
           {filteredCountryDefinitions.map(countryDefinition => (
             <li className="block w-full" onClick={() => onCreateCountry(countryDefinition)}><a>{countryDefinition.tag}</a></li>
