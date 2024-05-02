@@ -225,7 +225,7 @@ export default function Map() {
         const { to_country, from_country, to_state_coords, from_state_coords } = await invoke<TransferProvinceResponse>("create_country_from_province", {
           countryDefinition,
           fromCountry: selectedCountry,
-          state: selectedState,
+          state: selectedState.name,
           province: selectedProvince,
           stateCoords: stateCoords[`${selectedCountry.name}:${selectedState.name}`],
           provinceCoords: provinceCoords[selectedProvince]
@@ -237,7 +237,7 @@ export default function Map() {
         const { to_country: responseToCountry, from_country: responseFromCountry, state_coords: responseStateCoords } = await invoke<TransferStateResponse>("create_country", { 
           countryDefinition,
           fromCountry: selectedCountry,
-          state: selectedState,
+          state: selectedState.name,
           coords: stateCoords[`${selectedCountry.name}:${selectedState.name}`]
         })
         handleTransferResponse({ toCountry: responseToCountry, fromCountry: responseFromCountry, toStateCoords: responseStateCoords, fromStateCoords: [], selectedState })

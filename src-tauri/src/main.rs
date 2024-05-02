@@ -24,7 +24,7 @@ mod transfer_provinces;
 mod transfer_state;
 
 use building::Building;
-use country::{Country, State};
+use country::Country;
 use country_definition::CountryDefinition;
 use main_menu::MainMenu;
 use province_map_to_geojson::Coords;
@@ -110,11 +110,11 @@ fn get_uncreated_country_definitions(
 fn create_country(
     country_definition: CountryDefinition,
     from_country: Country,
-    state: State,
+    state: String,
     coords: Coords,
 ) -> TransferStateResponse {
     handle_transfer_state(
-        &state.name,
+        &state,
         from_country,
         Country::new(country_definition),
         coords,
@@ -125,13 +125,13 @@ fn create_country(
 fn create_country_from_province(
     country_definition: CountryDefinition,
     from_country: Country,
-    state: State,
+    state: String,
     province: String,
     state_coords: Coords,
     province_coords: Coords,
 ) -> TransferProvinceResponse {
     handle_transfer_province(
-        &state.name,
+        &state,
         &province,
         from_country,
         Country::new(country_definition),
