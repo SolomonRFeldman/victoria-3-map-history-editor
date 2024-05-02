@@ -8,7 +8,6 @@ use crate::{
     get_state_populations::Pop,
     merge_buildings::merge_state_buildings,
     merge_pops::merge_pops,
-    province_map_to_geojson::Coords,
 };
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -28,19 +27,6 @@ pub struct State {
 }
 
 impl Country {
-    pub fn create_from_state(
-        country_definition: CountryDefinition,
-        state: State,
-        coords: Coords,
-    ) -> Country {
-        Country {
-            name: country_definition.tag,
-            color: country_definition.color,
-            states: vec![state],
-            coordinates: coords,
-        }
-    }
-
     pub fn remove_state(mut self, state: &str, coords: &MultiPolygon<f32>) -> Country {
         self.states.retain(|from_state| from_state.name != state);
         self.coordinates =

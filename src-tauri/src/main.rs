@@ -26,7 +26,6 @@ mod transfer_state;
 use building::Building;
 use country::{Country, State};
 use country_definition::CountryDefinition;
-use geo_converters::vec_to_multi_poly;
 use main_menu::MainMenu;
 use province_map_to_geojson::Coords;
 use std::{
@@ -114,15 +113,13 @@ fn create_country(
     state: State,
     coords: Coords,
 ) -> TransferStateResponse {
-    let from_country = from_country
-        .remove_state(&state.name, &vec_to_multi_poly(coords.clone()))
-        .clone();
-    let new_country = Country::create_from_state(country_definition, state, coords.clone());
-    TransferStateResponse {
+    handle_transfer_state(
+        &state.name,
         from_country,
-        to_country: new_country,
-        state_coords: coords,
-    }
+        Country::new(country_definition),
+        coords,
+        vec![],
+    )
 }
 #[tauri::command]
 fn create_country_from_province(
