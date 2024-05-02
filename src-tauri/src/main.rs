@@ -124,6 +124,25 @@ fn create_country(
         state_coords: coords,
     }
 }
+#[tauri::command]
+fn create_country_from_province(
+    country_definition: CountryDefinition,
+    from_country: Country,
+    state: State,
+    province: String,
+    state_coords: Coords,
+    province_coords: Coords,
+) -> TransferProvinceResponse {
+    handle_transfer_province(
+        &state.name,
+        &province,
+        from_country,
+        Country::new(country_definition),
+        state_coords,
+        vec![],
+        province_coords,
+    )
+}
 
 fn main() {
     tauri::Builder::default()
@@ -143,7 +162,8 @@ fn main() {
             get_building,
             get_buildings,
             get_uncreated_country_definitions,
-            create_country
+            create_country,
+            create_country_from_province
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

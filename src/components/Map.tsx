@@ -220,17 +220,29 @@ export default function Map() {
   }
 
   const handleCreateCountry = async (countryDefinition: CountryDefinition) => {
-    console.log("Creating country", countryDefinition)
     if (selectedCountry && selectedState) {
-      const { to_country: responseToCountry, from_country: responseFromCountry, state_coords: responseStateCoords } = await invoke<TransferStateResponse>("create_country", { 
-        countryDefinition,
-        fromCountry: selectedCountry,
-        state: selectedState,
-        coords: stateCoords[`${selectedCountry.name}:${selectedState.name}`]
-      })
-
-      handleTransferResponse({ toCountry: responseToCountry, fromCountry: responseFromCountry, toStateCoords: responseStateCoords, fromStateCoords: [], selectedState })
-      setSelectedState((state) => state?.name === selectedState.name ? null : state)
+      if (selectedProvince) {
+        const { to_country, from_country, to_state_coords, from_state_coords } = await invoke<TransferProvinceResponse>("create_country_from_province", {
+          countryDefinition,
+          fromCountry: selectedCountry,
+          state: selectedState,
+          province: selectedProvince,
+          stateCoords: stateCoords[`${selectedCountry.name}:${selectedState.name}`],
+          provinceCoords: provinceCoords[selectedProvince]
+        })
+        handleTransferResponse({ toCountry: to_country, fromCountry: from_country, toStateCoords: to_state_coords, fromStateCoords: from_state_coords, selectedState })
+        setSelectedState((state) => state?.name === selectedState.name ? from_country.states.find((state) => state.name === selectedState.name) || null : state)
+        setSelectedProvince((province) => province === selectedProvince ? null : province)
+      } else {
+        const { to_country: responseToCountry, from_country: responseFromCountry, state_coords: responseStateCoords } = await invoke<TransferStateResponse>("create_country", { 
+          countryDefinition,
+          fromCountry: selectedCountry,
+          state: selectedState,
+          coords: stateCoords[`${selectedCountry.name}:${selectedState.name}`]
+        })
+        handleTransferResponse({ toCountry: responseToCountry, fromCountry: responseFromCountry, toStateCoords: responseStateCoords, fromStateCoords: [], selectedState })
+        setSelectedState((state) => state?.name === selectedState.name ? null : state)
+      }
     }
   }
 

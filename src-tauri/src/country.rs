@@ -49,6 +49,15 @@ impl Country {
         self
     }
 
+    pub fn new(country_definition: CountryDefinition) -> Country {
+        Country {
+            name: country_definition.tag,
+            color: country_definition.color,
+            states: vec![],
+            coordinates: vec![],
+        }
+    }
+
     pub fn add_state(
         mut self,
         from_country: &Country,
@@ -99,15 +108,15 @@ impl Country {
         state: &str,
         province: &str,
         province_coords: &MultiPolygon<f32>,
-        pops_given: Vec<Pop>,
-        new_state_buildings: Vec<StateBuilding>,
+        pops: Vec<Pop>,
+        state_buildings: Vec<StateBuilding>,
     ) -> Country {
         let existing_state = self.states.iter().find(|to_state| to_state.name == state);
         match existing_state {
             Some(to_state) => {
-                let new_pops = merge_pops(to_state.pops.clone(), pops_given);
+                let new_pops = merge_pops(to_state.pops.clone(), pops);
                 let new_state_buildings =
-                    merge_state_buildings(to_state.state_buildings.clone(), new_state_buildings);
+                    merge_state_buildings(to_state.state_buildings.clone(), state_buildings);
                 let mut new_provinces = to_state.provinces.clone();
                 new_provinces.push(province.to_string());
                 self.states.retain(|to_state| to_state.name != state);
@@ -122,8 +131,8 @@ impl Country {
                 let new_state = State {
                     name: state.to_string(),
                     provinces: vec![province.to_string()],
-                    pops: vec![],
-                    state_buildings: vec![],
+                    pops,
+                    state_buildings,
                 };
                 self.states.push(new_state);
             }
