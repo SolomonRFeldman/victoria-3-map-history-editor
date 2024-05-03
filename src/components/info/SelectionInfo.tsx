@@ -27,8 +27,13 @@ export default function SelectionInfo({ selectedCountry, selectedState, selected
     <div ref={infoRef} className='fixed top-4 right-4 card card-compact bg-base-100 z-[400]'>
       <div className="card-body">
         <h1 className="card-title justify-end">Country: {selectedCountry.name}</h1>
-        { selectedState && <StateInfo selectedState={selectedState} onStateChange={handleStateChange} /> }
-        { selectedProvince && <h3 className="card-title text-sm">Province: {selectedProvince}</h3> }
+        { 
+          selectedProvince ? 
+            <h3 className="card-title text-sm">Province: {selectedProvince}</h3> :
+            selectedState ? 
+              <StateInfo selectedState={selectedState} onStateChange={handleStateChange} /> :
+              '' 
+        }
       </div>
     </div>
   )
