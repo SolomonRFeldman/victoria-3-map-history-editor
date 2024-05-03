@@ -33,7 +33,7 @@ export default function SelectionInfo({ selectedCountry, selectedState, selected
             <h3 className="card-title text-sm">Province: {selectedProvince}</h3> :
             selectedState ? 
               <StateInfo selectedState={selectedState} onStateChange={handleStateChange} /> :
-              <CountryInfo country={selectedCountry} />
+              <CountryInfo country={selectedCountry} onChangeCountry={onCountryChange} />
         }
       </div>
     </div>
