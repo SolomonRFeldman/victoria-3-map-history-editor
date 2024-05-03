@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     country_definition::CountryDefinition,
+    country_setup::CountrySetup,
     geo_converters::{multi_poly_to_vec, vec_to_multi_poly},
     get_state_buildings::StateBuilding,
     get_state_populations::Pop,
@@ -16,6 +17,7 @@ pub struct Country {
     pub color: (u8, u8, u8),
     pub states: Vec<State>,
     pub coordinates: Vec<Vec<(f32, f32)>>,
+    pub setup: CountrySetup,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -41,6 +43,7 @@ impl Country {
             color: country_definition.color,
             states: vec![],
             coordinates: vec![],
+            setup: CountrySetup::new(),
         }
     }
 

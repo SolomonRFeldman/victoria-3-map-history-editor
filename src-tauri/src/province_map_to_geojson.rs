@@ -374,6 +374,7 @@ pub fn country_map_to_geojson(
                     color: country.color,
                     states: country.states.clone(),
                     coordinates: geometries.to_vec(),
+                    setup: country.setup.clone(),
                 },
                 None => {
                     println!(
@@ -385,6 +386,7 @@ pub fn country_map_to_geojson(
                         color: country.color,
                         states: country.states.clone(),
                         coordinates: vec![],
+                        setup: country.setup.clone(),
                     }
                 }
             }

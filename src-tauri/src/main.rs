@@ -6,6 +6,7 @@ mod cache_config;
 mod color_converter;
 mod country;
 mod country_definition;
+mod country_setup;
 mod dds_to_png;
 mod game_folder;
 mod geo_converters;

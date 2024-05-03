@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use crate::{
     country::{Country, State},
     country_definition::CountryDefinition,
+    country_setup::CountrySetup,
     get_state_buildings::StateBuilding,
     get_state_populations::StatePopulation,
     get_states::State as StateHistory,
@@ -13,6 +14,7 @@ pub fn get_countries(
     state_pops: HashMap<String, StatePopulation>,
     state_buildings: HashMap<String, Vec<StateBuilding>>,
     country_definitions: HashMap<String, CountryDefinition>,
+    country_setups: HashMap<String, CountrySetup>,
 ) -> Vec<Country> {
     let mut countries: Vec<Country> = vec![];
 
@@ -58,6 +60,7 @@ pub fn get_countries(
                                 .clone(),
                         }],
                         coordinates: vec![],
+                        setup: country_setups.get(&state.owner).unwrap().clone(),
                     });
                 }
             }

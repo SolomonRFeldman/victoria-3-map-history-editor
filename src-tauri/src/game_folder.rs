@@ -1,6 +1,7 @@
 use crate::{
     cache_config::CacheConfig,
     country_definition::CountryDefinition,
+    country_setup::CountrySetup,
     dds_to_png::DdsToPng,
     get_countries::get_countries,
     get_state_buildings::get_state_buildings,
@@ -23,6 +24,7 @@ pub const STATES_PATH: &str = "game/common/history/states/00_states.txt";
 pub const STATE_POPS_PATH: &str = "game/common/history/pops";
 const STATE_BUILDINGS_PATH: &str = "game/common/history/buildings";
 pub const COUNTRY_DEFINITIONS_PATH: &str = "common/country_definitions";
+const COUNTRY_SETUP_PATH: &str = "common/history/countries";
 
 pub struct GameFolder {
     pub folder_path: PathBuf,
@@ -138,6 +140,7 @@ impl GameFolder {
             get_state_populations(self.state_pops()),
             get_state_buildings(self.state_buildings()),
             self.country_definitions(),
+            self.country_setups(),
         );
         let countries_with_coords = country_map_to_geojson(
             cache_dir(event).join("states.png"),
@@ -193,6 +196,10 @@ impl GameFolder {
             self.game_path()
                 .join(PathBuf::from(COUNTRY_DEFINITIONS_PATH)),
         )
+    }
+
+    fn country_setups(&self) -> HashMap<String, CountrySetup> {
+        CountrySetup::parse_map_from(self.game_path().join(PathBuf::from(COUNTRY_SETUP_PATH)))
     }
 }
 

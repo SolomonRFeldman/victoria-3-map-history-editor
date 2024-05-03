@@ -3,6 +3,7 @@ import { State } from "../States"
 import { useEffect, useRef } from "react"
 import { DomEvent } from "leaflet"
 import StateInfo from "./StateInfo"
+import CountryInfo from "./CountryInfo"
 
 type SelectionInfoProps = {
   selectedCountry: Country
@@ -32,7 +33,7 @@ export default function SelectionInfo({ selectedCountry, selectedState, selected
             <h3 className="card-title text-sm">Province: {selectedProvince}</h3> :
             selectedState ? 
               <StateInfo selectedState={selectedState} onStateChange={handleStateChange} /> :
-              '' 
+              <CountryInfo country={selectedCountry} />
         }
       </div>
     </div>

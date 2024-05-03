@@ -9,6 +9,12 @@ export type Country = {
   color: [number, number, number],
   coordinates: Coords,
   states: State[]
+  setup: CountrySetup
+}
+
+type CountrySetup = {
+  base_tech: string | null,
+  technologies_researched: string[]
 }
 
 type CountriesProps = {
