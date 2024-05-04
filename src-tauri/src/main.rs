@@ -21,6 +21,7 @@ mod merge_pops;
 mod pdx_script_parser;
 mod province_map_to_geojson;
 mod save_as_pdx_script;
+mod technology;
 mod transfer_provinces;
 mod transfer_state;
 
@@ -34,6 +35,7 @@ use std::{
     thread,
 };
 use tauri::{App, Manager, Window};
+use technology::Technology;
 use transfer_provinces::{transfer_province as handle_transfer_province, TransferProvinceResponse};
 use transfer_state::{transfer_state as handle_transfer_state, TransferStateResponse};
 
@@ -101,6 +103,10 @@ fn get_buildings(window: Window) -> Vec<Building> {
     Building::parse_from_game_folder(window)
 }
 #[tauri::command]
+fn get_technologies(window: Window) -> Vec<Technology> {
+    Technology::parse_from_game_folder(window)
+}
+#[tauri::command]
 fn get_uncreated_country_definitions(
     window: Window,
     created_tag_set: HashSet<String>,
@@ -161,7 +167,8 @@ fn main() {
             get_buildings,
             get_uncreated_country_definitions,
             create_country,
-            create_country_from_province
+            create_country_from_province,
+            get_technologies
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

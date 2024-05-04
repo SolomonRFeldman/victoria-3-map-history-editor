@@ -1,4 +1,14 @@
+import { MinusIcon } from "@heroicons/react/24/solid"
+import { useEffect, useState } from "react";
 import { Country } from "../Countries";
+import { invoke } from "@tauri-apps/api";
+import SearchBox from "../form/SearchBox";
+
+type Technology = {
+  name: string,
+  era: string,
+  category: string,
+}
 
 type CountryInfoProps = {
   country: Country
@@ -12,6 +22,20 @@ export default function CountryInfo({ country, onChangeCountry }: CountryInfoPro
 
     onChangeCountry(updatedCountry)
   }
+
+  const handleAddTech = (tech: string) => {
+    const setup = { ...country.setup, technologies_researched: [...country.setup.technologies_researched, tech] }
+    onChangeCountry({ ...country, setup })
+  }
+  const handleRemoveTech = (tech: string) => {
+    const setup = { ...country.setup, technologies_researched: country.setup.technologies_researched.filter(t => t !== tech) }
+    onChangeCountry({ ...country, setup })
+  }
+
+  const handleGetTechnologies = async () => { setTechnologies((await invoke<Technology[]>("get_technologies", {}))) }
+  const [technologies, setTechnologies] = useState<Technology[]>([])
+  useEffect(() => { handleGetTechnologies() }, [])
+  const filteredTechnologies = technologies.filter(tech => !country.setup.technologies_researched.includes(tech.name))
 
   return (
     <div>
@@ -29,9 +53,14 @@ export default function CountryInfo({ country, onChangeCountry }: CountryInfoPro
       <h2>Technologies Researched:</h2>
       <ul>
         {country.setup.technologies_researched.map(tech => (
-          <li>{tech}</li>
+          <li>{tech}
+            <button className="btn float-right btn-square btn-xs btn-error w-4 min-h-4 h-4" onClick={() => handleRemoveTech(tech)}>
+              <MinusIcon className="w-3 h-3"/>
+            </button>
+          </li>
         ))}
       </ul>
+      <SearchBox options={filteredTechnologies.map(tech => ({ value: tech.name, label: tech.name }))} onSelect={handleAddTech} placeholder="Add Tech" />
     </div>
   )
 }
