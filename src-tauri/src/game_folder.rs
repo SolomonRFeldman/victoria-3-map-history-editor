@@ -24,7 +24,7 @@ pub const STATES_PATH: &str = "game/common/history/states/00_states.txt";
 pub const STATE_POPS_PATH: &str = "game/common/history/pops";
 const STATE_BUILDINGS_PATH: &str = "game/common/history/buildings";
 pub const COUNTRY_DEFINITIONS_PATH: &str = "common/country_definitions";
-const COUNTRY_SETUP_PATH: &str = "common/history/countries";
+pub const COUNTRY_SETUP_PATH: &str = "common/history/countries";
 
 pub struct GameFolder {
     pub folder_path: PathBuf,

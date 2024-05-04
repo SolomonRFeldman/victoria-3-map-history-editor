@@ -8,7 +8,8 @@ use tauri::{Manager, WindowMenuEvent};
 use crate::{
     cache_config::CacheConfig,
     country::Country,
-    game_folder::STATES_PATH,
+    country_setup::CountrySetup,
+    game_folder::{COUNTRY_SETUP_PATH, STATES_PATH},
     get_state_buildings::StateBuilding,
     get_state_populations::Pop,
     get_states::{get_states, State},
@@ -69,6 +70,15 @@ pub fn save_as_pdx_script(event: WindowMenuEvent) {
             });
     });
 
+    let working_dir_country_setup_path = working_dir.join(COUNTRY_SETUP_PATH);
+    let game_country_setup_path = game_folder.join("game").join(COUNTRY_SETUP_PATH);
+    std::fs::create_dir_all(&working_dir_country_setup_path).unwrap();
+    write_country_setup_to_pdx_script(
+        current_countries,
+        working_dir_country_setup_path,
+        game_country_setup_path,
+    );
+
     let state_pop_path = working_dir.join("common/history/pops");
     std::fs::create_dir_all(&state_pop_path).unwrap();
     write_state_pops_to_pdx_script(&current_state_map, &state_pop_path);
@@ -106,6 +116,45 @@ pub fn save_as_pdx_script(event: WindowMenuEvent) {
 
 //   state1_map == state2_map
 // }
+
+fn write_country_setup_to_pdx_script(
+    current_countries: Vec<Country>,
+    working_dir_country_setup_path: PathBuf,
+    game_country_setup_path: PathBuf,
+) {
+    let country_setup_map = CountrySetup::parse_map_from(game_country_setup_path);
+
+    current_countries.iter().for_each(|country| {
+        if !country_setup_map.contains_key(&country.name) {
+            let mut country_setup_script = String::new();
+            country_setup_script.push_str("COUNTRIES = {\n");
+            country_setup_script.push_str(&format!("  {} = ", country.name));
+            country_setup_script.push_str("{\n");
+            if country.setup.base_tech.is_some() {
+                country_setup_script.push_str(&format!(
+                    "    effective_starting_technology_{}_tech = yes\n",
+                    country.setup.base_tech.clone().unwrap()
+                ));
+            }
+            country
+                .setup
+                .technologies_researched
+                .iter()
+                .for_each(|tech| {
+                    country_setup_script
+                        .push_str(&format!("    add_technology_researched = {}\n", tech));
+                });
+            country_setup_script.push_str("  }\n");
+            country_setup_script.push_str("}\n");
+
+            std::fs::write(
+                working_dir_country_setup_path.join(format!("{}.txt", country.name.to_lowercase())),
+                country_setup_script,
+            )
+            .unwrap();
+        }
+    })
+}
 
 fn write_states_to_pdx_script(
     game_states: Vec<State>,

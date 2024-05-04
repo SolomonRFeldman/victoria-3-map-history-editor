@@ -5,8 +5,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct CountrySetup {
-    base_tech: Option<String>,
-    technologies_researched: Vec<String>,
+    pub base_tech: Option<String>,
+    pub technologies_researched: Vec<String>,
 }
 
 fn default_false() -> bool {
