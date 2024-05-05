@@ -48,7 +48,7 @@ fn hash<'a, E: ParseError<&'a str> + ContextError<&'a str>>(
     )(i)
 }
 
-fn sp<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a str, &'a str, E> {
+pub fn sp<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a str, &'a str, E> {
     recognize(many0(alt((
         multispace1,
         comment_line,
@@ -60,7 +60,7 @@ fn comment_line<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a str, 
     recognize(preceded(char('#'), take_while(|c| c != '\n')))(input)
 }
 
-fn parse_str<'a, E: ParseError<&'a str>>(i: &'a str) -> IResult<&'a str, &'a str, E> {
+pub fn parse_str<'a, E: ParseError<&'a str>>(i: &'a str) -> IResult<&'a str, &'a str, E> {
     escaped(
         one_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:_/.-"),
         '\\',

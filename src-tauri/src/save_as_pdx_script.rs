@@ -122,10 +122,26 @@ fn write_country_setup_to_pdx_script(
     working_dir_country_setup_path: PathBuf,
     game_country_setup_path: PathBuf,
 ) {
-    let country_setup_map = CountrySetup::parse_map_from(game_country_setup_path);
+    let country_setup_map = CountrySetup::parse_map_from(game_country_setup_path.clone());
+    let unprocessed_setup_map = CountrySetup::parse_map_unprocessed_values(game_country_setup_path);
 
     current_countries.iter().for_each(|country| {
-        if !country_setup_map.contains_key(&country.name) {
+        let save_path =
+            working_dir_country_setup_path.join(format!("{}.txt", country.name.to_lowercase()));
+        if save_path.exists() {
+            std::fs::remove_file(&save_path).unwrap();
+        }
+
+        let is_country_setup_changed = match country_setup_map.get(&country.name) {
+            Some(game_country_setup) => country.setup != *game_country_setup,
+            None => true,
+        };
+
+        if is_country_setup_changed {
+            let unparsed_script = match unprocessed_setup_map.get(&country.name) {
+                Some(script) => script,
+                None => "  ",
+            };
             let mut country_setup_script = String::new();
             country_setup_script.push_str("COUNTRIES = {\n");
             country_setup_script.push_str(&format!("  c:{} = ", country.name));
@@ -144,14 +160,11 @@ fn write_country_setup_to_pdx_script(
                     country_setup_script
                         .push_str(&format!("    add_technology_researched = {}\n", tech));
                 });
-            country_setup_script.push_str("  }\n");
+            country_setup_script.push_str(unparsed_script);
+            country_setup_script.push_str("}\n");
             country_setup_script.push_str("}\n");
 
-            std::fs::write(
-                working_dir_country_setup_path.join(format!("{}.txt", country.name.to_lowercase())),
-                country_setup_script,
-            )
-            .unwrap();
+            std::fs::write(save_path, country_setup_script).unwrap();
         }
     })
 }
