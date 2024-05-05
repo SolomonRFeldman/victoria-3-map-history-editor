@@ -128,11 +128,11 @@ fn write_country_setup_to_pdx_script(
         if !country_setup_map.contains_key(&country.name) {
             let mut country_setup_script = String::new();
             country_setup_script.push_str("COUNTRIES = {\n");
-            country_setup_script.push_str(&format!("  {} = ", country.name));
+            country_setup_script.push_str(&format!("  c:{} = ", country.name));
             country_setup_script.push_str("{\n");
             if country.setup.base_tech.is_some() {
                 country_setup_script.push_str(&format!(
-                    "    effective_starting_technology_{}_tech = yes\n",
+                    "    effect_starting_technology_{}_tech = yes\n",
                     country.setup.base_tech.clone().unwrap()
                 ));
             }
