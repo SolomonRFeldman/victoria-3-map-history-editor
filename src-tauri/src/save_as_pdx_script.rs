@@ -124,6 +124,8 @@ fn write_country_setup_to_pdx_script(
 ) {
     let country_setup_map = CountrySetup::parse_map_from(game_country_setup_path.clone());
     let unprocessed_setup_map = CountrySetup::parse_map_unprocessed_values(game_country_setup_path);
+    let unprocessed_working_dir_setup_map =
+        CountrySetup::parse_map_unprocessed_values(working_dir_country_setup_path.clone());
 
     current_countries.iter().for_each(|country| {
         let save_path =
@@ -133,14 +135,29 @@ fn write_country_setup_to_pdx_script(
         }
 
         let is_country_setup_changed = match country_setup_map.get(&country.name) {
-            Some(game_country_setup) => country.setup != *game_country_setup,
+            Some(game_country_setup) => {
+                country.setup != *game_country_setup
+                    || match unprocessed_working_dir_setup_map.get(&country.name) {
+                        Some(unprocessed_working_dir_setup) => {
+                            unprocessed_working_dir_setup.trim_start()
+                                != unprocessed_setup_map
+                                    .get(&country.name)
+                                    .unwrap()
+                                    .trim_start()
+                        }
+                        None => false,
+                    }
+            }
             None => true,
         };
 
         if is_country_setup_changed {
-            let unparsed_script = match unprocessed_setup_map.get(&country.name) {
+            let unparsed_script = match unprocessed_working_dir_setup_map.get(&country.name) {
                 Some(script) => script,
-                None => "  ",
+                None => match unprocessed_setup_map.get(&country.name) {
+                    Some(script) => script,
+                    None => "  ",
+                },
             };
             let mut country_setup_script = String::new();
             country_setup_script.push_str("COUNTRIES = {\n");
