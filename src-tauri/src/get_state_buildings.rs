@@ -1,6 +1,6 @@
 use jomini::{
     text::{ScalarReader, ValueReader},
-    TextTape, Windows1252Encoding,
+    JominiDeserialize, TextTape, Windows1252Encoding,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -13,6 +13,7 @@ pub struct StateBuilding {
     pub reserves: Option<i64>,
     pub activate_production_methods: Option<Vec<String>>,
     pub condition: Option<Value>,
+    pub ownership: Option<Ownership>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -21,6 +22,36 @@ struct RawStateBuilding {
     level: Option<i64>,
     reserves: Option<i64>,
     activate_production_methods: Option<Vec<String>>,
+    add_ownership: Option<RawOwnership>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Ownership {
+    pub countries: Vec<CountryOwnership>,
+    pub buildings: Vec<BuildingOwnership>,
+}
+
+#[derive(JominiDeserialize, Debug, Serialize, Clone)]
+struct RawOwnership {
+    #[jomini(alias = "country", duplicated)]
+    countries: Vec<CountryOwnership>,
+    #[jomini(alias = "building", duplicated)]
+    buildings: Vec<BuildingOwnership>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct CountryOwnership {
+    pub country: String,
+    pub levels: i64,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct BuildingOwnership {
+    #[serde(rename = "type")]
+    pub type_: String,
+    pub country: String,
+    pub levels: i64,
+    pub region: String,
 }
 
 fn parse_state_building(
@@ -96,6 +127,17 @@ pub fn get_state_buildings(state_buildings_path: PathBuf) -> HashMap<String, Vec
                                                         .activate_production_methods
                                                         .clone(),
                                                     condition: Some(condition.clone().into()),
+                                                    ownership: raw_state_building
+                                                        .add_ownership
+                                                        .as_ref()
+                                                        .map(|add_ownership| Ownership {
+                                                            countries: add_ownership
+                                                                .countries
+                                                                .clone(),
+                                                            buildings: add_ownership
+                                                                .buildings
+                                                                .clone(),
+                                                        }),
                                                 })
                                                 .collect();
 
@@ -127,6 +169,12 @@ pub fn get_state_buildings(state_buildings_path: PathBuf) -> HashMap<String, Vec
                                             .activate_production_methods
                                             .clone(),
                                         condition: None,
+                                        ownership: raw_state_building.add_ownership.as_ref().map(
+                                            |add_ownership| Ownership {
+                                                countries: add_ownership.countries.clone(),
+                                                buildings: add_ownership.buildings.clone(),
+                                            },
+                                        ),
                                     })
                                     .collect();
 
