@@ -13,7 +13,7 @@ pub fn get_uncreated_country_definitions(
     let country_definition_path = CacheConfig::get_config(
         window
             .app_handle()
-            .path_resolver()
+            .path()
             .app_cache_dir()
             .unwrap()
             .join("config.json"),

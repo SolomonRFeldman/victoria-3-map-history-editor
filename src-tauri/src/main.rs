@@ -77,7 +77,7 @@ fn cache_state(
     states: HashMap<String, Vec<Vec<(f32, f32)>>>,
 ) {
     thread::spawn(move || {
-        let cache_dir = window.app_handle().path_resolver().app_cache_dir().unwrap();
+        let cache_dir = window.app_handle().path().app_cache_dir().unwrap();
         std::fs::write(
             cache_dir.join("states.json"),
             serde_json::to_string(&states).unwrap(),
@@ -178,5 +178,5 @@ fn main() {
 }
 
 fn initialize_app_dir(app: &mut App) {
-    std::fs::create_dir_all(app.path_resolver().app_cache_dir().unwrap()).unwrap();
+    std::fs::create_dir_all(app.path().app_cache_dir().unwrap()).unwrap();
 }
