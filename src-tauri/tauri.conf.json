@@ -2,63 +2,46 @@
   "build": {
     "beforeDevCommand": "yarn dev",
     "beforeBuildCommand": "yarn build",
-    "devPath": "http://localhost:1420",
-    "distDir": "../dist"
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1420"
   },
-  "package": {
-    "productName": "victoria-3-map-history-editor",
-    "version": "0.0.0"
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
   },
-  "tauri": {
-    "allowlist": {
-      "all": false,
-      "shell": {
-        "all": false,
-        "open": true
+  "productName": "victoria-3-map-history-editor",
+  "mainBinaryName": "victoria-3-map-history-editor",
+  "version": "0.0.0",
+  "identifier": "Victoria3MapHistoryEditor",
+  "plugins": {},
+  "app": {
+    "security": {
+      "assetProtocol": {
+        "scope": {
+          "allow": [
+            "$CACHE/**/*"
+          ],
+          "deny": [],
+          "requireLiteralLeadingDot": null
+        },
+        "enable": true
       },
-      "dialog": {
-        "all": true,
-        "ask": true,
-        "confirm": true,
-        "message": true,
-        "open": true,
-        "save": true
-      },
-      "fs": {
-        "exists": true,
-        "readFile": true,
-        "scope": ["$CACHE/**/*"]
-      },
-      "path": {
-        "all": true
-      },
-      "protocol": {
-        "all": true,
-        "asset": true,
-        "assetScope": { "allow": ["$CACHE/**/*"]}
-      }
+      "csp": "default-src 'self'; img-src 'self' asset: https://asset.localhost; connect-src ipc: http://ipc.localhost"
     },
     "windows": [
       {
         "title": "victoria-3-map-history-editor",
         "width": 800,
-        "height": 600
+        "height": 600,
+        "useHttpsScheme": true
       }
-    ],
-    "security": {
-      "csp": "default-src 'self'; img-src 'self' asset: https://asset.localhost"
-    },
-    "bundle": {
-      "active": true,
-      "targets": "all",
-      "identifier": "Victoria3MapHistoryEditor",
-      "icon": [
-        "icons/32x32.png",
-        "icons/128x128.png",
-        "icons/128x128@2x.png",
-        "icons/icon.icns",
-        "icons/icon.ico"
-      ]
-    }
+    ]
   }
 }
