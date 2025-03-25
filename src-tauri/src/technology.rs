@@ -47,7 +47,7 @@ impl Technology {
     }
 
     pub fn parse_from_game_folder(window: Window) -> Vec<Technology> {
-        let cache_dir = window.app_handle().path_resolver().app_cache_dir().unwrap();
+        let cache_dir = window.app_handle().path().app_cache_dir().unwrap();
         let cache_config: CacheConfig = CacheConfig::get_config(cache_dir.join("config.json"));
 
         Self::parse_from(cache_config.game_folder.unwrap().join("game"))

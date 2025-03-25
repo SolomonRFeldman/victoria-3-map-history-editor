@@ -3,7 +3,7 @@ use std::{
     collections::HashMap,
     path::{Path, PathBuf},
 };
-use tauri::{Manager, WindowMenuEvent};
+use tauri::{AppHandle, Manager};
 
 use crate::{
     cache_config::CacheConfig,
@@ -23,14 +23,9 @@ struct SubState {
     pub state_buildings: Vec<StateBuilding>,
 }
 
-pub fn save_as_pdx_script(event: WindowMenuEvent) {
+pub fn save_as_pdx_script(app_handle: &AppHandle) {
     let start = std::time::Instant::now();
-    let cache_dir = event
-        .window()
-        .app_handle()
-        .path_resolver()
-        .app_cache_dir()
-        .unwrap();
+    let cache_dir = app_handle.path().app_cache_dir().unwrap();
     let cache_config: CacheConfig = CacheConfig::get_config(cache_dir.join("config.json"));
     let game_folder = cache_config.game_folder.unwrap();
     let working_dir = cache_config.working_dir.unwrap();

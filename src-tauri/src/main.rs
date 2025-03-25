@@ -77,7 +77,7 @@ fn cache_state(
     states: HashMap<String, Vec<Vec<(f32, f32)>>>,
 ) {
     thread::spawn(move || {
-        let cache_dir = window.app_handle().path_resolver().app_cache_dir().unwrap();
+        let cache_dir = window.app_handle().path().app_cache_dir().unwrap();
         std::fs::write(
             cache_dir.join("states.json"),
             serde_json::to_string(&states).unwrap(),
@@ -150,14 +150,17 @@ fn create_country_from_province(
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
-            let main_window = app.get_window("main").unwrap();
+            let main_window = app.get_webview_window("main").unwrap();
             main_window.maximize().unwrap();
 
             initialize_app_dir(app);
+            MainMenu::create_menu(app).unwrap();
             Ok(())
         })
-        .menu(MainMenu::create_menu())
         .on_menu_event(MainMenu::handler)
         .invoke_handler(tauri::generate_handler![
             transfer_state,
@@ -175,5 +178,5 @@ fn main() {
 }
 
 fn initialize_app_dir(app: &mut App) {
-    std::fs::create_dir_all(app.path_resolver().app_cache_dir().unwrap()).unwrap();
+    std::fs::create_dir_all(app.path().app_cache_dir().unwrap()).unwrap();
 }
