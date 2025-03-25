@@ -1,6 +1,6 @@
 import { MinusIcon, PlusIcon } from "@heroicons/react/24/solid"
 import { StateBuilding } from "../States"
-import { invoke } from "@tauri-apps/api"
+import { invoke } from "@tauri-apps/api/core";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline"
 import ChooseProductionMethods, { ProductionMethodGroup } from "./ChooseProductionMethods"
 import { useRef, useState } from "react"

@@ -1,7 +1,7 @@
 import { PlusIcon } from "@heroicons/react/24/solid";
 import { FocusEvent, useEffect, useRef, useState } from "react";
 import { Building } from "./StateBuildingInfo";
-import { invoke } from "@tauri-apps/api";
+import { invoke } from "@tauri-apps/api/core";
 import { StateBuilding } from "../States";
 
 const buildingsFilter = (buildings: Building[], stateBuildings: StateBuilding[], search: string) => buildings.filter(building => {

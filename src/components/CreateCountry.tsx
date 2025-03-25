@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Country } from "./Countries";
-import { invoke } from "@tauri-apps/api";
+import { invoke } from "@tauri-apps/api/core";
 
 export type CountryDefinition = {
   tag: string

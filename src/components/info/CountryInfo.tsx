@@ -1,7 +1,7 @@
 import { MinusIcon } from "@heroicons/react/24/solid"
 import { useEffect, useState } from "react";
 import { Country } from "../Countries";
-import { invoke } from "@tauri-apps/api";
+import { invoke } from "@tauri-apps/api/core";
 import SearchBox from "../form/SearchBox";
 
 type Technology = {
