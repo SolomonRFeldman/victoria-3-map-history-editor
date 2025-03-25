@@ -38,7 +38,7 @@ fn keys_and_values<'a, E: ParseError<&'a str> + ContextError<&'a str>>(
 
 fn hash<'a, E: ParseError<&'a str> + ContextError<&'a str>>(
     i: &'a str,
-) -> IResult<&'a str, Vec<(&str, JsonValue)>, E> {
+) -> IResult<&'a str, Vec<(&'a str, JsonValue)>, E> {
     context(
         "map",
         preceded(
