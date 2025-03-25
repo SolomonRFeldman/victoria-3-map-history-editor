@@ -289,6 +289,36 @@ fn write_state_buildings_to_pdx_script(
                     }
                     pdx_script.push_str("      create_building = {\n");
                     pdx_script.push_str(&format!("        building=\"{}\"\n", building.name));
+                    if let Some(ownership) = &building.ownership {
+                        pdx_script.push_str("          add_ownership = {\n");
+                        ownership.countries.iter().for_each(|country| {
+                            pdx_script.push_str("            country = {\n");
+                            pdx_script.push_str(&format!(
+                                "              country=\"{}\"\n",
+                                country.country
+                            ));
+                            pdx_script
+                                .push_str(&format!("              levels={}\n", country.levels));
+                            pdx_script.push_str("            }\n");
+                        });
+                        ownership.buildings.iter().for_each(|building| {
+                            pdx_script.push_str("            building = {\n");
+                            pdx_script
+                                .push_str(&format!("              type=\"{}\"\n", building.type_));
+                            pdx_script.push_str(&format!(
+                                "              country=\"{}\"\n",
+                                building.country
+                            ));
+                            pdx_script
+                                .push_str(&format!("              levels={}\n", building.levels));
+                            pdx_script.push_str(&format!(
+                                "              region=\"{}\"\n",
+                                building.region
+                            ));
+                            pdx_script.push_str("            }\n");
+                        });
+                        pdx_script.push_str("          }\n");
+                    }
                     if let Some(level) = building.level {
                         pdx_script.push_str(&format!("        level={}\n", level));
                     }
@@ -338,7 +368,11 @@ fn parse_building_edge_case_conditional_to_string(
                 .unwrap()
                 .as_array();
             condition.unwrap().iter().for_each(|item| {
-                pdx_script.push_str(&format!("      {} = {}\n", item[0], item[1]));
+                pdx_script.push_str(&format!(
+                    "      {} = {}\n",
+                    item[0].as_str().unwrap(),
+                    item[1].as_str().unwrap()
+                ));
             });
             pdx_script.push_str("    }\n");
             pdx_script.push_str(&format!("    {} = ", state_name));
@@ -348,6 +382,28 @@ fn parse_building_edge_case_conditional_to_string(
             sub_state.state_buildings.iter().for_each(|building| {
                 pdx_script.push_str("        create_building = {\n");
                 pdx_script.push_str(&format!("          building=\"{}\"\n", building.name));
+                if let Some(ownership) = &building.ownership {
+                    pdx_script.push_str("          add_ownership = {\n");
+                    ownership.countries.iter().for_each(|country| {
+                        pdx_script.push_str("            country = {\n");
+                        pdx_script
+                            .push_str(&format!("              country=\"{}\"\n", country.country));
+                        pdx_script.push_str(&format!("              levels={}\n", country.levels));
+                        pdx_script.push_str("            }\n");
+                    });
+                    ownership.buildings.iter().for_each(|building| {
+                        pdx_script.push_str("            building = {\n");
+                        pdx_script
+                            .push_str(&format!("              type=\"{}\"\n", building.type_));
+                        pdx_script
+                            .push_str(&format!("              country=\"{}\"\n", building.country));
+                        pdx_script.push_str(&format!("              levels={}\n", building.levels));
+                        pdx_script
+                            .push_str(&format!("              region=\"{}\"\n", building.region));
+                        pdx_script.push_str("            }\n");
+                    });
+                    pdx_script.push_str("          }\n");
+                }
                 if let Some(level) = building.level {
                     pdx_script.push_str(&format!("          level={}\n", level));
                 }

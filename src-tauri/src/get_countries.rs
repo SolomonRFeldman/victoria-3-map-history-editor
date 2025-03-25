@@ -25,21 +25,26 @@ pub fn get_countries(
             let country = countries
                 .iter_mut()
                 .find(|country| country.name == state.owner);
+            let pops = state_pops
+                .get(&format!("{}:{}", state.owner, state_history_copy.name))
+                .unwrap()
+                .pops
+                .clone();
+            let state_buildings = match state_buildings
+                .get(&format!("{}:{}", state.owner, state_history_copy.name))
+            {
+                Some(state_buildings) => state_buildings.clone(),
+                None => vec![],
+            }
+            .to_vec();
 
             match country {
                 Some(country) => {
                     country.states.push(State {
                         name: state_history_copy.name.clone(),
                         provinces: state.provinces,
-                        pops: state_pops
-                            .get(&format!("{}:{}", state.owner, state_history_copy.name))
-                            .unwrap()
-                            .pops
-                            .clone(),
-                        state_buildings: state_buildings
-                            .get(&format!("{}:{}", state.owner, state_history_copy.name))
-                            .unwrap()
-                            .clone(),
+                        pops,
+                        state_buildings,
                     });
                 }
                 None => {
@@ -49,15 +54,8 @@ pub fn get_countries(
                         states: vec![State {
                             name: state_history_copy.name.clone(),
                             provinces: state.provinces,
-                            pops: state_pops
-                                .get(&format!("{}:{}", state.owner, state_history_copy.name))
-                                .unwrap()
-                                .pops
-                                .clone(),
-                            state_buildings: state_buildings
-                                .get(&format!("{}:{}", state.owner, state_history_copy.name))
-                                .unwrap()
-                                .clone(),
+                            pops,
+                            state_buildings,
                         }],
                         coordinates: vec![],
                         setup: country_setups.get(&state.owner).unwrap().clone(),

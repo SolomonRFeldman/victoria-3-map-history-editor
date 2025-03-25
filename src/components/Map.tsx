@@ -169,8 +169,47 @@ export default function Map() {
 
     setSelectedCountry((country) => country?.name === fromCountry.name ? fromCountry : country)
 
-    setCountries([...countries])
+    const updatedCountries = fromStateCoords.length > 0 ? [...countries] : handleTransferOwnership({ toCountry, fromCountry, selectedState, countries })
+    setCountries(updatedCountries)
     forceRerender()
+  }
+
+  const handleTransferOwnership = ({ toCountry, fromCountry, selectedState, countries }: { toCountry: Country, fromCountry: Country, selectedState: State, countries: Country[] }) => {
+    return countries.map((country) => ({
+      ...country,
+      states: country.states.map((state) => ({
+        ...state,
+        state_buildings: state.state_buildings.map((building) => ({
+          ...building,
+          ownership: building.ownership
+            ? {
+                ...building.ownership,
+                buildings: building.ownership.buildings.map((building) => {
+                  if (
+                    building.country == `c:${fromCountry.name}` &&
+                    `s:${building.region}` == selectedState.name
+                  ) {
+                    return {
+                      ...building,
+                      country: `c:${toCountry.name}`,
+                    };
+                  }
+                  return building;
+                }),
+                countries: building.ownership.countries.map((country) => {
+                  if (state.name === selectedState.name) {
+                    return {
+                      ...country,
+                      country: `c:${toCountry.name}`,
+                    };
+                  }
+                  return country;
+                }),
+              }
+            : null,
+        })),
+      })),
+    }))
   }
 
   const handleClickCountry = (event: LeafletMouseEvent) => {

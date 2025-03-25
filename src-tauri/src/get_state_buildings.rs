@@ -1,8 +1,10 @@
+use jomini::{
+    text::{ScalarReader, ValueReader},
+    JominiDeserialize, TextTape, Windows1252Encoding,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{collections::HashMap, path::PathBuf};
-
-use crate::pdx_script_parser::parse_script;
+use std::{collections::HashMap, fs::read, path::PathBuf};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct StateBuilding {
@@ -11,6 +13,72 @@ pub struct StateBuilding {
     pub reserves: Option<i64>,
     pub activate_production_methods: Option<Vec<String>>,
     pub condition: Option<Value>,
+    pub ownership: Option<Ownership>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct RawStateBuilding {
+    building: String,
+    level: Option<i64>,
+    reserves: Option<i64>,
+    activate_production_methods: Option<Vec<String>>,
+    add_ownership: Option<RawOwnership>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Ownership {
+    pub countries: Vec<CountryOwnership>,
+    pub buildings: Vec<BuildingOwnership>,
+}
+
+#[derive(JominiDeserialize, Debug, Serialize, Clone)]
+struct RawOwnership {
+    #[jomini(alias = "country", duplicated)]
+    countries: Vec<CountryOwnership>,
+    #[jomini(alias = "building", duplicated)]
+    buildings: Vec<BuildingOwnership>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct CountryOwnership {
+    pub country: String,
+    pub levels: i64,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct BuildingOwnership {
+    #[serde(rename = "type")]
+    pub type_: String,
+    pub country: String,
+    pub levels: i64,
+    pub region: String,
+}
+
+fn parse_state_building(
+    key: ScalarReader<Windows1252Encoding>,
+    value: ValueReader<Windows1252Encoding>,
+) -> HashMap<String, Vec<RawStateBuilding>> {
+    let state_name = key.read_str();
+
+    value
+        .read_object()
+        .unwrap()
+        .fields()
+        .map(|(key, _op, value)| {
+            let binding = key.read_str();
+            let country_name = binding.strip_prefix("region_state:").unwrap();
+            let state_building_name = format!("{}:{}", country_name, state_name);
+
+            let state_buildings = value
+                .read_object()
+                .unwrap()
+                .fields()
+                .map(|(_key, _op, value)| value.read_object().unwrap().deserialize().unwrap())
+                .collect();
+
+            (state_building_name, state_buildings)
+        })
+        .collect()
 }
 
 pub fn get_state_buildings(state_buildings_path: PathBuf) -> HashMap<String, Vec<StateBuilding>> {
@@ -18,97 +86,112 @@ pub fn get_state_buildings(state_buildings_path: PathBuf) -> HashMap<String, Vec
 
     for entry in std::fs::read_dir(state_buildings_path).unwrap() {
         let entry = entry.unwrap().path();
-        let parsed_state_buildings = parse_script(&std::fs::read_to_string(entry).unwrap());
+        let string_entry = read(entry).unwrap();
+        let tape = TextTape::from_slice(&string_entry).unwrap();
+        let reader = tape.windows1252_reader();
 
-        parsed_state_buildings[0][1]
-            .as_array()
-            .unwrap()
-            .iter()
-            .for_each(|item| {
-                let (state_name, state_buildings, condition) = match item[0].as_str().unwrap() {
-                    "if" => {
-                        let block = item[1].as_array().unwrap();
-                        let condition = &block.iter().find(|item| item[0] == "limit").unwrap()[1];
-                        let state_item = block
-                            .iter()
-                            .find(|item| item[0].as_str().unwrap().starts_with("s:"))
+        for (_key, _op, value) in reader.fields() {
+            value
+                .read_object()
+                .unwrap()
+                .fields()
+                .for_each(|(key, _op, value)| {
+                    let string_key = key.read_str();
+                    if string_key == "if" {
+                        let mut object_value = value.read_object().unwrap().fields();
+
+                        let (_key, _op, condition_reader) = object_value
+                            .find(|(key, _op, _value)| key.read_str() == "limit")
                             .unwrap();
-                        (
-                            state_item[0].as_str().unwrap().to_string(),
-                            state_item[1].as_array().unwrap(),
-                            Some(condition),
-                        )
-                    }
-                    _ => (
-                        item[0].as_str().unwrap().to_string(),
-                        item[1].as_array().unwrap(),
-                        None,
-                    ),
-                };
-
-                state_buildings.iter().for_each(|raw_sub_state_buildings| {
-                    let country_name = raw_sub_state_buildings[0]
-                        .as_str()
-                        .unwrap()
-                        .strip_prefix("region_state:")
-                        .unwrap();
-
-                    let parsed_sub_state_buildings: Vec<StateBuilding> = raw_sub_state_buildings[1]
-                        .as_array()
-                        .unwrap()
-                        .iter()
-                        .map(|raw_building| {
-                            let building = raw_building[1].as_array().unwrap();
-                            let name = building.iter().find(|item| item[0] == "building").unwrap()
-                                [1]
-                            .as_str()
+                        let condition: Vec<Vec<String>> = condition_reader
+                            .read_object()
                             .unwrap()
-                            .to_string();
-                            let level: Option<i64> = building
-                                .iter()
-                                .find(|item| item[0] == "level")
-                                .map(|level| level[1].as_str().unwrap().parse().unwrap());
-                            let reserves: Option<i64> = building
-                                .iter()
-                                .find(|item| item[0] == "reserves")
-                                .map(|level| level[1].as_str().unwrap().parse().unwrap());
-                            let activate_production_methods = building
-                                .iter()
-                                .find(|item| item[0] == "activate_production_methods")
-                                .map(|activate_production_methods| {
-                                    activate_production_methods[1]
-                                        .as_array()
-                                        .unwrap()
-                                        .iter()
-                                        .map(|method| {
-                                            method.as_str().unwrap().trim_matches('"').to_string()
-                                        })
-                                        .collect()
-                                });
+                            .fields()
+                            .map(|(key, _op, value)| {
+                                vec![key.read_string(), value.read_string().unwrap().to_string()]
+                            })
+                            .collect();
 
-                            StateBuilding {
-                                name,
-                                level,
-                                reserves,
-                                activate_production_methods,
-                                condition: condition.cloned(),
+                        object_value.for_each(|(key, _op, value)| {
+                            if key.read_str().starts_with("s:") {
+                                parse_state_building(key, value).iter().for_each(
+                                    |(state_name, raw_state_building)| {
+                                        let state_buildings: Vec<StateBuilding> =
+                                            raw_state_building
+                                                .iter()
+                                                .map(|raw_state_building| StateBuilding {
+                                                    name: raw_state_building.building.clone(),
+                                                    level: raw_state_building.level,
+                                                    reserves: raw_state_building.reserves,
+                                                    activate_production_methods: raw_state_building
+                                                        .activate_production_methods
+                                                        .clone(),
+                                                    condition: Some(condition.clone().into()),
+                                                    ownership: raw_state_building
+                                                        .add_ownership
+                                                        .as_ref()
+                                                        .map(|add_ownership| Ownership {
+                                                            countries: add_ownership
+                                                                .countries
+                                                                .clone(),
+                                                            buildings: add_ownership
+                                                                .buildings
+                                                                .clone(),
+                                                        }),
+                                                })
+                                                .collect();
+
+                                        match state_buildings_map.get_mut(state_name) {
+                                            Some(sub_state_buildings) => {
+                                                sub_state_buildings.extend(state_buildings.clone());
+                                            }
+                                            None => {
+                                                state_buildings_map.insert(
+                                                    state_name.clone(),
+                                                    state_buildings.clone(),
+                                                );
+                                            }
+                                        }
+                                    },
+                                );
                             }
-                        })
-                        .collect();
+                        });
+                    } else {
+                        parse_state_building(key, value).iter().for_each(
+                            |(state_name, raw_state_building)| {
+                                let state_buildings: Vec<StateBuilding> = raw_state_building
+                                    .iter()
+                                    .map(|raw_state_building| StateBuilding {
+                                        name: raw_state_building.building.clone(),
+                                        level: raw_state_building.level,
+                                        reserves: raw_state_building.reserves,
+                                        activate_production_methods: raw_state_building
+                                            .activate_production_methods
+                                            .clone(),
+                                        condition: None,
+                                        ownership: raw_state_building.add_ownership.as_ref().map(
+                                            |add_ownership| Ownership {
+                                                countries: add_ownership.countries.clone(),
+                                                buildings: add_ownership.buildings.clone(),
+                                            },
+                                        ),
+                                    })
+                                    .collect();
 
-                    match state_buildings_map.get_mut(&format!("{}:{}", country_name, state_name)) {
-                        Some(sub_state_buildings) => {
-                            sub_state_buildings.extend(parsed_sub_state_buildings);
-                        }
-                        None => {
-                            state_buildings_map.insert(
-                                format!("{}:{}", country_name, state_name),
-                                parsed_sub_state_buildings,
-                            );
-                        }
+                                match state_buildings_map.get_mut(state_name) {
+                                    Some(sub_state_buildings) => {
+                                        sub_state_buildings.extend(state_buildings.clone());
+                                    }
+                                    None => {
+                                        state_buildings_map
+                                            .insert(state_name.clone(), state_buildings.clone());
+                                    }
+                                }
+                            },
+                        );
                     }
                 });
-            });
+        }
     }
 
     state_buildings_map

@@ -17,6 +17,24 @@ export type StateBuilding = {
   reserves: number | null,
   activate_production_methods: string[] | null
   condition: BuildingCondition | null
+  ownership: Ownership | null
+}
+
+type Ownership = {
+  countries: CountryOwnership[],
+  buildings: BuildingOwnership[]
+}
+
+type CountryOwnership = {
+  country: string,
+  levels: number
+}
+
+type BuildingOwnership = {
+  type_: string,
+  country: string,
+  levels: number,
+  region: string
 }
 
 type BuildingCondition = [string, string][]
