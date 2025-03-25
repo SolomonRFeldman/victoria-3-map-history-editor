@@ -13,7 +13,7 @@ use crate::{
 };
 use image_dds::image::Rgba;
 use std::{collections::HashMap, path::PathBuf};
-use tauri::{Manager, WindowMenuEvent};
+use tauri::{AppHandle, Emitter, Manager};
 
 const FLATMAP_PATH: &str = "game/dlc/dlc004_voice_of_the_people/gfx/map/textures/flatmap_votp.dds";
 const LAND_MASK_PATH: &str = "game/gfx/map/textures/land_mask.dds";
@@ -28,21 +28,22 @@ pub const COUNTRY_SETUP_PATH: &str = "common/history/countries";
 
 pub struct GameFolder {
     pub folder_path: PathBuf,
+    pub app_handle: AppHandle,
 }
 
 impl GameFolder {
-    pub fn load(&self, event: WindowMenuEvent) {
-        self.write_path_to_config(&event);
-        self.load_flatmap(&event);
-        self.load_land_mask(&event);
-        self.load_flatmap_overlay(&event);
-        self.load_states(&event);
-        self.load_countries(&event);
-        self.load_provinces(&event);
+    pub fn load(&self) {
+        self.write_path_to_config();
+        self.load_flatmap();
+        self.load_land_mask();
+        self.load_flatmap_overlay();
+        self.load_states();
+        self.load_countries();
+        self.load_provinces();
     }
 
-    fn write_path_to_config(&self, event: &WindowMenuEvent) {
-        let config_path = cache_dir(event).join("config.json");
+    fn write_path_to_config(&self) {
+        let config_path = cache_dir(&self.app_handle).join("config.json");
 
         let mut config: CacheConfig = match std::fs::read_to_string(&config_path) {
             Ok(config) => serde_json::from_str(&config).unwrap(),
@@ -52,23 +53,23 @@ impl GameFolder {
         std::fs::write(config_path, serde_json::to_string(&config).unwrap()).unwrap();
     }
 
-    fn load_flatmap(&self, event: &WindowMenuEvent) {
+    fn load_flatmap(&self) {
         let dds_to_png = DdsToPng {
             dds_file_path: self.flatmap(),
         };
 
-        match dds_to_png.cache(cache_dir(event)) {
-            Ok(_) => handle_send_map(event, "load-flatmap"),
+        match dds_to_png.cache(cache_dir(&self.app_handle)) {
+            Ok(_) => handle_send_map(&self.app_handle, "load-flatmap"),
             Err(_) => println!("Flatmap already in cache"),
         };
     }
 
-    fn load_land_mask(&self, event: &WindowMenuEvent) {
+    fn load_land_mask(&self) {
         let dds_to_png = DdsToPng {
             dds_file_path: self.land_mask(),
         };
 
-        if !dds_to_png.exists_in_cache(cache_dir(event)) {
+        if !dds_to_png.exists_in_cache(cache_dir(&self.app_handle)) {
             let mut png_buffer = dds_to_png.dds_to_buffer();
             for pixel in png_buffer.pixels_mut() {
                 if pixel[0] == 0 && pixel[1] == 0 && pixel[2] == 0 {
@@ -77,64 +78,67 @@ impl GameFolder {
             }
 
             dds_to_png
-                .write_image(png_buffer, dds_to_png.png_file_path(cache_dir(event)))
+                .write_image(
+                    png_buffer,
+                    dds_to_png.png_file_path(cache_dir(&self.app_handle)),
+                )
                 .unwrap();
-            handle_send_map(event, "load-land-mask");
+            handle_send_map(&self.app_handle, "load-land-mask");
         } else {
             println!("Land mask already in cache");
         }
     }
 
-    fn load_flatmap_overlay(&self, event: &WindowMenuEvent) {
+    fn load_flatmap_overlay(&self) {
         let dds_to_png = DdsToPng {
             dds_file_path: self.flatmap_overlay(),
         };
 
-        match dds_to_png.cache(cache_dir(event)) {
-            Ok(_) => handle_send_map(event, "load-flatmap-overlay"),
+        match dds_to_png.cache(cache_dir(&self.app_handle)) {
+            Ok(_) => handle_send_map(&self.app_handle, "load-flatmap-overlay"),
             Err(_) => println!("Flatmap overlay already in cache"),
         };
     }
 
-    fn load_provinces(&self, event: &WindowMenuEvent) {
-        match cache_dir(event).join("provinces.json").exists() {
+    fn load_provinces(&self) {
+        match cache_dir(&self.app_handle).join("provinces.json").exists() {
             true => {}
             false => {
                 let provinces = province_map_to_geojson(self.provinces());
                 std::fs::write(
-                    cache_dir(event).join("provinces.json"),
+                    cache_dir(&self.app_handle).join("provinces.json"),
                     serde_json::to_string(&provinces).unwrap(),
                 )
                 .unwrap();
             }
         };
 
-        match event.window().emit("load-province-coords", true) {
+        match self.app_handle.emit("load-province-coords", true) {
             Ok(_) => println!("Sent load-province-coords to frontend"),
             Err(e) => println!("Failed to send load-province-coords to frontend: {:?}", e),
         }
     }
 
-    fn load_states(&self, event: &WindowMenuEvent) {
+    fn load_states(&self) {
         let states = get_states(self.states());
         let state_coords = state_map_to_geojson(
             self.provinces(),
-            cache_dir(event).join("states.png"),
+            cache_dir(&self.app_handle).join("states.png"),
             states,
         );
         std::fs::write(
-            cache_dir(event).join("states.json"),
+            cache_dir(&self.app_handle).join("states.json"),
             serde_json::to_string(&state_coords).unwrap(),
         )
         .unwrap();
 
-        match event.window().emit("load-state-coords", true) {
+        match self.app_handle.emit("load-state-coords", true) {
             Ok(_) => println!("Sent load-state-coords to frontend"),
             Err(e) => println!("Failed to send load-state-coords to frontend: {:?}", e),
         }
     }
 
-    fn load_countries(&self, event: &WindowMenuEvent) {
+    fn load_countries(&self) {
         let countries = get_countries(
             get_states(self.states()),
             get_state_populations(self.state_pops()),
@@ -143,17 +147,17 @@ impl GameFolder {
             self.country_setups(),
         );
         let countries_with_coords = country_map_to_geojson(
-            cache_dir(event).join("states.png"),
-            cache_dir(event).join("countries.png"),
+            cache_dir(&self.app_handle).join("states.png"),
+            cache_dir(&self.app_handle).join("countries.png"),
             countries.clone(),
         );
         std::fs::write(
-            cache_dir(event).join("countries.json"),
+            cache_dir(&self.app_handle).join("countries.json"),
             serde_json::to_string(&countries_with_coords).unwrap(),
         )
         .unwrap();
 
-        match event.window().emit("load-country-data", true) {
+        match self.app_handle.emit("load-country-data", true) {
             Ok(_) => println!("Sent load-country-data to frontend"),
             Err(e) => println!("Failed to send load-country-data to frontend: {:?}", e),
         }
@@ -203,18 +207,13 @@ impl GameFolder {
     }
 }
 
-fn handle_send_map(event: &WindowMenuEvent, event_id: &str) {
-    match event.window().emit(event_id, true) {
+fn handle_send_map(app_handle: &AppHandle, event_id: &str) {
+    match app_handle.emit(event_id, true) {
         Ok(_) => println!("Sent {:?} to frontend", event_id),
         Err(e) => println!("Failed to send {:?} to frontend: {:?}", event_id, e),
     }
 }
 
-fn cache_dir(event: &WindowMenuEvent) -> PathBuf {
-    event
-        .window()
-        .app_handle()
-        .path_resolver()
-        .app_cache_dir()
-        .unwrap()
+fn cache_dir(app_handle: &AppHandle) -> PathBuf {
+    app_handle.path().app_cache_dir().unwrap()
 }

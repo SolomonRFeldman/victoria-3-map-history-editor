@@ -1,8 +1,8 @@
-use tauri::api::dialog::FileDialogBuilder;
 use tauri::{
     menu::{MenuBuilder, MenuEvent, SubmenuBuilder},
     App, AppHandle, Manager,
 };
+use tauri_plugin_dialog::DialogExt;
 
 use crate::cache_config::CacheConfig;
 use crate::game_folder::GameFolder;
@@ -25,54 +25,64 @@ impl MainMenu {
             .text(EXIT, "Exit")
             .build()?;
         let menu = MenuBuilder::new(handle).item(&submenu).build()?;
-        app.set_menu(menu);
+        app.set_menu(menu).unwrap();
         Ok(())
     }
 
-    pub fn handler(app: &AppHandle, event: MenuEvent) {
+    pub fn handler(app_handle: &AppHandle, event: MenuEvent) {
         match event.id.as_ref() {
             OPEN_GAME_FOLDER => {
-                handle_open_game_folder(event);
+                handle_open_game_folder(app_handle);
             }
-            OPEN_WORKING_DIRECTORY => handle_open_working_directory(app),
+            OPEN_WORKING_DIRECTORY => handle_open_working_directory(app_handle),
             SAVE => {
-                handle_save(event);
+                handle_save(app_handle);
             }
             EXIT => {
-                app.exit(1);
+                app_handle.exit(1);
             }
             _ => {}
         }
     }
 }
 
-fn handle_open_game_folder(event: MenuEvent) {
-    FileDialogBuilder::new().pick_folder(|file_path| {
+fn handle_open_game_folder(app_handle: &AppHandle) {
+    let app_handle = app_handle.clone();
+    app_handle.dialog().file().pick_folder(move |file_path| {
         if let Some(file_path) = file_path {
-            GameFolder {
-                folder_path: file_path,
+            if let Ok(file_path) = file_path.into_path() {
+                GameFolder {
+                    folder_path: file_path,
+                    app_handle,
+                }
+                .load()
             }
-            .load(event)
         }
     });
 }
 
-fn handle_open_working_directory(app: &AppHandle) {
-    FileDialogBuilder::new().pick_folder(move |file_path| {
+fn handle_open_working_directory(app_handle: &AppHandle) {
+    let config_path = app_handle
+        .path()
+        .app_cache_dir()
+        .unwrap()
+        .join("config.json");
+
+    app_handle.dialog().file().pick_folder(move |file_path| {
         if let Some(file_path) = file_path {
-            let config_path = app.path().app_cache_dir().unwrap().join("config.json");
+            if let Ok(file_path) = file_path.into_path() {
+                let mut config: CacheConfig = match std::fs::read_to_string(&config_path) {
+                    Ok(config) => serde_json::from_str(&config).unwrap(),
+                    Err(_) => CacheConfig::new(),
+                };
 
-            let mut config: CacheConfig = match std::fs::read_to_string(&config_path) {
-                Ok(config) => serde_json::from_str(&config).unwrap(),
-                Err(_) => CacheConfig::new(),
-            };
-
-            config.working_dir = Some(file_path.clone());
-            std::fs::write(config_path, serde_json::to_string(&config).unwrap()).unwrap();
+                config.working_dir = Some(file_path.clone());
+                std::fs::write(config_path, serde_json::to_string(&config).unwrap()).unwrap();
+            }
         }
     });
 }
 
-fn handle_save(event: MenuEvent) {
-    save_as_pdx_script(event);
+fn handle_save(app_handle: &AppHandle) {
+    save_as_pdx_script(app_handle);
 }

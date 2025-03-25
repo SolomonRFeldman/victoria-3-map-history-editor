@@ -158,7 +158,7 @@ fn main() {
             main_window.maximize().unwrap();
 
             initialize_app_dir(app);
-            MainMenu::create_menu(app);
+            MainMenu::create_menu(app).unwrap();
             Ok(())
         })
         .on_menu_event(MainMenu::handler)
