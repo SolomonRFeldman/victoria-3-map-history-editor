@@ -154,13 +154,13 @@ fn main() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
-            let main_window = app.get_window("main").unwrap();
+            let main_window = app.get_webview_window("main").unwrap();
             main_window.maximize().unwrap();
 
             initialize_app_dir(app);
+            MainMenu::create_menu(app);
             Ok(())
         })
-        .menu(MainMenu::create_menu())
         .on_menu_event(MainMenu::handler)
         .invoke_handler(tauri::generate_handler![
             transfer_state,

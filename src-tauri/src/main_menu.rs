@@ -1,5 +1,8 @@
 use tauri::api::dialog::FileDialogBuilder;
-use tauri::{CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent};
+use tauri::{
+    menu::{MenuBuilder, MenuEvent, SubmenuBuilder},
+    App, AppHandle, Manager,
+};
 
 use crate::cache_config::CacheConfig;
 use crate::game_folder::GameFolder;
@@ -13,41 +16,37 @@ const EXIT: &str = "exit";
 pub struct MainMenu {}
 
 impl MainMenu {
-    pub fn create_menu() -> Menu {
-        let open_game_folder = CustomMenuItem::new(OPEN_GAME_FOLDER, "Open Game Folder");
-        let open_working_directory =
-            CustomMenuItem::new("open-working-directory", "Open Working Directory");
-        let save = CustomMenuItem::new(SAVE, "Save");
-        let exit = CustomMenuItem::new(EXIT, "Exit");
-        let submenu = Submenu::new(
-            "File",
-            Menu::new()
-                .add_item(open_game_folder)
-                .add_item(open_working_directory)
-                .add_item(save)
-                .add_item(exit),
-        );
-        Menu::new().add_submenu(submenu)
+    pub fn create_menu(app: &App) -> Result<(), tauri::Error> {
+        let handle = app.handle();
+        let submenu = SubmenuBuilder::new(handle, "File")
+            .text(OPEN_GAME_FOLDER, "Open Game Folder")
+            .text("open-working-directory", "Open Working Directory")
+            .text(SAVE, "Save")
+            .text(EXIT, "Exit")
+            .build()?;
+        let menu = MenuBuilder::new(handle).item(&submenu).build()?;
+        app.set_menu(menu);
+        Ok(())
     }
 
-    pub fn handler(event: WindowMenuEvent) {
-        match event.menu_item_id() {
+    pub fn handler(app: &AppHandle, event: MenuEvent) {
+        match event.id.as_ref() {
             OPEN_GAME_FOLDER => {
                 handle_open_game_folder(event);
             }
-            OPEN_WORKING_DIRECTORY => handle_open_working_directory(event),
+            OPEN_WORKING_DIRECTORY => handle_open_working_directory(app),
             SAVE => {
                 handle_save(event);
             }
             EXIT => {
-                event.window().close().unwrap();
+                app.exit(1);
             }
             _ => {}
         }
     }
 }
 
-fn handle_open_game_folder(event: WindowMenuEvent) {
+fn handle_open_game_folder(event: MenuEvent) {
     FileDialogBuilder::new().pick_folder(|file_path| {
         if let Some(file_path) = file_path {
             GameFolder {
@@ -58,16 +57,10 @@ fn handle_open_game_folder(event: WindowMenuEvent) {
     });
 }
 
-fn handle_open_working_directory(event: WindowMenuEvent) {
+fn handle_open_working_directory(app: &AppHandle) {
     FileDialogBuilder::new().pick_folder(move |file_path| {
         if let Some(file_path) = file_path {
-            let config_path = event
-                .window()
-                .app_handle()
-                .path_resolver()
-                .app_cache_dir()
-                .unwrap()
-                .join("config.json");
+            let config_path = app.path().app_cache_dir().unwrap().join("config.json");
 
             let mut config: CacheConfig = match std::fs::read_to_string(&config_path) {
                 Ok(config) => serde_json::from_str(&config).unwrap(),
@@ -80,6 +73,6 @@ fn handle_open_working_directory(event: WindowMenuEvent) {
     });
 }
 
-fn handle_save(event: WindowMenuEvent) {
+fn handle_save(event: MenuEvent) {
     save_as_pdx_script(event);
 }
