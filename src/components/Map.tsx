@@ -8,7 +8,7 @@ import Countries, { Country } from './Countries'
 import States, { State } from './States'
 import Provinces from './Provinces'
 import Background from './Background'
-import { exists, readTextFile } from '@tauri-apps/plugin-fs';
+import { exists, readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
 import { appCacheDir } from '@tauri-apps/api/path'
 import SelectionInfo from './info/SelectionInfo'
 import CreateCountry, { CountryDefinition } from './CreateCountry'
@@ -246,11 +246,24 @@ export default function Map() {
     const timer = setTimeout(() => {
       if (countries.length > 0 && Object.keys(stateCoords).length > 0) {
         console.log("Caching state");
-        invoke<TransferProvinceResponse>("cache_state", { countries, states: stateCoords });
+        cacheCountries(countries, stateCoords)
       }
     }, 3000);
     return () => clearTimeout(timer);
   }, [countries, stateCoords])
+
+  const cacheCountries = async (countries: Country[], states: StateCoords) => {
+    const cacheDir = await appCacheDir()
+    const statePath = `${cacheDir}/states.json`
+    const stateFileExists = await exists(statePath)
+    const countryPath = `${cacheDir}/countries.json`
+    const countryFileExists = await exists(countryPath)
+    
+    if (stateFileExists && countryFileExists) {
+      await writeTextFile(statePath, JSON.stringify(states))
+      await writeTextFile(countryPath, JSON.stringify(countries))
+    }
+  }
 
   const handleCountryChange = (country: Country) => {
     setCountries(countries.map((c) => c.name === country.name ? country : c))

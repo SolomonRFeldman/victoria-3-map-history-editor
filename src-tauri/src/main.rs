@@ -30,10 +30,7 @@ use country::Country;
 use country_definition::CountryDefinition;
 use main_menu::MainMenu;
 use province_map_to_geojson::Coords;
-use std::{
-    collections::{HashMap, HashSet},
-    thread,
-};
+use std::collections::HashSet;
 use tauri::{App, Manager, Window};
 use technology::Technology;
 use transfer_provinces::{transfer_province as handle_transfer_province, TransferProvinceResponse};
@@ -69,26 +66,6 @@ fn transfer_province(
         to_coords,
         province_coords,
     )
-}
-#[tauri::command]
-fn cache_state(
-    window: Window,
-    countries: Vec<Country>,
-    states: HashMap<String, Vec<Vec<(f32, f32)>>>,
-) {
-    thread::spawn(move || {
-        let cache_dir = window.app_handle().path().app_cache_dir().unwrap();
-        std::fs::write(
-            cache_dir.join("states.json"),
-            serde_json::to_string(&states).unwrap(),
-        )
-        .unwrap();
-        std::fs::write(
-            cache_dir.join("countries.json"),
-            serde_json::to_string(&countries).unwrap(),
-        )
-        .unwrap();
-    });
 }
 #[tauri::command]
 fn get_building(window: Window, name: String) -> Building {
@@ -165,7 +142,6 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             transfer_state,
             transfer_province,
-            cache_state,
             get_building,
             get_buildings,
             get_uncreated_country_definitions,
