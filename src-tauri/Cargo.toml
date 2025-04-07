@@ -16,6 +16,7 @@ image = "0.25"
 ddsfile = "0.5"
 image_dds = "0.5"
 base64 = "0.22"
+sea-orm = { version = "1.1.0", features = [ "sqlx-sqlite", "runtime-tokio-native-tls", "macros", "with-json" ] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 geo = "0.28.0"
@@ -26,6 +27,7 @@ palette = "0.7.5"
 tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
 tauri-plugin-shell = "2"
+migration = { path = "migration" }
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
