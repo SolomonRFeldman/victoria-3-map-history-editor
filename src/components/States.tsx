@@ -40,22 +40,22 @@ type BuildingOwnership = {
 type BuildingCondition = [string, string][]
 
 export type State = {
+  id: number,
   name: string,
   color: string
   provinces: string[]
-  pops: Pop[]
-  state_buildings: StateBuilding[]
+  border: Coords
 }
 
 type StatesProps = {
   country: Country
-  stateCoords: { [key: string]: Coords }
+  states: State[]
   selectedState: State | null
   renderBreaker: number
   eventHandlers: LeafletEventHandlerFnMap
 }
 
-export default function States({ country, stateCoords, selectedState, renderBreaker, eventHandlers }: StatesProps) {
+export default function States({ country, states, selectedState, renderBreaker, eventHandlers }: StatesProps) {
   const stateStyle = (feature?: Feature<Geometry, State>) => {
     return {
       fillColor: feature ? feature.properties.provinces[0].replace('x', '#') : 'transparent',
@@ -65,8 +65,6 @@ export default function States({ country, stateCoords, selectedState, renderBrea
     }
   }
 
-  const states = country.states.filter((state) => state.name != selectedState?.name)
-
   const stateData: FeatureCollection<Geometry, State> = {
     type: "FeatureCollection",
     features: states.map((state) => {
@@ -75,11 +73,11 @@ export default function States({ country, stateCoords, selectedState, renderBrea
         properties: state,
         geometry: {
           type: "Polygon",
-          coordinates: stateCoords[`${country.name}:${state.name}`]
+          coordinates: state.border
         }
       }
     })
   }
 
-  return <GeoJSON data={stateData} key={country.name + selectedState?.name + renderBreaker} style={stateStyle} eventHandlers={eventHandlers} />
+  return <GeoJSON data={stateData} key={country.tag + selectedState?.name + renderBreaker} style={stateStyle} eventHandlers={eventHandlers} />
 }

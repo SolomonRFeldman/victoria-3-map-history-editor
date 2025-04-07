@@ -18,6 +18,7 @@ mod get_uncreated_country_definitions;
 mod main_menu;
 mod merge_buildings;
 mod merge_pops;
+mod models;
 mod pdx_script_parser;
 mod province_map_to_geojson;
 mod save_as_pdx_script;
@@ -29,10 +30,14 @@ use building::Building;
 use country::Country;
 use country_definition::CountryDefinition;
 use main_menu::MainMenu;
+use models::{country as country_model, state};
 use province_map_to_geojson::Coords;
-use sea_orm::Database;
+use sea_orm::{
+    ActiveModelTrait, ActiveValue::Set, ColumnTrait, Database, DatabaseConnection, EntityTrait,
+    QueryFilter,
+};
 use std::collections::HashSet;
-use tauri::{App, Manager, Window};
+use tauri::{async_runtime::block_on, App, Manager, Window};
 use technology::Technology;
 use transfer_provinces::{transfer_province as handle_transfer_province, TransferProvinceResponse};
 use transfer_state::{transfer_state as handle_transfer_state, TransferStateResponse};
@@ -125,6 +130,36 @@ fn create_country_from_province(
         province_coords,
     )
 }
+#[tauri::command]
+fn get_country(window: Window) -> Vec<country_model::Model> {
+    let db = window.state::<DatabaseConnection>().inner();
+    let start_time = std::time::Instant::now();
+    let country = block_on(country_model::Entity::find().all(db)).unwrap();
+    println!("Country query took: {:?}", start_time.elapsed());
+    country
+}
+#[tauri::command]
+fn get_states(window: Window, country_id: i32) -> Vec<state::Model> {
+    let db = window.state::<DatabaseConnection>().inner();
+    let start_time = std::time::Instant::now();
+    let states = block_on(
+        state::Entity::find()
+            .filter(state::Column::CountryId.eq(country_id))
+            .all(db),
+    )
+    .unwrap();
+    println!("States query took: {:?}", start_time.elapsed());
+    states
+}
+#[tauri::command]
+fn update_country(window: Window, country: country_model::Model) -> country_model::Model {
+    let db = window.state::<DatabaseConnection>().inner();
+    let setup = Set(country.setup.clone());
+    let mut country: country_model::ActiveModel = country.into();
+    country.setup = setup;
+    let country = block_on(country.update(db)).unwrap();
+    country
+}
 
 fn main() {
     tauri::Builder::default()
@@ -149,7 +184,10 @@ fn main() {
             get_uncreated_country_definitions,
             create_country,
             create_country_from_province,
-            get_technologies
+            get_technologies,
+            get_country,
+            update_country,
+            get_states
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

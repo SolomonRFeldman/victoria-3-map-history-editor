@@ -1,15 +1,14 @@
 import { Coords } from "./Map"
-import { State } from "./States"
 import { GeoJSON } from 'react-leaflet'
 import { FeatureCollection, Feature, Geometry } from 'geojson'
 import { LeafletEventHandlerFnMap } from "leaflet"
 
 export type Country = {
-  name: string,
+  id: number,
+  tag: string,
   color: [number, number, number],
-  coordinates: Coords,
-  states: State[]
   setup: CountrySetup
+  border: Coords,
 }
 
 type CountrySetup = {
@@ -42,7 +41,7 @@ export default function Countries({ countries, renderBreaker, eventHandlers }: C
         properties: country,
         geometry: {
           type: "Polygon",
-          coordinates: country.coordinates
+          coordinates: country.border
         }
       }
     })

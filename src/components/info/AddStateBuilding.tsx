@@ -118,7 +118,7 @@ export default function AddStateBuilding({ stateBuildings, onAddStateBuilding }:
   const handleClickBuilding = (building: Building) => {
     const activate_production_methods = building.production_method_groups.map(pmGroup => pmGroup.production_methods[0].name)
 
-    onAddStateBuilding({ name: building.name, level: 1, activate_production_methods, reserves: 1, condition: null })
+    onAddStateBuilding({ name: building.name, level: 1, activate_production_methods, reserves: 1, condition: null, ownership: null })
   }
 
 
