@@ -7,13 +7,21 @@ use crate::{
     get_state_buildings::get_state_buildings,
     get_state_populations::get_state_populations,
     get_states::get_states,
+    models::{
+        building, building_ownership,
+        country::{self, Border, Color},
+        country_ownership, pop,
+        state::{self, Provinces},
+    },
     province_map_to_geojson::{
         country_map_to_geojson, province_map_to_geojson, state_map_to_geojson,
     },
 };
 use image_dds::image::Rgba;
+use migration::{Migrator, MigratorTrait};
+use sea_orm::{ActiveValue::Set, DatabaseConnection, EntityTrait};
 use std::{collections::HashMap, path::PathBuf};
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{async_runtime::block_on, AppHandle, Emitter, Manager};
 
 const FLATMAP_PATH: &str = "game/dlc/dlc004_voice_of_the_people/gfx/map/textures/flatmap_votp.dds";
 const LAND_MASK_PATH: &str = "game/gfx/map/textures/land_mask.dds";
@@ -37,7 +45,6 @@ impl GameFolder {
         self.load_flatmap();
         self.load_land_mask();
         self.load_flatmap_overlay();
-        self.load_states();
         self.load_countries();
         self.load_provinces();
     }
@@ -119,25 +126,6 @@ impl GameFolder {
         }
     }
 
-    fn load_states(&self) {
-        let states = get_states(self.states());
-        let state_coords = state_map_to_geojson(
-            self.provinces(),
-            cache_dir(&self.app_handle).join("states.png"),
-            states,
-        );
-        std::fs::write(
-            cache_dir(&self.app_handle).join("states.json"),
-            serde_json::to_string(&state_coords).unwrap(),
-        )
-        .unwrap();
-
-        match self.app_handle.emit("load-state-coords", true) {
-            Ok(_) => println!("Sent load-state-coords to frontend"),
-            Err(e) => println!("Failed to send load-state-coords to frontend: {:?}", e),
-        }
-    }
-
     fn load_countries(&self) {
         let countries = get_countries(
             get_states(self.states()),
@@ -146,16 +134,224 @@ impl GameFolder {
             self.country_definitions(),
             self.country_setups(),
         );
+        let db = self.app_handle.state::<DatabaseConnection>().inner();
+        block_on(Migrator::down(db, None)).unwrap();
+        block_on(Migrator::up(db, None)).unwrap();
         let countries_with_coords = country_map_to_geojson(
             cache_dir(&self.app_handle).join("states.png"),
             cache_dir(&self.app_handle).join("countries.png"),
             countries.clone(),
         );
-        std::fs::write(
-            cache_dir(&self.app_handle).join("countries.json"),
-            serde_json::to_string(&countries_with_coords).unwrap(),
+        let countries_to_insert: Vec<country::ActiveModel> = countries_with_coords
+            .iter()
+            .map(|country| country::ActiveModel {
+                tag: Set(country.name.clone()),
+                color: Set(Color(country.color)),
+                setup: Set(country.setup.clone()),
+                border: Set(Border(
+                    country
+                        .coordinates
+                        .iter()
+                        .map(|polygon| polygon.iter().map(|&(x, y)| (x as i32, y as i32)).collect())
+                        .collect(),
+                )),
+                ..Default::default()
+            })
+            .collect();
+        block_on(country::Entity::insert_many(countries_to_insert).exec(db)).unwrap();
+
+        let inserted_countries = block_on(
+            country::Entity::find()
+                .into_model::<country::WithoutBorder>()
+                .all(db),
         )
         .unwrap();
+
+        let states = get_states(self.states());
+        let state_coords = state_map_to_geojson(
+            self.provinces(),
+            cache_dir(&self.app_handle).join("states.png"),
+            states,
+        );
+
+        let states_to_insert: Vec<state::ActiveModel> = countries
+            .iter()
+            .flat_map(|country| {
+                let country_id = inserted_countries
+                    .iter()
+                    .find(|inserted_country| inserted_country.tag == country.name)
+                    .unwrap()
+                    .id;
+                country
+                    .states
+                    .iter()
+                    .map(|state| state::ActiveModel {
+                        name: Set(state.name.trim_start_matches("s:").to_string()),
+                        country_id: Set(country_id),
+                        provinces: Set(Provinces(state.provinces.clone())),
+                        border: Set(Border(
+                            state_coords
+                                .get(&format!("{}:{}", country.name.clone(), state.name.clone()))
+                                .unwrap()
+                                .clone()
+                                .iter()
+                                .map(|polygon| {
+                                    polygon.iter().map(|&(x, y)| (x as i32, y as i32)).collect()
+                                })
+                                .collect(),
+                        )),
+                        ..Default::default()
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .collect();
+        block_on(state::Entity::insert_many(states_to_insert).exec(db)).unwrap();
+
+        let inserted_states = block_on(
+            state::Entity::find()
+                .into_model::<state::WithoutBorder>()
+                .all(db),
+        )
+        .unwrap();
+
+        let country_map: HashMap<i32, &country::WithoutBorder> = inserted_countries
+            .iter()
+            .map(|country| (country.id, country))
+            .collect();
+
+        let state_pops = get_state_populations(self.state_pops());
+
+        let pops_to_insert: Vec<pop::ActiveModel> = inserted_states
+            .iter()
+            .flat_map(|state| {
+                let country_tag = country_map.get(&state.country_id).unwrap().tag.clone();
+                let pops = state_pops
+                    .get(&format!("{}:s:{}", country_tag, state.name))
+                    .unwrap()
+                    .pops
+                    .clone();
+                pops.iter()
+                    .map(|pop| pop::ActiveModel {
+                        state_id: Set(state.id),
+                        culture: Set(pop.culture.clone()),
+                        religion: Set(pop.religion.clone()),
+                        size: Set(pop.size),
+                        pop_type: Set(pop.pop_type.clone()),
+                        ..Default::default()
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .collect();
+        block_on(pop::Entity::insert_many(pops_to_insert).exec(db)).unwrap();
+
+        let state_buildings = get_state_buildings(self.state_buildings());
+
+        let buildings_to_insert: Vec<building::ActiveModel> = inserted_states
+            .iter()
+            .flat_map(|state| {
+                let country_tag = country_map.get(&state.country_id).unwrap().tag.clone();
+                if let Some(state_buildings) =
+                    state_buildings.get(&format!("{}:s:{}", country_tag, state.name))
+                {
+                    state_buildings
+                        .iter()
+                        .map(|building| building::ActiveModel {
+                            state_id: Set(state.id),
+                            name: Set(building.name.clone()),
+                            level: Set(building.level),
+                            reserves: Set(building.reserves),
+                            activate_production_methods: Set(building::ActivateProductionMethods(
+                                building.activate_production_methods.clone(),
+                            )),
+                            condition: Set(building.condition.clone()),
+                            ..Default::default()
+                        })
+                        .collect::<Vec<_>>()
+                } else {
+                    vec![]
+                }
+            })
+            .collect();
+        block_on(building::Entity::insert_many(buildings_to_insert).exec(db)).unwrap();
+
+        let inserted_buildings = block_on(building::Entity::find().all(db)).unwrap();
+
+        let mut country_ownerships_to_insert: Vec<country_ownership::ActiveModel> = vec![];
+        let mut building_ownerships_to_insert: Vec<building_ownership::ActiveModel> = vec![];
+        for country in countries {
+            let country_id = inserted_countries
+                .iter()
+                .find(|inserted_country| inserted_country.tag == country.name)
+                .unwrap()
+                .id;
+            for state in &country.states {
+                let state_id = inserted_states
+                    .iter()
+                    .find(|inserted_state| {
+                        inserted_state.name == state.name.trim_start_matches("s:")
+                            && inserted_state.country_id == country_id
+                    })
+                    .unwrap()
+                    .id;
+                for building in &state.state_buildings {
+                    let building_id = inserted_buildings
+                        .iter()
+                        .find(|inserted_building| {
+                            inserted_building.name == building.name
+                                && inserted_building.state_id == state_id
+                        })
+                        .unwrap()
+                        .id;
+                    if let Some(ownership) = &building.ownership {
+                        for country_ownership in ownership.countries.clone() {
+                            let country_id = inserted_countries
+                                .iter()
+                                .find(|inserted_country| {
+                                    inserted_country.tag
+                                        == country_ownership.country.trim_start_matches("c:")
+                                })
+                                .unwrap()
+                                .id;
+                            country_ownerships_to_insert.push(country_ownership::ActiveModel {
+                                building_id: Set(building_id),
+                                country_id: Set(country_id),
+                                levels: Set(country_ownership.levels),
+                                ..Default::default()
+                            });
+                        }
+                        for building_ownership in ownership.buildings.clone() {
+                            let country_id = inserted_countries
+                                .iter()
+                                .find(|inserted_country| {
+                                    inserted_country.tag
+                                        == building_ownership.country.trim_start_matches("c:")
+                                })
+                                .unwrap()
+                                .id;
+                            let state_id = inserted_states
+                                .iter()
+                                .find(|inserted_state| {
+                                    inserted_state.name == building_ownership.region
+                                        && inserted_state.country_id == country_id
+                                })
+                                .unwrap()
+                                .id;
+                            building_ownerships_to_insert.push(building_ownership::ActiveModel {
+                                building_id: Set(building_id),
+                                state_id: Set(state_id),
+                                owner_type: Set(building_ownership.type_),
+                                levels: Set(building_ownership.levels),
+                                ..Default::default()
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        block_on(country_ownership::Entity::insert_many(country_ownerships_to_insert).exec(db))
+            .unwrap();
+        block_on(building_ownership::Entity::insert_many(building_ownerships_to_insert).exec(db))
+            .unwrap();
 
         match self.app_handle.emit("load-country-data", true) {
             Ok(_) => println!("Sent load-country-data to frontend"),
