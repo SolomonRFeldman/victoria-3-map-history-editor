@@ -30,6 +30,7 @@ use country::Country;
 use country_definition::CountryDefinition;
 use main_menu::MainMenu;
 use province_map_to_geojson::Coords;
+use sea_orm::Database;
 use std::collections::HashSet;
 use tauri::{App, Manager, Window};
 use technology::Technology;
@@ -135,6 +136,7 @@ fn main() {
             main_window.maximize().unwrap();
 
             initialize_app_dir(app);
+            initialize_db(app);
             MainMenu::create_menu(app).unwrap();
             Ok(())
         })
@@ -155,4 +157,12 @@ fn main() {
 
 fn initialize_app_dir(app: &mut App) {
     std::fs::create_dir_all(app.path().app_cache_dir().unwrap()).unwrap();
+}
+
+fn initialize_db(app: &mut App) {
+    let db_path = app.path().app_cache_dir().unwrap().join("database.db");
+    let db_url = format!("sqlite://{}?mode=rwc", db_path.display());
+    let db = block_on(Database::connect(db_url)).unwrap();
+
+    app.manage(db);
 }
