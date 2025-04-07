@@ -1,4 +1,7 @@
+use migration::{Migrator, MigratorTrait};
+use sea_orm::DatabaseConnection;
 use tauri::{
+    async_runtime::block_on,
     menu::{MenuBuilder, MenuEvent, SubmenuBuilder},
     App, AppHandle, Manager,
 };
@@ -13,6 +16,9 @@ const OPEN_WORKING_DIRECTORY: &str = "open-working-directory";
 const SAVE: &str = "save";
 const EXIT: &str = "exit";
 
+const DB_MIGRATE: &str = "db-migrate";
+const DB_ROLLBACK: &str = "db-rollback";
+
 pub struct MainMenu {}
 
 impl MainMenu {
@@ -24,7 +30,15 @@ impl MainMenu {
             .text(SAVE, "Save")
             .text(EXIT, "Exit")
             .build()?;
-        let menu = MenuBuilder::new(handle).item(&submenu).build()?;
+        let database_menu = SubmenuBuilder::new(handle, "Database")
+            .text(DB_MIGRATE, "Migrate")
+            .text(DB_ROLLBACK, "Rollback")
+            .build()?;
+
+        let menu = MenuBuilder::new(handle)
+            .item(&submenu)
+            .item(&database_menu)
+            .build()?;
         app.set_menu(menu).unwrap();
         Ok(())
     }
@@ -40,6 +54,12 @@ impl MainMenu {
             }
             EXIT => {
                 app_handle.exit(1);
+            }
+            DB_MIGRATE => {
+                handle_db_migrate(app_handle);
+            }
+            DB_ROLLBACK => {
+                handle_db_rollback(app_handle);
             }
             _ => {}
         }
@@ -85,4 +105,26 @@ fn handle_open_working_directory(app_handle: &AppHandle) {
 
 fn handle_save(app_handle: &AppHandle) {
     save_as_pdx_script(app_handle);
+}
+
+fn handle_db_migrate(app_handle: &AppHandle) {
+    let db = app_handle.state::<DatabaseConnection>().inner();
+
+    match block_on(Migrator::up(db, None)) {
+        Ok(_) => {
+            println!("Migration successful");
+        }
+        Err(e) => {
+            println!("Migration failed: {}", e);
+        }
+    }
+}
+
+fn handle_db_rollback(app_handle: &AppHandle) {
+    let db = app_handle.state::<DatabaseConnection>().inner();
+
+    match block_on(Migrator::down(db, Some(1))) {
+        Ok(_) => println!("Rollback successful"),
+        Err(e) => println!("Rollback failed: {}", e),
+    }
 }
