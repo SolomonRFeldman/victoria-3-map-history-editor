@@ -9,12 +9,13 @@ use nom::{
     sequence::{pair, preceded, tuple},
     IResult,
 };
+use sea_orm::FromJsonQueryResult;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::PathBuf};
 
 use crate::pdx_script_parser::{parse_str, sp};
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Clone, Debug, Eq, Serialize, Deserialize, FromJsonQueryResult)]
 pub struct CountrySetup {
     pub base_tech: Option<String>,
     pub technologies_researched: Vec<String>,
