@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
 use crate::{
-    country::{Country, State},
     country_definition::CountryDefinition,
     country_setup::CountrySetup,
     get_state_buildings::StateBuilding,
     get_state_populations::StatePopulation,
     get_states::State as StateHistory,
+    legacy_country::{Country, State},
 };
 
 pub fn get_countries(

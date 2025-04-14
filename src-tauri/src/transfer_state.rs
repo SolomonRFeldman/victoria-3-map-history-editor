@@ -1,8 +1,8 @@
 use geo::BooleanOps;
 use serde::Serialize;
 
-use crate::country::Country;
 use crate::geo_converters::{multi_poly_to_vec, vec_to_multi_poly};
+use crate::legacy_country::Country;
 
 #[derive(Serialize)]
 pub struct TransferStateResponse {

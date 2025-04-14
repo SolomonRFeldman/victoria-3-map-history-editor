@@ -58,8 +58,8 @@ export default function StateInfo({ selectedState, onStateChange }: StateInfoPro
         </div>
       </div>
       <div className="card block" ref={divRef} tabIndex={0} onKeyDown={handleOnKeyDown}>
-        { tabSelection === 'population' && <PopsInfo key={selectedState.name} pops={selectedState.pops} onPopsChange={(pops) => onStateChange({...selectedState, pops})} /> }
-        { tabSelection === 'buildings' && <StateBuildingsInfo buildings={selectedState.state_buildings} onBuildingsChange={(state_buildings) => onStateChange({...selectedState, state_buildings})} /> }
+        {/* { tabSelection === 'population' && <PopsInfo key={selectedState.name} pops={selectedState.pops} onPopsChange={(pops) => onStateChange({...selectedState, pops})} /> }
+        { tabSelection === 'buildings' && <StateBuildingsInfo buildings={selectedState.state_buildings} onBuildingsChange={(state_buildings) => onStateChange({...selectedState, state_buildings})} /> } */}
       </div>
     </div>
   )

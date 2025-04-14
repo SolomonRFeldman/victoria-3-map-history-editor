@@ -4,7 +4,6 @@
 mod building;
 mod cache_config;
 mod color_converter;
-mod country;
 mod country_definition;
 mod country_setup;
 mod dds_to_png;
@@ -15,9 +14,11 @@ mod get_state_buildings;
 mod get_state_populations;
 mod get_states;
 mod get_uncreated_country_definitions;
+mod legacy_country;
 mod main_menu;
 mod merge_buildings;
 mod merge_pops;
+mod models;
 mod pdx_script_parser;
 mod province_map_to_geojson;
 mod save_as_pdx_script;
@@ -26,48 +27,15 @@ mod transfer_provinces;
 mod transfer_state;
 
 use building::Building;
-use country::Country;
 use country_definition::CountryDefinition;
 use main_menu::MainMenu;
-use province_map_to_geojson::Coords;
-use sea_orm::Database;
+use models::{country, state};
+use sea_orm::{ColumnTrait, Database, DatabaseConnection, EntityTrait, QueryFilter};
 use std::collections::HashSet;
-use tauri::{App, Manager, Window};
+use tauri::{async_runtime::block_on, App, Manager, Window};
 use technology::Technology;
-use transfer_provinces::{transfer_province as handle_transfer_province, TransferProvinceResponse};
-use transfer_state::{transfer_state as handle_transfer_state, TransferStateResponse};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-#[tauri::command]
-fn transfer_state(
-    state: String,
-    from_country: Country,
-    to_country: Country,
-    from_coords: Vec<Vec<(f32, f32)>>,
-    to_coords: Vec<Vec<(f32, f32)>>,
-) -> TransferStateResponse {
-    handle_transfer_state(&state, from_country, to_country, from_coords, to_coords)
-}
-#[tauri::command]
-fn transfer_province(
-    state: String,
-    province: String,
-    from_country: Country,
-    to_country: Country,
-    from_coords: Vec<Vec<(f32, f32)>>,
-    to_coords: Vec<Vec<(f32, f32)>>,
-    province_coords: Vec<Vec<(f32, f32)>>,
-) -> TransferProvinceResponse {
-    handle_transfer_province(
-        &state,
-        &province,
-        from_country,
-        to_country,
-        from_coords,
-        to_coords,
-        province_coords,
-    )
-}
 #[tauri::command]
 fn get_building(window: Window, name: String) -> Building {
     Building::parse_from_game_folder(window)
@@ -92,38 +60,19 @@ fn get_uncreated_country_definitions(
     get_uncreated_country_definitions::get_uncreated_country_definitions(window, created_tag_set)
 }
 #[tauri::command]
-fn create_country(
-    country_definition: CountryDefinition,
-    from_country: Country,
-    state: String,
-    coords: Coords,
-) -> TransferStateResponse {
-    handle_transfer_state(
-        &state,
-        from_country,
-        Country::new(country_definition),
-        coords,
-        vec![],
-    )
+fn get_countries(window: Window) -> Vec<country::Model> {
+    let db = window.state::<DatabaseConnection>().inner();
+    block_on(country::Entity::find().all(db)).unwrap()
 }
 #[tauri::command]
-fn create_country_from_province(
-    country_definition: CountryDefinition,
-    from_country: Country,
-    state: String,
-    province: String,
-    state_coords: Coords,
-    province_coords: Coords,
-) -> TransferProvinceResponse {
-    handle_transfer_province(
-        &state,
-        &province,
-        from_country,
-        Country::new(country_definition),
-        state_coords,
-        vec![],
-        province_coords,
+fn get_states(window: Window, country_id: i32) -> Vec<state::Model> {
+    let db = window.state::<DatabaseConnection>().inner();
+    block_on(
+        state::Entity::find()
+            .filter(state::Column::CountryId.eq(country_id))
+            .all(db),
     )
+    .unwrap()
 }
 
 fn main() {
@@ -142,14 +91,12 @@ fn main() {
         })
         .on_menu_event(MainMenu::handler)
         .invoke_handler(tauri::generate_handler![
-            transfer_state,
-            transfer_province,
             get_building,
             get_buildings,
             get_uncreated_country_definitions,
-            create_country,
-            create_country_from_province,
-            get_technologies
+            get_technologies,
+            get_countries,
+            get_states
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

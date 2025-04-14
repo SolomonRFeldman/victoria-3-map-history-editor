@@ -21,13 +21,13 @@ export default function SelectionInfo({ selectedCountry, selectedState, selected
   }, []);
 
   const handleStateChange = (state: State) => {
-    onCountryChange({...selectedCountry, states: selectedCountry.states.map((s) => s.name === state.name ? state : s)})
+    // onCountryChange({...selectedCountry, states: selectedCountry.states.map((s) => s.name === state.name ? state : s)})
   }
 
   return (
     <div ref={infoRef} className='fixed top-4 right-4 card card-compact bg-base-100 z-[400]'>
       <div className="card-body">
-        <h1 className="card-title justify-end">Country: {selectedCountry.name}</h1>
+        <h1 className="card-title justify-end">Country: {selectedCountry.tag}</h1>
         { 
           selectedProvince ? 
             <h3 className="card-title text-sm">Province: {selectedProvince}</h3> :
