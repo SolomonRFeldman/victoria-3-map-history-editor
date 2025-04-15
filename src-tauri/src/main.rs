@@ -37,6 +37,7 @@ use sea_orm::{
 use std::collections::HashSet;
 use tauri::{async_runtime::block_on, App, Manager, Window};
 use technology::Technology;
+use transfer_provinces::TransferProvinceResponse;
 use transfer_state::TransferStateResponse;
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -96,6 +97,36 @@ fn transfer_state(window: Window, state_id: i32, country_id: i32) -> TransferSta
     block_on(txn.commit()).unwrap();
     resp
 }
+#[tauri::command]
+fn transfer_province(
+    window: Window,
+    province: String,
+    province_coords: Vec<Vec<(f32, f32)>>,
+    state_id: i32,
+    country_id: i32,
+) -> TransferProvinceResponse {
+    let db = window.state::<DatabaseConnection>().inner();
+    let state = block_on(state::Entity::find_by_id(state_id).one(db))
+        .unwrap()
+        .unwrap();
+    let to_country = block_on(country::Entity::find_by_id(country_id).one(db))
+        .unwrap()
+        .unwrap();
+    let from_country = block_on(country::Entity::find_by_id(state.country_id).one(db))
+        .unwrap()
+        .unwrap();
+    let txn = block_on(db.begin()).unwrap();
+    let resp = transfer_provinces::transfer_province(
+        &txn,
+        state.into(),
+        from_country.into(),
+        to_country.into(),
+        province,
+        province_coords,
+    );
+    block_on(txn.commit()).unwrap();
+    resp
+}
 
 fn main() {
     tauri::Builder::default()
@@ -119,7 +150,8 @@ fn main() {
             get_technologies,
             get_countries,
             get_states,
-            transfer_state
+            transfer_state,
+            transfer_province
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

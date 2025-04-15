@@ -74,26 +74,49 @@ export default function Map() {
     }
   }, [])
 
-  const handleControlClickCountry = async (country: Country) => {
-    if(selectedState) {
-      invoke<{ from_country: Country, to_country: Country }>(
+  const invokeTransferTerritory = async (country: Country, selectedState: State) => {
+    if (selectedProvince && selectedState.provinces.length > 1) {
+      return await invoke<{ from_country: Country, to_country: Country, from_state: State }>(
+        'transfer_province', {
+          province: selectedProvince,
+          provinceCoords: provinceCoords[selectedProvince],
+          stateId: selectedState.id,
+          countryId: country.id
+        }
+      )
+    } else {
+      return await invoke<{ from_country: Country, to_country: Country, from_state: null }>(
         'transfer_state', { stateId: selectedState.id, countryId: country.id }
-      ).then(({ from_country, to_country }) => {
-        setCountries((prevCountries) => {
-          const updatedCountries = prevCountries.map((c) => {
-            if (c.id === from_country.id) { return from_country }
-            if (c.id === to_country.id) { return to_country }
-            return c
-          })
-          return updatedCountries
-        })
-        setStates((prevStates) => {
-          return prevStates.filter((s) => s.id !== selectedState?.id)
-        })
-        setSelectedState(null)
-        forceRerender()
-      })
+      )
     }
+  }
+
+  const handleControlClickCountry = async (country: Country) => {
+    if (!selectedState) { return }
+
+    invokeTransferTerritory(country, selectedState).then(({ from_country, to_country, from_state }) => {
+      setCountries((prevCountries) => {
+        const updatedCountries = prevCountries.map((c) => {
+          if (c.id === from_country.id) { return from_country }
+          if (c.id === to_country.id) { return to_country }
+          return c
+        })
+        return updatedCountries
+      })
+      setStates((prevStates) => {
+        if (from_state) {
+          return prevStates.map((s) => {
+            if (s.id === from_state.id) { return from_state }
+            return s
+          })
+        } else {
+          return prevStates.filter((s) => s.id !== selectedState?.id)
+        }
+      })
+      setSelectedProvince(null)
+      setSelectedState(from_state)
+      forceRerender()
+    })
   }
 
   const handleClickCountry = (event: LeafletMouseEvent) => {
