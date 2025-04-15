@@ -16,8 +16,6 @@ mod get_states;
 mod get_uncreated_country_definitions;
 mod legacy_country;
 mod main_menu;
-mod merge_buildings;
-mod merge_pops;
 mod merge_states;
 mod models;
 mod pdx_script_parser;
