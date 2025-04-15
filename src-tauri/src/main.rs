@@ -18,6 +18,7 @@ mod legacy_country;
 mod main_menu;
 mod merge_buildings;
 mod merge_pops;
+mod merge_states;
 mod models;
 mod pdx_script_parser;
 mod province_map_to_geojson;
@@ -30,10 +31,13 @@ use building::Building;
 use country_definition::CountryDefinition;
 use main_menu::MainMenu;
 use models::{country, state};
-use sea_orm::{ColumnTrait, Database, DatabaseConnection, EntityTrait, QueryFilter};
+use sea_orm::{
+    ColumnTrait, Database, DatabaseConnection, EntityTrait, QueryFilter, TransactionTrait,
+};
 use std::collections::HashSet;
 use tauri::{async_runtime::block_on, App, Manager, Window};
 use technology::Technology;
+use transfer_state::TransferStateResponse;
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -74,6 +78,24 @@ fn get_states(window: Window, country_id: i32) -> Vec<state::Model> {
     )
     .unwrap()
 }
+#[tauri::command]
+fn transfer_state(window: Window, state_id: i32, country_id: i32) -> TransferStateResponse {
+    let db = window.state::<DatabaseConnection>().inner();
+    let state = block_on(state::Entity::find_by_id(state_id).one(db))
+        .unwrap()
+        .unwrap();
+    let to_country = block_on(country::Entity::find_by_id(country_id).one(db))
+        .unwrap()
+        .unwrap();
+    let from_country = block_on(country::Entity::find_by_id(state.country_id).one(db))
+        .unwrap()
+        .unwrap();
+    let txn = block_on(db.begin()).unwrap();
+    let resp =
+        transfer_state::transfer_state(&txn, state.into(), from_country.into(), to_country.into());
+    block_on(txn.commit()).unwrap();
+    resp
+}
 
 fn main() {
     tauri::Builder::default()
@@ -96,7 +118,8 @@ fn main() {
             get_uncreated_country_definitions,
             get_technologies,
             get_countries,
-            get_states
+            get_states,
+            transfer_state
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

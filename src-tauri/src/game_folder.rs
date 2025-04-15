@@ -152,7 +152,7 @@ impl GameFolder {
                     country
                         .coordinates
                         .iter()
-                        .map(|polygon| polygon.iter().map(|&(x, y)| (x as i32, y as i32)).collect())
+                        .map(|polygon| polygon.iter().map(|&(x, y)| (x, y)).collect())
                         .collect(),
                 )),
                 ..Default::default()
@@ -195,9 +195,7 @@ impl GameFolder {
                                 .unwrap()
                                 .clone()
                                 .iter()
-                                .map(|polygon| {
-                                    polygon.iter().map(|&(x, y)| (x as i32, y as i32)).collect()
-                                })
+                                .map(|polygon| polygon.iter().map(|&(x, y)| (x, y)).collect())
                                 .collect(),
                         )),
                         ..Default::default()

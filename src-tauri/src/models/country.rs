@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::country_setup::CountrySetup;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "countries")]
 pub struct Model {
     #[sea_orm(primary_key)]
@@ -38,5 +38,5 @@ impl ActiveModelBehavior for ActiveModel {}
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
 pub struct Color(pub (u8, u8, u8));
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
-pub struct Border(pub Vec<Vec<(i32, i32)>>);
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, FromJsonQueryResult)]
+pub struct Border(pub Vec<Vec<(f32, f32)>>);

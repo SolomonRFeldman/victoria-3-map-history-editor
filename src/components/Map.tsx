@@ -74,14 +74,35 @@ export default function Map() {
     }
   }, [])
 
-  const handleControlClickCountry = async () => {
+  const handleControlClickCountry = async (country: Country) => {
+    if(selectedState) {
+      invoke<{ from_country: Country, to_country: Country }>(
+        'transfer_state', { stateId: selectedState.id, countryId: country.id }
+      ).then(({ from_country, to_country }) => {
+        setCountries((prevCountries) => {
+          const updatedCountries = prevCountries.map((c) => {
+            if (c.id === from_country.id) { return from_country }
+            if (c.id === to_country.id) { return to_country }
+            return c
+          })
+          return updatedCountries
+        })
+        setStates((prevStates) => {
+          return prevStates.filter((s) => s.id !== selectedState?.id)
+        })
+        setSelectedState(null)
+        forceRerender()
+      })
+    }
   }
 
   const handleClickCountry = (event: LeafletMouseEvent) => {
     const country = event.sourceTarget.feature.properties as Country
     const selectedCountry = countries.find((c) => c.tag === country.tag) || null
 
-    if (event.originalEvent.ctrlKey || event.originalEvent.metaKey) { return handleControlClickCountry() }
+    if (event.originalEvent.ctrlKey || event.originalEvent.metaKey) { 
+      return selectedCountry && handleControlClickCountry(selectedCountry)
+    }
 
     setSelectedProvince(null)
     setSelectedState(null)
