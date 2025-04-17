@@ -11,7 +11,7 @@ import Background from './Background'
 import { exists, readTextFile } from '@tauri-apps/plugin-fs';
 import { appCacheDir } from '@tauri-apps/api/path'
 import SelectionInfo from './info/SelectionInfo'
-import CreateCountry from './CreateCountry'
+import CreateCountry, { CountryDefinition } from './CreateCountry'
 
 export type Coords = [number, number][][]
 
@@ -101,6 +101,9 @@ export default function Map() {
           if (c.id === to_country.id) { return to_country }
           return c
         })
+        if (!prevCountries.find((country) => country.id === to_country.id)) {
+          updatedCountries.push(to_country)
+        }
         return updatedCountries
       })
       setStates((prevStates) => {
@@ -163,7 +166,10 @@ export default function Map() {
   const handleCountryChange = () => {
   }
 
-  const handleCreateCountry = async () => {
+  const handleCreateCountry = async (countryDefinition: CountryDefinition) => {
+    const country = countries.find((country) => country.tag == countryDefinition.tag) ||
+      await invoke<Country>('create_country', { countryDefinition })
+    handleControlClickCountry(country)
   }
 
   const [states, setStates] = useState<State[]>([])

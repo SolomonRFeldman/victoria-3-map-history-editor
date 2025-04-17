@@ -28,9 +28,13 @@ mod transfer_state;
 use building::Building;
 use country_definition::CountryDefinition;
 use main_menu::MainMenu;
-use models::{country, state};
+use models::{
+    country::{self, Color},
+    state,
+};
 use sea_orm::{
-    ColumnTrait, Database, DatabaseConnection, EntityTrait, QueryFilter, TransactionTrait,
+    ActiveModelTrait, ColumnTrait, Database, DatabaseConnection, EntityTrait, QueryFilter,
+    TransactionTrait,
 };
 use std::collections::HashSet;
 use tauri::{async_runtime::block_on, App, Manager, Window};
@@ -66,6 +70,18 @@ fn get_uncreated_country_definitions(
 fn get_countries(window: Window) -> Vec<country::Model> {
     let db = window.state::<DatabaseConnection>().inner();
     block_on(country::Entity::find().all(db)).unwrap()
+}
+#[tauri::command]
+fn create_country(window: Window, country_definition: CountryDefinition) -> country::Model {
+    let db = window.state::<DatabaseConnection>().inner();
+    block_on(
+        country::ActiveModel::new(
+            country_definition.tag.clone(),
+            Color(country_definition.color),
+        )
+        .insert(db),
+    )
+    .unwrap()
 }
 #[tauri::command]
 fn get_states(window: Window, country_id: i32) -> Vec<state::Model> {
@@ -147,6 +163,7 @@ fn main() {
             get_uncreated_country_definitions,
             get_technologies,
             get_countries,
+            create_country,
             get_states,
             transfer_state,
             transfer_province

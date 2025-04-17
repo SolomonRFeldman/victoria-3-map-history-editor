@@ -1,4 +1,4 @@
-use sea_orm::{entity::prelude::*, FromJsonQueryResult, FromQueryResult};
+use sea_orm::{entity::prelude::*, ActiveValue::Set, FromJsonQueryResult, FromQueryResult};
 use serde::{Deserialize, Serialize};
 
 use crate::country_setup::CountrySetup;
@@ -40,3 +40,15 @@ pub struct Color(pub (u8, u8, u8));
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, FromJsonQueryResult)]
 pub struct Border(pub Vec<Vec<(f32, f32)>>);
+
+impl ActiveModel {
+    pub fn new(tag: String, color: Color) -> ActiveModel {
+        ActiveModel {
+            tag: Set(tag),
+            color: Set(color),
+            setup: Set(CountrySetup::new()),
+            border: Set(Border(vec![])),
+            ..Default::default()
+        }
+    }
+}
