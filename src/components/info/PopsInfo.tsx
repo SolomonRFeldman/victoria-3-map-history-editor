@@ -78,12 +78,28 @@ const CreatePopForm = ({ onCreatePop, onCancel }: { onCreatePop: (pop: Pop) => v
   )
 }
 
+const popKey = (pop: Pop) => `${pop.culture}-${pop.religion || ''}-${pop.pop_type || ''}`
+
+const consolidatePops = (pops: Pop[]) => {
+  const consolidatedPops: Pop[] = []
+  pops.forEach((pop) => {
+    const existingPop = consolidatedPops.find((p) => popKey(p) === popKey(pop))
+    if (existingPop) {
+      existingPop.size += pop.size
+    } else {
+      consolidatedPops.push(pop)
+    }
+  })
+  return consolidatedPops
+}
+
 export default function PopsInfo({ stateId }: PopsInfoProps) {
   const [pops, setPops] = useState<Pop[]>([])
   useEffect(() => {
     invoke<Pop[]>("get_pops", { stateId }).then((pops) => {
-      popHistory.push(pops)
-      setPops(pops)
+      const consolidatedPops = consolidatePops(pops)
+      popHistory.push(consolidatedPops)
+      setPops(consolidatedPops)
     })
   }, [stateId])
   const onPopsChange = (newPops: Pop[]) => {
@@ -164,7 +180,7 @@ export default function PopsInfo({ stateId }: PopsInfoProps) {
         {isCreatingPop && <CreatePopForm onCreatePop={handleAddPop} onCancel={() => setIsCreatingPop(false)} />}
         {pops.sort((pop1, pop2) => pop2.size - pop1.size).map((pop) => {
           return (
-            <tr key={pop.culture + pop.religion + pop.pop_type}>
+            <tr key={popKey(pop)}>
               <td></td>
               <td>{pop.culture}</td>
               <td>{pop.religion}</td>
