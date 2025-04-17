@@ -17,7 +17,7 @@ export default function CreateCountry({ createdCountries, onCreateCountry }: Cre
   const [filter, setFilter] = useState<string>("");
 
   useEffect(() => {
-    const createdTagSet = createdCountries.map(country => country.tag)
+    const createdTagSet = createdCountries.filter(country => country.border.length > 0).map(country => country.tag)
     handleGetUncreatedCountryDefinitions(createdTagSet)
   }, [createdCountries])
   

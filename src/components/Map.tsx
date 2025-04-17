@@ -115,6 +115,7 @@ export default function Map() {
       })
       setSelectedProvince(null)
       setSelectedState(from_state)
+      if (from_country.border.length == 0) { setSelectedCountry(null) }
       forceRerender()
     })
   }
