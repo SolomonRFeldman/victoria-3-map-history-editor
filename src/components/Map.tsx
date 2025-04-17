@@ -163,9 +163,6 @@ export default function Map() {
     return () => window.removeEventListener('keydown', handleEscapePress)
   }, [selectedCountry, selectedState, selectedProvince])
 
-  const handleCountryChange = () => {
-  }
-
   const handleCreateCountry = async (countryDefinition: CountryDefinition) => {
     const country = countries.find((country) => country.tag == countryDefinition.tag) ||
       await invoke<Country>('create_country', { countryDefinition })
@@ -209,7 +206,6 @@ export default function Map() {
             selectedCountry={selectedCountry}
             selectedState={selectedState}
             selectedProvince={selectedProvince}
-            onCountryChange={handleCountryChange}
           />
       }
       {

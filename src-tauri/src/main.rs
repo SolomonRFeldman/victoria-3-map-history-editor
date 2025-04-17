@@ -33,8 +33,9 @@ use models::{
     state,
 };
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, Database, DatabaseConnection, EntityTrait, QueryFilter,
-    TransactionTrait,
+    ActiveModelTrait,
+    ActiveValue::{NotSet, Set},
+    ColumnTrait, Database, DatabaseConnection, EntityTrait, QueryFilter, TransactionTrait,
 };
 use std::collections::HashSet;
 use tauri::{async_runtime::block_on, App, Manager, Window};
@@ -81,6 +82,39 @@ fn create_country(window: Window, country_definition: CountryDefinition) -> coun
         )
         .insert(db),
     )
+    .unwrap()
+}
+#[tauri::command]
+fn get_country(window: Window, id: i32) -> country::WithoutBorder {
+    let db = window.state::<DatabaseConnection>().inner();
+    block_on(
+        country::Entity::find_by_id(id)
+            .into_model::<country::WithoutBorder>()
+            .one(db),
+    )
+    .unwrap()
+    .unwrap()
+}
+#[tauri::command]
+fn update_country(window: Window, country: country::WithoutBorder) -> country::WithoutBorder {
+    let db = window.state::<DatabaseConnection>().inner();
+    block_on(
+        country::ActiveModel {
+            id: Set(country.id),
+            tag: Set(country.tag),
+            color: Set(country.color),
+            setup: Set(country.setup),
+            border: NotSet,
+        }
+        .save(db),
+    )
+    .unwrap();
+    block_on(
+        country::Entity::find_by_id(country.id)
+            .into_model::<country::WithoutBorder>()
+            .one(db),
+    )
+    .unwrap()
     .unwrap()
 }
 #[tauri::command]
@@ -164,6 +198,8 @@ fn main() {
             get_technologies,
             get_countries,
             create_country,
+            get_country,
+            update_country,
             get_states,
             transfer_state,
             transfer_province

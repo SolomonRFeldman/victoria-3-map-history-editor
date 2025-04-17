@@ -18,6 +18,7 @@ pub struct Model {
 pub struct WithoutBorder {
     pub id: i32,
     pub tag: String,
+    pub color: Color,
     pub setup: CountrySetup,
 }
 

@@ -1,6 +1,6 @@
 import { MinusIcon } from "@heroicons/react/24/solid"
 import { useEffect, useState } from "react";
-import { Country } from "../Countries";
+import { Country, CountryWithoutBorders, emptyCountry } from "../Countries";
 import { invoke } from "@tauri-apps/api/core";
 import SearchBox from "../form/SearchBox";
 
@@ -11,11 +11,22 @@ type Technology = {
 }
 
 type CountryInfoProps = {
-  country: Country
-  onChangeCountry: (country: Country) => void
+  countryId: number
 }
 
-export default function CountryInfo({ country, onChangeCountry }: CountryInfoProps) {
+export default function CountryInfo({ countryId }: CountryInfoProps) {
+  const [country, setCountry] = useState<CountryWithoutBorders>(emptyCountry)
+  useEffect(() => {
+    invoke<Country>("get_country", { id: countryId }).then(country => {
+      setCountry(country)
+    })
+  }, [countryId])
+  const onChangeCountry = (updatedCountry: CountryWithoutBorders) => {
+    invoke("update_country", { country: updatedCountry }).then(() => {
+      setCountry(updatedCountry)
+    })
+  }
+
   const handleChangeBaseTech = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const setup = { ...country.setup, base_tech: event.target.value }
     const updatedCountry = { ...country, setup }

@@ -11,6 +11,17 @@ export type Country = {
   border: Coords,
 }
 
+export type CountryWithoutBorders = Omit<Country, 'border'>
+export const emptyCountry: CountryWithoutBorders = {
+  id: -1,
+  tag: '',
+  color: [0, 0, 0],
+  setup: {
+    base_tech: null,
+    technologies_researched: []
+  }
+}
+
 type CountrySetup = {
   base_tech: string | null,
   technologies_researched: string[]

@@ -9,10 +9,9 @@ type SelectionInfoProps = {
   selectedCountry: Country
   selectedState: State | null
   selectedProvince: string | null
-  onCountryChange: (country: Country) => void
 }
 
-export default function SelectionInfo({ selectedCountry, selectedState, selectedProvince, onCountryChange }: SelectionInfoProps) {
+export default function SelectionInfo({ selectedCountry, selectedState, selectedProvince }: SelectionInfoProps) {
   const infoRef = useRef(null);
   useEffect(() => {
     if (infoRef.current) {
@@ -20,8 +19,7 @@ export default function SelectionInfo({ selectedCountry, selectedState, selected
     }
   }, []);
 
-  const handleStateChange = (state: State) => {
-    // onCountryChange({...selectedCountry, states: selectedCountry.states.map((s) => s.name === state.name ? state : s)})
+  const handleStateChange = () => {
   }
 
   return (
@@ -33,7 +31,7 @@ export default function SelectionInfo({ selectedCountry, selectedState, selected
             <h3 className="card-title text-sm">Province: {selectedProvince}</h3> :
             selectedState ? 
               <StateInfo selectedState={selectedState} onStateChange={handleStateChange} /> :
-              <CountryInfo country={selectedCountry} onChangeCountry={onCountryChange} />
+              <CountryInfo countryId={selectedCountry.id} />
         }
       </div>
     </div>
