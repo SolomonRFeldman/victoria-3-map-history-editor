@@ -30,12 +30,14 @@ use country_definition::CountryDefinition;
 use main_menu::MainMenu;
 use models::{
     country::{self, Color},
-    pop, state,
+    pop::{self, NewPop},
+    state,
 };
 use sea_orm::{
     ActiveModelTrait,
     ActiveValue::{NotSet, Set},
-    ColumnTrait, Database, DatabaseConnection, EntityTrait, QueryFilter, TransactionTrait,
+    ColumnTrait, Database, DatabaseConnection, EntityTrait, ModelTrait, QueryFilter,
+    TransactionTrait,
 };
 use std::collections::HashSet;
 use tauri::{async_runtime::block_on, App, Manager, Window};
@@ -185,6 +187,38 @@ fn get_pops(window: Window, state_id: i32) -> Vec<pop::Model> {
     )
     .unwrap()
 }
+#[tauri::command]
+fn set_pops(window: Window, state_id: i32, pops: Vec<NewPop>) {
+    let db = window.state::<DatabaseConnection>().inner();
+    let txn = block_on(db.begin()).unwrap();
+    let existing_pops = block_on(
+        pop::Entity::find()
+            .filter(pop::Column::StateId.eq(state_id))
+            .all(&txn),
+    )
+    .unwrap();
+    for existing_pop in existing_pops {
+        block_on(existing_pop.delete(&txn)).unwrap();
+    }
+    for NewPop {
+        culture,
+        religion,
+        size,
+        pop_type,
+    } in pops
+    {
+        let pop = pop::ActiveModel {
+            state_id: Set(state_id),
+            culture: Set(culture),
+            religion: Set(religion),
+            size: Set(size),
+            pop_type: Set(pop_type),
+            ..Default::default()
+        };
+        block_on(pop.insert(&txn)).unwrap();
+    }
+    block_on(txn.commit()).unwrap();
+}
 
 fn main() {
     tauri::Builder::default()
@@ -213,7 +247,8 @@ fn main() {
             get_states,
             transfer_state,
             transfer_province,
-            get_pops
+            get_pops,
+            set_pops
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

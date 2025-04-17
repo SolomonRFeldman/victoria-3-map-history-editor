@@ -16,6 +16,14 @@ pub struct Model {
 }
 
 #[derive(FromQueryResult, Debug, Serialize, Deserialize, Clone)]
+pub struct NewPop {
+    pub culture: String,
+    pub religion: Option<String>,
+    pub size: i64,
+    pub pop_type: Option<String>,
+}
+
+#[derive(FromQueryResult, Debug, Serialize, Deserialize, Clone)]
 pub struct SavablePop {
     pub culture: String,
     pub religion: Option<String>,

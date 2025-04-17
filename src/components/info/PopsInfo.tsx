@@ -86,7 +86,10 @@ export default function PopsInfo({ stateId }: PopsInfoProps) {
       setPops(pops)
     })
   }, [stateId])
-  const onPopsChange = (newPops: Pop[]) => { setPops(newPops) }
+  const onPopsChange = (newPops: Pop[]) => {
+    invoke("set_pops", { stateId, pops: newPops })
+    setPops(newPops)
+  }
 
   const popHistory = usePopHistory()
   const handlePopulationChange = (pop: Pop, size: number) => {
