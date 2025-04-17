@@ -30,7 +30,7 @@ use country_definition::CountryDefinition;
 use main_menu::MainMenu;
 use models::{
     country::{self, Color},
-    state,
+    pop, state,
 };
 use sea_orm::{
     ActiveModelTrait,
@@ -175,6 +175,16 @@ fn transfer_province(
     block_on(txn.commit()).unwrap();
     resp
 }
+#[tauri::command]
+fn get_pops(window: Window, state_id: i32) -> Vec<pop::Model> {
+    let db = window.state::<DatabaseConnection>().inner();
+    block_on(
+        pop::Entity::find()
+            .filter(pop::Column::StateId.eq(state_id))
+            .all(db),
+    )
+    .unwrap()
+}
 
 fn main() {
     tauri::Builder::default()
@@ -202,7 +212,8 @@ fn main() {
             update_country,
             get_states,
             transfer_state,
-            transfer_province
+            transfer_province,
+            get_pops
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

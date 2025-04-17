@@ -19,9 +19,6 @@ export default function SelectionInfo({ selectedCountry, selectedState, selected
     }
   }, []);
 
-  const handleStateChange = () => {
-  }
-
   return (
     <div ref={infoRef} className='fixed top-4 right-4 card card-compact bg-base-100 z-[400]'>
       <div className="card-body">
@@ -30,7 +27,7 @@ export default function SelectionInfo({ selectedCountry, selectedState, selected
           selectedProvince ? 
             <h3 className="card-title text-sm">Province: {selectedProvince}</h3> :
             selectedState ? 
-              <StateInfo selectedState={selectedState} onStateChange={handleStateChange} /> :
+              <StateInfo selectedState={selectedState} /> :
               <CountryInfo countryId={selectedCountry.id} />
         }
       </div>

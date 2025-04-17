@@ -1,16 +1,22 @@
 import { useEffect, useRef, useState } from "react"
-import { Pop } from "../States"
 import { MinusIcon, PlusIcon } from "@heroicons/react/24/outline"
+import { invoke } from "@tauri-apps/api/core"
+
+type Pop = {
+  culture: string,
+  religion: string | null,
+  size: number,
+  pop_type?: string | null,
+}
 
 type PopsInfoProps = {
-  pops: Pop[]
-  onPopsChange: (pops: Pop[]) => void
+  stateId: number
 }
 
 const presentString = (value: string) => value === '' ? null : value
 
-const usePopHistory = (initialPops: Pop[]) => {
-  const [popBackHistory, setPopBackHistory] = useState<Pop[][]>([initialPops])
+const usePopHistory = () => {
+  const [popBackHistory, setPopBackHistory] = useState<Pop[][]>([])
   const [popForwardHistory, setPopForwardHistory] = useState<Pop[][]>([])
 
   const back = () => {
@@ -72,8 +78,17 @@ const CreatePopForm = ({ onCreatePop, onCancel }: { onCreatePop: (pop: Pop) => v
   )
 }
 
-export default function PopsInfo({ pops, onPopsChange }: PopsInfoProps) {
-  const popHistory = usePopHistory(pops)
+export default function PopsInfo({ stateId }: PopsInfoProps) {
+  const [pops, setPops] = useState<Pop[]>([])
+  useEffect(() => {
+    invoke<Pop[]>("get_pops", { stateId }).then((pops) => {
+      popHistory.push(pops)
+      setPops(pops)
+    })
+  }, [stateId])
+  const onPopsChange = (newPops: Pop[]) => { setPops(newPops) }
+
+  const popHistory = usePopHistory()
   const handlePopulationChange = (pop: Pop, size: number) => {
     const newPop = {...pop, size}
     const newPops = pops.map((p) => p === pop ? newPop : p)

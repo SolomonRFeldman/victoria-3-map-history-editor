@@ -7,10 +7,9 @@ type TabSelection = 'population' | 'buildings'
 
 type StateInfoProps = {
   selectedState: State,
-  onStateChange: (state: State) => void
 }
 
-export default function StateInfo({ selectedState, onStateChange }: StateInfoProps) {
+export default function StateInfo({ selectedState }: StateInfoProps) {
   const [tabSelection, setTabSelection] = useState<TabSelection>('population')
   const handleTabSelection = (tab: TabSelection) => setTabSelection(tab)
   const isSelected = (tab: string) => tab === tabSelection ? 'bg-purple-400' : ''
@@ -58,8 +57,8 @@ export default function StateInfo({ selectedState, onStateChange }: StateInfoPro
         </div>
       </div>
       <div className="card block" ref={divRef} tabIndex={0} onKeyDown={handleOnKeyDown}>
-        {/* { tabSelection === 'population' && <PopsInfo key={selectedState.name} pops={selectedState.pops} onPopsChange={(pops) => onStateChange({...selectedState, pops})} /> }
-        { tabSelection === 'buildings' && <StateBuildingsInfo buildings={selectedState.state_buildings} onBuildingsChange={(state_buildings) => onStateChange({...selectedState, state_buildings})} /> } */}
+        { tabSelection === 'population' && <PopsInfo key={selectedState.name} stateId={selectedState.id} /> }
+        {/* { tabSelection === 'buildings' && <StateBuildingsInfo buildings={selectedState.state_buildings} onBuildingsChange={(state_buildings) => onStateChange({...selectedState, state_buildings})} /> } */}
       </div>
     </div>
   )
