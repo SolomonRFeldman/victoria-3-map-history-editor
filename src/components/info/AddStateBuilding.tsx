@@ -24,7 +24,9 @@ export default function AddStateBuilding({ stateBuildings, onAddStateBuilding }:
   const [search, setSearch] = useState('')
   const [buildings, setBuildings] = useState<Building[]>([])
 
-  const handleGetBuildings = async () => { setBuildings((await invoke<Building[]>("get_buildings", {}))) }
+  const handleGetBuildings = async () => {
+    setBuildings((await invoke<Building[]>("get_building_definitions", {})))
+  }
   const filteredBuildings = buildingsFilter(buildings, stateBuildings, search)
   useEffect(() => { handleGetBuildings() }, [])
 

@@ -21,22 +21,22 @@ pub struct ProductionMethodGroup {
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct Building {
+pub struct BuildingDefinition {
     pub name: String,
     pub production_method_groups: Vec<ProductionMethodGroup>,
     pub buildable: bool,
     pub unique: bool,
 }
 
-impl Building {
-    pub fn parse_from_game_folder(window: Window) -> Vec<Building> {
+impl BuildingDefinition {
+    pub fn parse_from_game_folder(window: Window) -> Vec<BuildingDefinition> {
         let cache_dir = window.app_handle().path().app_cache_dir().unwrap();
         let cache_config: CacheConfig = CacheConfig::get_config(cache_dir.join("config.json"));
 
         Self::parse_from(cache_config.game_folder.unwrap().join("game"))
     }
 
-    fn parse_from(path: PathBuf) -> Vec<Building> {
+    fn parse_from(path: PathBuf) -> Vec<BuildingDefinition> {
         let production_method_groups_map =
             parse_production_method_groups(path.join(PRODUCTION_METHOD_GROUPS_PATH));
         parse_buildings(path.join(BUILDINGS_PATH), production_method_groups_map)
@@ -58,8 +58,8 @@ struct RawBuilding {
 pub fn parse_buildings(
     buildings_path: PathBuf,
     pmg_map: HashMap<String, ProductionMethodGroup>,
-) -> Vec<Building> {
-    let mut buildings: Vec<Building> = Vec::new();
+) -> Vec<BuildingDefinition> {
+    let mut buildings: Vec<BuildingDefinition> = Vec::new();
 
     for entry in std::fs::read_dir(buildings_path).unwrap() {
         let entry = entry.unwrap().path();
@@ -79,7 +79,7 @@ pub fn parse_buildings(
                 .iter()
                 .map(|group| pmg_map.get(group).unwrap().clone())
                 .collect();
-            let building = Building {
+            let building = BuildingDefinition {
                 name: name.clone(),
                 production_method_groups,
                 buildable,

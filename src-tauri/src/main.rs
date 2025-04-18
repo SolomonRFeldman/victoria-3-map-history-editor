@@ -1,7 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod building;
+mod building_definition;
 mod cache_config;
 mod color_converter;
 mod country_definition;
@@ -25,7 +25,7 @@ mod technology;
 mod transfer_provinces;
 mod transfer_state;
 
-use building::Building;
+use building_definition::BuildingDefinition;
 use country_definition::CountryDefinition;
 use main_menu::MainMenu;
 use models::{
@@ -47,16 +47,16 @@ use transfer_state::TransferStateResponse;
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
-fn get_building(window: Window, name: String) -> Building {
-    Building::parse_from_game_folder(window)
+fn get_building_definition(window: Window, name: String) -> BuildingDefinition {
+    BuildingDefinition::parse_from_game_folder(window)
         .iter()
         .find(|building| building.name == name)
         .unwrap()
         .clone()
 }
 #[tauri::command]
-fn get_buildings(window: Window) -> Vec<Building> {
-    Building::parse_from_game_folder(window)
+fn get_building_definitions(window: Window) -> Vec<BuildingDefinition> {
+    BuildingDefinition::parse_from_game_folder(window)
 }
 #[tauri::command]
 fn get_technologies(window: Window) -> Vec<Technology> {
@@ -236,8 +236,8 @@ fn main() {
         })
         .on_menu_event(MainMenu::handler)
         .invoke_handler(tauri::generate_handler![
-            get_building,
-            get_buildings,
+            get_building_definition,
+            get_building_definitions,
             get_uncreated_country_definitions,
             get_technologies,
             get_countries,

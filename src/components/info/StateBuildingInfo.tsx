@@ -31,7 +31,9 @@ export default function StateBuildingInfo({ stateBuilding, onBuildingChange }: S
   const renderBuildingsRef = useRef<HTMLDivElement>(null)
 
   const [pmgs, setPmgs] = useState<ProductionMethodGroup[]>([])
-  const handleGetBuilding = async () => { setPmgs((await invoke<Building>("get_building", { name: stateBuilding.name })).production_method_groups) }
+  const handleGetBuilding = async () => {
+    setPmgs((await invoke<Building>("get_building_definition", { name: stateBuilding.name })).production_method_groups)
+  }
 
   const productionMethods = stateBuilding.activate_production_methods?.join(', ')
   return (
