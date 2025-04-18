@@ -29,6 +29,7 @@ use building_definition::BuildingDefinition;
 use country_definition::CountryDefinition;
 use main_menu::MainMenu;
 use models::{
+    building,
     country::{self, Color},
     pop::{self, NewPop},
     state,
@@ -219,6 +220,16 @@ fn set_pops(window: Window, state_id: i32, pops: Vec<NewPop>) {
     }
     block_on(txn.commit()).unwrap();
 }
+#[tauri::command]
+fn get_buildings(window: Window, state_id: i32) -> Vec<building::Model> {
+    let db = window.state::<DatabaseConnection>().inner();
+    block_on(
+        building::Entity::find()
+            .filter(building::Column::StateId.eq(state_id))
+            .all(db),
+    )
+    .unwrap()
+}
 
 fn main() {
     tauri::Builder::default()
@@ -248,7 +259,8 @@ fn main() {
             transfer_state,
             transfer_province,
             get_pops,
-            set_pops
+            set_pops,
+            get_buildings
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

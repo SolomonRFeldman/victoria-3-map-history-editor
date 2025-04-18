@@ -1,8 +1,7 @@
 import { PlusIcon } from "@heroicons/react/24/solid";
 import { FocusEvent, useEffect, useRef, useState } from "react";
-import { Building } from "./StateBuildingInfo";
+import { Building, StateBuilding } from "./StateBuildingInfo";
 import { invoke } from "@tauri-apps/api/core";
-import { StateBuilding } from "../States";
 
 const buildingsFilter = (buildings: Building[], stateBuildings: StateBuilding[], search: string) => buildings.filter(building => {
   return !building.unique &&
@@ -120,7 +119,7 @@ export default function AddStateBuilding({ stateBuildings, onAddStateBuilding }:
   const handleClickBuilding = (building: Building) => {
     const activate_production_methods = building.production_method_groups.map(pmGroup => pmGroup.production_methods[0].name)
 
-    onAddStateBuilding({ name: building.name, level: 1, activate_production_methods, reserves: 1, condition: null, ownership: null })
+    onAddStateBuilding({ name: building.name, level: 1, activate_production_methods, reserves: 1, condition: null })
   }
 
 

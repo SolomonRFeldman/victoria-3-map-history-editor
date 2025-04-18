@@ -4,34 +4,6 @@ import { FeatureCollection, Feature, Geometry } from 'geojson'
 import { LeafletEventHandlerFnMap } from "leaflet"
 import { Country } from "./Countries"
 
-export type StateBuilding = {
-  name: string,
-  level: number | null,
-  reserves: number | null,
-  activate_production_methods: string[] | null
-  condition: BuildingCondition | null
-  ownership: Ownership | null
-}
-
-type Ownership = {
-  countries: CountryOwnership[],
-  buildings: BuildingOwnership[]
-}
-
-type CountryOwnership = {
-  country: string,
-  levels: number
-}
-
-type BuildingOwnership = {
-  type_: string,
-  country: string,
-  levels: number,
-  region: string
-}
-
-type BuildingCondition = [string, string][]
-
 export type State = {
   id: number,
   name: string,

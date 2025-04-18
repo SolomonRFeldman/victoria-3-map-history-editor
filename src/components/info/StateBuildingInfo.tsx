@@ -1,9 +1,18 @@
 import { MinusIcon, PlusIcon } from "@heroicons/react/24/solid"
-import { StateBuilding } from "../States"
 import { invoke } from "@tauri-apps/api/core";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline"
 import ChooseProductionMethods, { ProductionMethodGroup } from "./ChooseProductionMethods"
 import { useRef, useState } from "react"
+
+export type StateBuilding = {
+  name: string,
+  level: number | null,
+  reserves: number | null,
+  activate_production_methods: string[] | null
+  condition: BuildingCondition | null
+}
+
+type BuildingCondition = [string, string][]
 
 type StateBuildingInfoProps = { 
   stateBuilding: StateBuilding

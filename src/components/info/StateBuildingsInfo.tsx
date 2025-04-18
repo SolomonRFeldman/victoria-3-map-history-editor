@@ -1,27 +1,22 @@
-import { StateBuilding } from "../States"
-import StateBuildingInfo from "./StateBuildingInfo"
+import StateBuildingInfo, { StateBuilding } from "./StateBuildingInfo"
 import AddStateBuilding from "./AddStateBuilding"
+import { useEffect, useState } from "react"
+import { invoke } from "@tauri-apps/api/core"
 
 type BuildingsInfoProps = {
-  buildings: StateBuilding[]
-  onBuildingsChange: (building: StateBuilding[]) => void
+  stateId: number
 }
 
-export default function StateBuildingsInfo({ buildings, onBuildingsChange }: BuildingsInfoProps) {
-  const handleBuildingChange = (building: StateBuilding) => {
-    if (building.level === 0) {
-      const newBuildings = buildings.filter((b) => b.name !== building.name)
-      onBuildingsChange(newBuildings)
-    } else {
-      const newBuildings = buildings.map((b) => b.name === building.name ? building : b)
-      onBuildingsChange(newBuildings)
-    }
-  }
+export default function StateBuildingsInfo({ stateId }: BuildingsInfoProps) {
+  const [buildings, setBuildings] = useState<StateBuilding[]>([])
+  useEffect(() => {
+    invoke<StateBuilding[]>("get_buildings", { stateId }).then((buildings) => {
+      setBuildings(buildings)
+    })
+  }, [stateId])
 
-  const handleAddStateBuilding = (building: StateBuilding) => {
-    const newBuildings = [...buildings, building]
-    onBuildingsChange(newBuildings)
-  }
+  const handleAddStateBuilding = () => {}
+  const handleBuildingChange = () => {}
   
   return(
     <table className="table table-xs">
